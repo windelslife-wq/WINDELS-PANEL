@@ -24,6 +24,36 @@ $legal_line = LegalIdentity::line();
           A prepaid commerce platform for social-media services, Nigerian VTU,
           virtual numbers, identity checks, gift cards and a platform-owned marketplace.
         </p>
+        <?php
+        // The social channel buttons. URLs come from marvy_social_links(): a
+        // stored setting wins, a missing row falls back to the platform's home
+        // page, and a cleared row hides the channel. Icons are the same generic
+        // 24x24 stroke glyphs partials/icon ships for the category grid — not
+        // traced brand logos. 'twitter' is the X mark; 'telegram' is the
+        // ringed paper plane.
+        $social_channels = array(
+            'facebook'  => array('facebook',  'Facebook'),
+            'instagram' => array('instagram', 'Instagram'),
+            'whatsapp'  => array('whatsapp',  'WhatsApp'),
+            'x'         => array('twitter',   'X (Twitter)'),
+            'linkedin'  => array('linkedin',  'LinkedIn'),
+            'telegram'  => array('telegram',  'Telegram'),
+            'youtube'   => array('youtube',   'YouTube'),
+        );
+        $social_links = function_exists('marvy_social_links') ? marvy_social_links() : array();
+        ?>
+        <?php if (!empty($social_links)): ?>
+        <nav class="ws-social" aria-label="Social channels">
+          <?php foreach ($social_channels as $channel => $meta): ?>
+            <?php if (!isset($social_links[$channel])) continue; ?>
+            <a class="ws-social-btn" href="<?=htmlspecialchars($social_links[$channel])?>"
+               target="_blank" rel="noopener"
+               aria-label="<?=htmlspecialchars($site_name.' on '.$meta[1])?>">
+              <?php $this->load->view('partials/icon', array('name'=>$meta[0], 'class'=>'ws-social-icon')); ?>
+            </a>
+          <?php endforeach; ?>
+        </nav>
+        <?php endif; ?>
       </div>
 
       <div>

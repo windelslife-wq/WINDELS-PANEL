@@ -420,6 +420,18 @@ class Core_seeder extends Seeder {
             array('brand_logo_url',NULL,'branding',1),
             array('brand_favicon_url',NULL,'branding',1),
             array('default_theme','system','branding',1),
+            // Social channels — the footer buttons. The platform home pages
+            // are the shipped defaults: every button renders and none is a
+            // dead link until the operator points them at the panel's real
+            // profiles (Admin → Settings → Social channels). Clearing a value
+            // hides that channel's button.
+            array('social_facebook_url','https://www.facebook.com/','social',1),
+            array('social_instagram_url','https://www.instagram.com/','social',1),
+            array('social_whatsapp_url','https://www.whatsapp.com/','social',1),
+            array('social_x_url','https://x.com/','social',1),
+            array('social_linkedin_url','https://www.linkedin.com/','social',1),
+            array('social_telegram_url','https://t.me/','social',1),
+            array('social_youtube_url','https://www.youtube.com/','social',1),
             // currency
             array('base_currency','NGN','currency',1),
             array('currency_display','symbol','currency',1),

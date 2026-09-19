@@ -434,6 +434,16 @@ button { font-family:inherit; cursor:pointer; }
 .ws-footer-meta{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--slate-200);
   display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;color:var(--text-muted);font-size:.85rem}
 .ws-footer-links{display:flex;gap:1rem;flex-wrap:wrap}
+/* Social channel buttons. Base rules use the light tokens like the rest of
+   this section; the footer-only navy palette is layered on by the
+   .ws-footer overrides further down (the footer is navy on every shell). */
+.ws-social{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1.25rem}
+.ws-social-btn{display:inline-flex;align-items:center;justify-content:center;
+  width:2.5rem;height:2.5rem;border-radius:50%;border:1px solid var(--color-border);
+  color:var(--text-secondary);text-decoration:none;
+  transition:background-color .15s,border-color .15s,color .15s}
+.ws-social-btn:hover{background:var(--surface-muted);color:var(--color-text);text-decoration:none}
+.ws-social-btn .ws-social-icon{width:18px;height:18px}
 @media(max-width:1000px){.ws-footer-grid{grid-template-columns:1fr 1fr}.ws-footer{padding:2.5rem 0 5.5rem}}
 @media(max-width:520px){.ws-footer-grid{grid-template-columns:1fr}}
 
@@ -942,6 +952,15 @@ button { font-family:inherit; cursor:pointer; }
 .ws-footer .muted,
 .ws-app-footer .muted{ color:var(--ws-navy-ink-dim); }
 .ws-footer-meta{ border-top-color:var(--ws-navy-line); color:var(--ws-navy-ink-dim); }
+/* Social buttons on the navy footer: the light-theme surface tokens above
+   would be invisible here, so the circle, the ink and the hover state are
+   re-stated on the navy palette. Specificity sits above `.ws-footer a` on
+   purpose — these are buttons, not text links, and must not grow an
+   underline on hover. */
+.ws-footer .ws-social-btn{ border-color:var(--ws-navy-line); color:var(--ws-navy-ink-dim); }
+.ws-footer .ws-social-btn:hover{
+  background:var(--ws-navy-700); border-color:var(--ws-navy-700); color:var(--ws-navy-ink);
+}
 /* The footer renders the light wordmark directly (partials/footer asks for the
    'dark' variant), so no filter trickery is needed — a filtered logo loses the
    gradient in the mark. */

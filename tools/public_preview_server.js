@@ -30,6 +30,32 @@ function esc(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
+/* Social channel buttons — mirrors partials/footer.php + partials/icon.php
+   (generic 24x24 stroke glyphs, same as the icon partial) so the preview
+   shows the footer the PHP app actually renders. URLs match the seeded
+   social_*_url defaults. */
+const socialGlyphs = {
+  facebook: '<path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>',
+  instagram: '<rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>',
+  whatsapp: '<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/><path stroke-width="1.25" d="M16.2 14.07v1.26a0.84 0.84 0 0 1-.92.84 8.31 8.31 0 0 1-3.62-1.29 8.19 8.19 0 0 1-2.52-2.52 8.31 8.31 0 0 1-1.29-3.64A0.84 0.84 0 0 1 8.69 7.8h1.26a0.84 0.84 0 0 1 .84.72 5.39 5.39 0 0 0 .29 1.18 0.84 0.84 0 0 1-.19.89L10.36 11.12a6.72 6.72 0 0 0 2.52 2.52l.53-.53a0.84 0.84 0 0 1 .89-.19 5.39 5.39 0 0 0 1.18.29A0.84 0.84 0 0 1 16.2 14.07z"/>',
+  twitter: '<path d="M4 4l16 16"/><path d="M20 4L4 20"/>',
+  linkedin: '<path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/>',
+  telegram: '<circle cx="12" cy="12" r="10"/><line x1="16.5" y1="7.5" x2="11.55" y2="12.45" stroke-width="1.5"/><polygon points="16.5 7.5 13.35 16.5 11.55 12.45 7.5 10.65" stroke-width="1.5"/>',
+  youtube: '<rect x="2" y="5" width="20" height="14" rx="4"/><polygon points="10 9 15 12 10 15 10 9"/>',
+};
+const socialChannels = [
+  ['facebook', 'Facebook', 'https://www.facebook.com/'],
+  ['instagram', 'Instagram', 'https://www.instagram.com/'],
+  ['whatsapp', 'WhatsApp', 'https://www.whatsapp.com/'],
+  ['twitter', 'X (Twitter)', 'https://x.com/'],
+  ['linkedin', 'LinkedIn', 'https://www.linkedin.com/'],
+  ['telegram', 'Telegram', 'https://t.me/'],
+  ['youtube', 'YouTube', 'https://www.youtube.com/'],
+];
+const socialRow = `<nav class="ws-social" aria-label="Social channels">${socialChannels
+  .map(([glyph, label, url]) => `<a class="ws-social-btn" href="${url}" target="_blank" rel="noopener" aria-label="MarvySocials on ${label}"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ws-social-icon" aria-hidden="true">${socialGlyphs[glyph]}</svg></a>`)
+  .join('')}</nav>`;
+
 function layout(title, desc, body, extra = '') {
   return `<!doctype html>
 <html lang="en">
@@ -87,6 +113,7 @@ function layout(title, desc, body, extra = '') {
       <div>
         <a class="ws-brand" href="/"><img class="ws-logo" src="/assets/brand/logo.svg" alt="MarvySocials" height="40" width="176"></a>
         <p class="muted mt-2">A prepaid reseller panel for social-media services, Nigerian VTU, virtual numbers, identity checks, gift cards and a platform-owned marketplace.</p>
+        ${socialRow}
       </div>
       <div><h2>Platform</h2><ul>
         <li><a href="/services">Services</a></li><li><a href="/pricing">Pricing</a></li>

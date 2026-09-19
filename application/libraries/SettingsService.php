@@ -77,6 +77,27 @@ class SettingsService {
             'homepage_meta_description' => array('longtext', 'homepage', 'SEO meta description',
                 'Search engines and social previews.', 'MarvySocials is a prepaid panel for social media growth services, Nigerian VTU and bills, virtual numbers, identity checks and gift cards.'),
 
+            // Social channels — the seven buttons in the site footer. The
+            // shipped default for each is the platform's own home page, so
+            // the row renders on a fresh install without a single dead link
+            // while the operator has not filled their profile URLs in yet.
+            // An empty value hides that channel's button (the url type's
+            // usual "leave blank to disable" contract).
+            'social_facebook_url' => array('url', 'social', 'Facebook',
+                'Full URL the footer\'s Facebook button opens. Replace with your page (https://www.facebook.com/YourPage) or clear the field to hide the button.', 'https://www.facebook.com/'),
+            'social_instagram_url' => array('url', 'social', 'Instagram',
+                'Full URL the footer\'s Instagram button opens. Replace with your profile (https://www.instagram.com/yourhandle) or clear the field to hide the button.', 'https://www.instagram.com/'),
+            'social_whatsapp_url' => array('url', 'social', 'WhatsApp',
+                'Full URL the footer\'s WhatsApp button opens — https://wa.me/2348012345678 starts a chat with that number. Clear the field to hide the button.', 'https://www.whatsapp.com/'),
+            'social_x_url' => array('url', 'social', 'X (Twitter)',
+                'Full URL the footer\'s X button opens. Replace with your profile (https://x.com/yourhandle) or clear the field to hide the button.', 'https://x.com/'),
+            'social_linkedin_url' => array('url', 'social', 'LinkedIn',
+                'Full URL the footer\'s LinkedIn button opens. Replace with your page (https://www.linkedin.com/company/yourcompany) or clear the field to hide the button.', 'https://www.linkedin.com/'),
+            'social_telegram_url' => array('url', 'social', 'Telegram',
+                'Full URL the footer\'s Telegram button opens — https://t.me/yourhandle for a channel or chat. Clear the field to hide the button.', 'https://t.me/'),
+            'social_youtube_url' => array('url', 'social', 'YouTube',
+                'Full URL the footer\'s YouTube button opens. Replace with your channel (https://www.youtube.com/@yourchannel) or clear the field to hide the button.', 'https://www.youtube.com/'),
+
             'registration_enabled' => array('bool', 'security', 'Allow new sign-ups',
                 'Off closes registration; existing customers can still sign in.', true),
             'email_verification_required' => array('bool', 'security', 'Require email verification',
