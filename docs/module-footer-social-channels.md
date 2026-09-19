@@ -52,55 +52,68 @@ migration was actually run against the dev database before it shipped.
 `tools/build_production_sql.php`, and `application-deployment.zip` rebuilt —
 a stale package is a panel that boots without the new fields.
 
-## 3. Icons: generic line forms, not traced logos
+## 3. Icons: the original brand marks, at a size that cannot drift
 
-The buttons use the same 24×24 stroke glyphs `partials/icon` already ships for
-the service-category grid — deliberately generic shapes, for the same licence
-reason the category glyphs are. Four existed (`facebook`, `instagram`,
-`youtube`, and `twitter`, which is the X mark); three were added:
+The first cut used the generic stroke glyphs from `partials/icon` — the set's
+house style, and deliberately not brand logos. The operator asked for the
+**original icons**, so that is what ships now, with the licence question
+answered rather than ducked:
 
-- **`whatsapp`** — the house `message-circle` bubble carrying a phone handset.
-  The handset is the standard Lucide `phone` outline scaled to 42% around the
-  centre and re-weighted (`stroke-width="1.25"`) so the stroke keeps its
-  proportion at that size.
-- **`linkedin`** — the classic rounded-square shape reduced to strokes.
-- **`telegram`** — the house `send` paper plane scaled to 45% and ringed, so it
-  reads as a channel badge rather than the generic send action.
+- the marks are the official brand glyphs from **Simple Icons**
+  (simpleicons.org), published under **CC0 1.0** — public domain, explicitly
+  free to redistribute. The "no licence to redistribute traced logos" rule
+  that keeps the category grid generic does not apply to CC0 artwork;
+- they live in their own partial, `partials/social_icon.php`, so the generic
+  stroke set stays generic (`partials/icon` is back to exactly what it was);
+- each button is the channel's own colour — Facebook `#0866FF`, Instagram its
+  published gradient, WhatsApp `#25D366`, X `#000000` (with a hairline so the
+  black circle reads against the navy footer), LinkedIn `#0A66C2`, Telegram
+  `#26A5E4`, YouTube `#FF0000` — with the mark in white. That is what makes
+  the row read as "the real icons" and what keeps every one of them visible on
+  the navy footer.
 
-The two composites were generated mechanically from the existing glyphs and
-verified by rasterising them next to the reference transform (99.7% and 100%
-pixel overlap; the glyphs as shipped are in
-[footer-social-icons-preview.png](footer-social-icons-preview.png)). A
-typo in a glyph key renders nothing at all, silently — which is why the test
-pins every glyph name the footer references.
+**Sizing is written on the `<svg>` element, not left to CSS.** The buttons are
+36px circles with 18px marks, and the 18 is a `width="18" height="18"`
+attribute rendered by the partial. An icon whose size lives only in a
+stylesheet class renders at the 24×24 viewBox default the moment that CSS
+fails to load — which is exactly the "icon too big" defect the operator
+reported on the first cut's preview image. With the attributes, the icon size
+holds regardless of what loads, in what order.
+
+The shipped paths were byte-verified against the Simple Icons package, and the
+rendered buttons colour-verified against the official brand values. A typo in
+a mark key renders nothing at all, silently — which is why the test pins every
+mark the footer references. True-scale render in
+[footer-social-icons-preview.png](footer-social-icons-preview.png).
 
 ## 4. Where the row lives, and what it looks like
 
 The buttons sit in the footer's brand column, under the strapline, on every
 shell that renders `partials/footer` — the public site, the auth pages and the
-API reference. They are 40px circles with an 18px glyph, defined once in
-`design-system.css` on the light tokens and restated on the navy palette
-(the footer is navy on every shell, and a `.ws-footer a` text-link rule would
-otherwise win the specificity fight and underline them).
+API reference. The button rules live once in `design-system.css`; the only
+footer-specific override is a specificity shim (`.ws-footer .ws-social-btn`)
+that stops the footer's text-link rules from dimming or underlining the white
+marks.
 
 Icon-only links have no accessible name unless they carry one, so each button
 has `aria-label="MarvySocials on Facebook"` (built from the configured site
-name), and the icons themselves stay `aria-hidden`. The row is a
+name), and the marks themselves stay `aria-hidden`. The row is a
 `<nav aria-label="Social channels">`.
 
-The static preview (`tools/public_preview_server.js`) mirrors the row so the
-design can be looked at without a PHP runtime — the mirror is pinned by a test
-too, because a preview that stops mirroring the views previews a site that no
-longer exists.
+The static preview (`tools/public_preview_server.js`) mirrors the row — same
+marks, same classes, same 18px attributes — so the design can be looked at
+without a PHP runtime. The mirror is pinned by a test too, because a preview
+that stops mirroring the views previews a site that no longer exists.
 
 ---
 
 ## Proofs
 
-`tests/unit/FooterSocialChannelsTest.php` — 9 tests, 87 assertions: the footer
-markup and its aria/noopener contract, the icon set, the stylesheet, the
-helper's three states, the schema's seven keys, seeder/migration agreement, and
-the migration's insert-or-leave behaviour against the real `Setting_model`.
+`tests/unit/FooterSocialChannelsTest.php` — 9 tests, 100 assertions: the footer
+markup and its aria/noopener contract, the original marks and their
+element-level sizing, the stylesheet's brand colours, the helper's three
+states, the schema's seven keys, seeder/migration agreement, and the
+migration's insert-or-leave behaviour against the real `Setting_model`.
 The full suite (1,808 tests) passes except the six payments/Fundsvera failures
 that predate this branch.
 
@@ -110,6 +123,7 @@ that predate this branch.
   with real channels pastes their URLs in Admin → Settings → Social channels;
   the per-field help text shows the exact shape (`https://wa.me/…`,
   `https://t.me/…`, `https://www.youtube.com/@…`).
-- **No brand colours on hover.** The buttons go navy-on-navy like the rest of
-  the footer. Per-channel brand colours would need the logo-adjacent artwork
-  the licence stance already rules out.
+- **Trademarks belong to their owners.** CC0 covers the artwork's copyright;
+  using a platform's logo to link to that platform's own site is the use the
+  brands' guidelines contemplate, but a deployment that renames the site
+  should re-read those guidelines with its own counsel.

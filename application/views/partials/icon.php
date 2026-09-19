@@ -68,17 +68,6 @@ $icons = array(
     'send'       => '<line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>',
     'music'      => '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
     'music-2'    => '<circle cx="12" cy="12" r="10"/><path d="M8 14.5c2.5-1 5.5-1 8 .5"/><path d="M7 11c3-1.2 7-1 10 1"/><path d="M7 7.5c3.5-1.4 8-1 11 1.5"/>',
-    // The three the set was missing for the footer's channel buttons; same
-    // rule as above — generic line forms, not traced brand artwork.
-    // whatsapp: a speech bubble carrying a phone handset. The handset is the
-    // house 'phone' outline scaled to 42% around the centre (and re-weighted
-    // to 1.25 so the stroke keeps its proportion at that size).
-    'whatsapp'  => '<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/><path stroke-width="1.25" d="M16.2 14.07v1.26a0.84 0.84 0 0 1-.92.84 8.31 8.31 0 0 1-3.62-1.29 8.19 8.19 0 0 1-2.52-2.52 8.31 8.31 0 0 1-1.29-3.64A0.84 0.84 0 0 1 8.69 7.8h1.26a0.84 0.84 0 0 1 .84.72 5.39 5.39 0 0 0 .29 1.18 0.84 0.84 0 0 1-.19.89L10.36 11.12a6.72 6.72 0 0 0 2.52 2.52l.53-.53a0.84 0.84 0 0 1 .89-.19 5.39 5.39 0 0 0 1.18.29A0.84 0.84 0 0 1 16.2 14.07z"/>',
-    // linkedin: the classic rounded-square wordmark shape reduced to strokes.
-    'linkedin'  => '<path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/>',
-    // telegram: the paper plane from 'send' scaled to 45% and ringed, so it
-    // reads as a channel badge rather than the generic send action.
-    'telegram'  => '<circle cx="12" cy="12" r="10"/><line x1="16.5" y1="7.5" x2="11.55" y2="12.45" stroke-width="1.5"/><polygon points="16.5 7.5 13.35 16.5 11.55 12.45 7.5 10.65" stroke-width="1.5"/>',
 );
 $svg = $icons[$name] ?? '';
 if ($svg === '') return;

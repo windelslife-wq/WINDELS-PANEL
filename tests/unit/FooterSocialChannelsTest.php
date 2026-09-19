@@ -22,8 +22,11 @@ require_once dirname(__DIR__).'/_support/IntegrationHarness.php';
  *   - the buttons are external links opened in a new tab, so they carry
  *     rel="noopener" and aria-labels (the icons alone are not accessible
  *     names);
- *   - the icons are glyphs from partials/icon — a typo in a glyph key
- *     renders nothing at all, silently.
+ *   - the icons are the ORIGINAL brand marks (Simple Icons, CC0) in
+ *     partials/social_icon, sized on the <svg> element itself so a failed
+ *     stylesheet can never balloon them to the 24x24 viewBox — a typo in a
+ *     mark key, or a size left to CSS alone, is the difference between "the
+ *     original icons at normal size" and a button the size of a logo.
  */
 class FooterSocialChannelsTest extends TestCase
 {
@@ -79,25 +82,41 @@ class FooterSocialChannelsTest extends TestCase
             $this->assertStringContainsString("'".$channel."'", $footer,
                 'the footer must declare the '.$channel.' channel');
         }
+        $this->assertStringContainsString('ws-social-btn--<?=$channel?>', $footer,
+            'each button carries its channel class so it gets the brand colour');
         // External links in a new tab: never without rel="noopener", and the
         // icon is aria-hidden so the link needs its own accessible name.
         $this->assertStringContainsString('target="_blank" rel="noopener"', $footer,
             'social buttons open externally and must be cut off from window.opener');
         $this->assertStringContainsString('aria-label=', $footer,
             'an icon-only link has no accessible name unless it carries aria-label');
-        $this->assertStringContainsString("array('name'=>\$meta[0], 'class'=>'ws-social-icon')", $footer,
-            'the buttons render their icons through the shared icon partial');
+        $this->assertStringContainsString("array('channel'=>\$channel, 'size'=>18)", $footer,
+            'the buttons render the original marks through partials/social_icon at icon size');
     }
 
-    public function testEveryChannelIconShipsInTheIconSet()
+    public function testEveryChannelShipsItsOriginalBrandMark()
     {
+        $partial = $this->view('partials/social_icon.php');
+        foreach (self::channels() as $channel) {
+            $this->assertMatchesRegularExpression('/\''.$channel.'\'\s*=>\s*\'<path d=/', $partial,
+                'partials/social_icon must carry the '.$channel.' mark');
+        }
+        // The size is written on the <svg> element itself, not left to CSS:
+        // an icon sized only by a stylesheet renders at the 24x24 viewBox
+        // default the moment that CSS fails to load — a button the size of a
+        // logo. The attributes make the icon size load-order proof.
+        $this->assertStringContainsString('width="<?=$size?>" height="<?=$size?>"', $partial,
+            'the svg must carry explicit width/height');
+        $this->assertStringContainsString('max(8, (int)$size) : 18;', $partial,
+            'and default to 18px, a normal icon size');
+        $this->assertStringContainsString('fill="currentColor"', $partial,
+            'the mark is drawn in currentColor so the button colour rule owns the ink');
+        // The generic stroke set must stay generic: the brand marks live in
+        // their own partial, not mixed into partials/icon.
         $icons = $this->view('partials/icon.php');
-        // facebook, instagram, youtube, twitter (the X mark) and send (the
-        // paper plane) predate this feature; whatsapp, linkedin and telegram
-        // were added with it.
-        foreach (array('facebook', 'instagram', 'whatsapp', 'twitter', 'linkedin', 'send', 'telegram', 'youtube') as $glyph) {
-            $this->assertMatchesRegularExpression('/\''.$glyph.'\'\s*=>/', $icons,
-                'the icon set must ship the '.$glyph.' glyph');
+        foreach (array('whatsapp', 'linkedin', 'telegram') as $glyph) {
+            $this->assertStringNotContainsString("'".$glyph."'", $icons,
+                'brand glyphs belong to partials/social_icon, not the generic icon set');
         }
     }
 
@@ -106,12 +125,21 @@ class FooterSocialChannelsTest extends TestCase
         $css = file_get_contents(self::$root.'/assets/css/design-system.css');
         $this->assertFileExists(self::$root.'/assets/css/design-system.css');
 
-        $this->assertMatchesRegularExpression('/\.ws-social-btn\s*\{/', $css,
-            'the base button rules must exist');
-        $this->assertMatchesRegularExpression('/\.ws-footer\s+\.ws-social-btn\s*\{[^}]*--ws-navy-line/', $css,
-            'the footer is navy on every shell: the button must be restated on the navy palette');
-        $this->assertMatchesRegularExpression('/\.ws-social-btn\s+\.ws-social-icon\s*\{[^}]*18px/', $css,
-            'the icon is sized once, in the stylesheet');
+        $this->assertMatchesRegularExpression('/\.ws-social-btn\s*\{[^}]*2\.25rem/', $css,
+            'the button is a normal 36px circle');
+        // Every channel's button carries its own official brand colour, which
+        // is what makes the row read as the original icons on the navy footer.
+        foreach (array('#0866FF', '#25D366', '#0A66C2', '#26A5E4', '#FF0000') as $hex) {
+            $this->assertStringContainsString($hex, $css, 'the stylesheet must carry the brand colour '.$hex);
+        }
+        $this->assertMatchesRegularExpression('/\.ws-social-btn--instagram\s*\{[^}]*linear-gradient/', $css,
+            'Instagram is its published gradient, not a flat colour');
+        $this->assertMatchesRegularExpression('/\.ws-social-btn--x\s*\{[^}]*#000/', $css,
+            'X is its official black, with the hairline that keeps it visible on navy');
+        // The footer's text-link rules would otherwise win on specificity and
+        // dim/underline the white glyphs.
+        $this->assertMatchesRegularExpression('/\.ws-footer\s+\.ws-social-btn,\s*\.ws-footer\s+\.ws-social-btn:hover\s*\{[^}]*#fff/', $css,
+            'white glyphs are forced above the footer text-link rules');
     }
 
     /* ======================= marvy_social_links() ======================== */
