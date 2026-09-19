@@ -434,29 +434,25 @@ button { font-family:inherit; cursor:pointer; }
 .ws-footer-meta{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--slate-200);
   display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;color:var(--text-muted);font-size:.85rem}
 .ws-footer-links{display:flex;gap:1rem;flex-wrap:wrap}
-/* Social channel buttons — the original brand marks. The glyph is white
-   (currentColor) on the channel's own button colour, which is what makes the
-   row read as "the real icons" and stays visible on the navy footer. The
-   icon size lives on the <svg> element itself (partials/social_icon writes
-   width/height attributes), so these rules only shape the button — an icon
-   can never balloon to the viewBox size because a stylesheet failed. */
+/* Social channel buttons — the original brand marks. Each mark carries its
+   OWN original brand colour as the fill on its path (partials/social_icon
+   writes it there: Facebook blue, the Instagram gradient, WhatsApp green,
+   X black, LinkedIn blue, Telegram blue, YouTube red), so the ink can never
+   be restyled away from the brand. The button is WHITE because a
+   brand-coloured circle would swallow a same-coloured mark, and because
+   white is the one background on which all seven originals — X's black
+   included — stay visible against the navy footer. The icon size lives on
+   the <svg> element itself (partials/social_icon writes width/height
+   attributes), so these rules only shape the button — an icon can never
+   balloon to the viewBox size because a stylesheet failed. */
 .ws-social{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1.25rem}
 .ws-social-btn{display:inline-flex;align-items:center;justify-content:center;
-  width:2.25rem;height:2.25rem;border-radius:50%;border:1px solid transparent;
-  color:#fff;text-decoration:none;padding:0;
-  transition:transform .12s ease,filter .12s ease,border-color .12s ease}
-.ws-social-btn:hover{color:#fff;text-decoration:none;transform:translateY(-2px);filter:brightness(1.08)}
+  width:2.25rem;height:2.25rem;border-radius:50%;border:1px solid rgba(15,23,42,.14);
+  background:#fff;text-decoration:none;padding:0;
+  transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease}
+.ws-social-btn:hover{text-decoration:none;transform:translateY(-2px);
+  border-color:rgba(15,23,42,.26);box-shadow:0 6px 14px -6px rgba(15,23,42,.35)}
 .ws-social-btn svg{display:block}
-/* Channel colours (official brand values; Instagram is its published
-   gradient). X is black, so it carries a hairline that keeps the circle
-   visible against the navy footer. */
-.ws-social-btn--facebook{background:#0866FF}
-.ws-social-btn--instagram{background:linear-gradient(45deg,#FEDA75 0%,#FA7E1E 28%,#D62976 62%,#962FBF 86%,#4F5BD5 100%)}
-.ws-social-btn--whatsapp{background:#25D366}
-.ws-social-btn--x{background:#000;border-color:rgba(255,255,255,.28)}
-.ws-social-btn--linkedin{background:#0A66C2}
-.ws-social-btn--telegram{background:#26A5E4}
-.ws-social-btn--youtube{background:#FF0000}
 @media(max-width:1000px){.ws-footer-grid{grid-template-columns:1fr 1fr}.ws-footer{padding:2.5rem 0 5.5rem}}
 @media(max-width:520px){.ws-footer-grid{grid-template-columns:1fr}}
 
@@ -965,13 +961,13 @@ button { font-family:inherit; cursor:pointer; }
 .ws-footer .muted,
 .ws-app-footer .muted{ color:var(--ws-navy-ink-dim); }
 .ws-footer-meta{ border-top-color:var(--ws-navy-line); color:var(--ws-navy-ink-dim); }
-/* Social buttons need no navy restatement: each carries its own official
-   brand colour with a white glyph, which is what keeps them visible (and
+/* Social buttons need no navy restatement: each mark carries its own original
+   brand colour on a white button, which is what keeps them visible (and
    recognisable) on the navy footer. These two rules exist purely for
    specificity — `.ws-footer a` and `.ws-footer a:hover` would otherwise win
-   (they are class+type) and turn the white glyphs dim and underlined. */
+   (they are class+type) and underline the marks. */
 .ws-footer .ws-social-btn,
-.ws-footer .ws-social-btn:hover{ color:#fff; text-decoration:none; }
+.ws-footer .ws-social-btn:hover{ text-decoration:none; }
 /* The footer renders the light wordmark directly (partials/footer asks for the
    'dark' variant), so no filter trickery is needed — a filtered logo loses the
    gradient in the mark. */

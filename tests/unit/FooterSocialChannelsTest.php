@@ -23,10 +23,12 @@ require_once dirname(__DIR__).'/_support/IntegrationHarness.php';
  *     rel="noopener" and aria-labels (the icons alone are not accessible
  *     names);
  *   - the icons are the ORIGINAL brand marks (Simple Icons, CC0) in
- *     partials/social_icon, sized on the <svg> element itself so a failed
- *     stylesheet can never balloon them to the 24x24 viewBox — a typo in a
- *     mark key, or a size left to CSS alone, is the difference between "the
- *     original icons at normal size" and a button the size of a logo.
+ *     partials/social_icon, each drawn in its OWN original brand colour as
+ *     the fill on its path (Instagram its published gradient), and sized on
+ *     the <svg> element itself so a failed stylesheet can never balloon them
+ *     to the 24x24 viewBox — a typo in a mark key, or a size left to CSS
+ *     alone, is the difference between "the original icons at normal size"
+ *     and a button the size of a logo.
  */
 class FooterSocialChannelsTest extends TestCase
 {
@@ -83,7 +85,7 @@ class FooterSocialChannelsTest extends TestCase
                 'the footer must declare the '.$channel.' channel');
         }
         $this->assertStringContainsString('ws-social-btn--<?=$channel?>', $footer,
-            'each button carries its channel class so it gets the brand colour');
+            'each button carries its channel class (a per-channel styling hook)');
         // External links in a new tab: never without rel="noopener", and the
         // icon is aria-hidden so the link needs its own accessible name.
         $this->assertStringContainsString('target="_blank" rel="noopener"', $footer,
@@ -97,10 +99,30 @@ class FooterSocialChannelsTest extends TestCase
     public function testEveryChannelShipsItsOriginalBrandMark()
     {
         $partial = $this->view('partials/social_icon.php');
-        foreach (self::channels() as $channel) {
-            $this->assertMatchesRegularExpression('/\''.$channel.'\'\s*=>\s*\'<path d=/', $partial,
-                'partials/social_icon must carry the '.$channel.' mark');
+        // Every mark is drawn in its OWN original brand colour, written as the
+        // fill on the path itself (Instagram is its published gradient, carried
+        // as an inline <defs> so the camera is multi-coloured like the real
+        // thing). That is what "the original icon colour" means: not white ink
+        // a stylesheet chose, and not ink a stylesheet could restyle away.
+        $brand_fills = array(
+            'facebook'  => 'fill="#0866FF"',
+            'instagram' => 'fill="url\(#ws-social-instagram\)"',
+            'whatsapp'  => 'fill="#25D366"',
+            'x'         => 'fill="#000000"',
+            'linkedin'  => 'fill="#0A66C2"',
+            'telegram'  => 'fill="#26A5E4"',
+            'youtube'   => 'fill="#FF0000"',
+        );
+        foreach ($brand_fills as $channel => $fill) {
+            $this->assertMatchesRegularExpression('/\''.$channel.'\'\s*=>\s*\'[^\']*'.$fill.'/', $partial,
+                'the '.$channel.' mark must carry its original brand colour as its own fill');
         }
+        foreach (array('#FEDA75', '#FA7E1E', '#D62976', '#962FBF', '#4F5BD5') as $stop) {
+            $this->assertStringContainsString('stop-color="'.$stop.'"', $partial,
+                'the Instagram gradient must carry its published stop '.$stop);
+        }
+        $this->assertStringNotContainsString('fill="currentColor"', $partial,
+            'currentColour ink can be restyled away from the brand — the fill belongs on the path');
         // The size is written on the <svg> element itself, not left to CSS:
         // an icon sized only by a stylesheet renders at the 24x24 viewBox
         // default the moment that CSS fails to load — a button the size of a
@@ -109,8 +131,6 @@ class FooterSocialChannelsTest extends TestCase
             'the svg must carry explicit width/height');
         $this->assertStringContainsString('max(8, (int)$size) : 18;', $partial,
             'and default to 18px, a normal icon size');
-        $this->assertStringContainsString('fill="currentColor"', $partial,
-            'the mark is drawn in currentColor so the button colour rule owns the ink');
         // The generic stroke set must stay generic: the brand marks live in
         // their own partial, not mixed into partials/icon.
         $icons = $this->view('partials/icon.php');
@@ -127,19 +147,21 @@ class FooterSocialChannelsTest extends TestCase
 
         $this->assertMatchesRegularExpression('/\.ws-social-btn\s*\{[^}]*2\.25rem/', $css,
             'the button is a normal 36px circle');
-        // Every channel's button carries its own official brand colour, which
-        // is what makes the row read as the original icons on the navy footer.
-        foreach (array('#0866FF', '#25D366', '#0A66C2', '#26A5E4', '#FF0000') as $hex) {
-            $this->assertStringContainsString($hex, $css, 'the stylesheet must carry the brand colour '.$hex);
-        }
-        $this->assertMatchesRegularExpression('/\.ws-social-btn--instagram\s*\{[^}]*linear-gradient/', $css,
-            'Instagram is its published gradient, not a flat colour');
-        $this->assertMatchesRegularExpression('/\.ws-social-btn--x\s*\{[^}]*#000/', $css,
-            'X is its official black, with the hairline that keeps it visible on navy');
+        // The button is WHITE, and the brand colour lives on the mark itself
+        // (pinned in testEveryChannelShipsItsOriginalBrandMark): a
+        // brand-coloured circle would swallow a same-coloured mark, and white
+        // is the one background on which all seven originals — X's black
+        // included — stay visible on the navy footer.
+        $this->assertMatchesRegularExpression('/\.ws-social-btn\s*\{[^}]*background:#fff/', $css,
+            'the button must be white so every original mark colour reads on the navy footer');
+        $this->assertMatchesRegularExpression('/\.ws-social-btn\s*\{[^}]*border:1px solid rgba\(15,23,42,\.14\)/', $css,
+            'the white circle carries a hairline so it reads as a button');
+        $this->assertStringNotContainsString('.ws-social-btn--facebook{background', $css,
+            'the stylesheet must not paint the buttons in brand colours — that would swallow the same-coloured mark');
         // The footer's text-link rules would otherwise win on specificity and
-        // dim/underline the white glyphs.
-        $this->assertMatchesRegularExpression('/\.ws-footer\s+\.ws-social-btn,\s*\.ws-footer\s+\.ws-social-btn:hover\s*\{[^}]*#fff/', $css,
-            'white glyphs are forced above the footer text-link rules');
+        // underline the marks.
+        $this->assertMatchesRegularExpression('/\.ws-footer\s+\.ws-social-btn,\s*\.ws-footer\s+\.ws-social-btn:hover\s*\{[^}]*text-decoration:none/', $css,
+            'the marks stay un-underlined above the footer text-link rules');
     }
 
     /* ======================= marvy_social_links() ======================== */

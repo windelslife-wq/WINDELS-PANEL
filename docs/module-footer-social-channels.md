@@ -65,12 +65,16 @@ answered rather than ducked:
   that keeps the category grid generic does not apply to CC0 artwork;
 - they live in their own partial, `partials/social_icon.php`, so the generic
   stroke set stays generic (`partials/icon` is back to exactly what it was);
-- each button is the channel's own colour — Facebook `#0866FF`, Instagram its
-  published gradient, WhatsApp `#25D366`, X `#000000` (with a hairline so the
-  black circle reads against the navy footer), LinkedIn `#0A66C2`, Telegram
-  `#26A5E4`, YouTube `#FF0000` — with the mark in white. That is what makes
-  the row read as "the real icons" and what keeps every one of them visible on
-  the navy footer.
+- each mark is drawn in its own original brand colour — the fill is written
+  on the path itself: Facebook `#0866FF`, Instagram its published gradient
+  (carried as an inline `<defs>` so the camera is multi-coloured like the real
+  thing), WhatsApp `#25D366`, X `#000000`, LinkedIn `#0A66C2`, Telegram
+  `#26A5E4`, YouTube `#FF0000`. The operator asked for the original icon
+  colour, and a fill on the path is the one place a stylesheet cannot restyle
+  the ink away from the brand;
+- the button behind each mark is white. A brand-coloured circle would swallow
+  a same-coloured mark, and white is the one background on which all seven
+  originals — X's black included — stay visible on the navy footer.
 
 **Sizing is written on the `<svg>` element, not left to CSS.** The buttons are
 36px circles with 18px marks, and the 18 is a `width="18" height="18"`
@@ -90,10 +94,11 @@ mark the footer references. True-scale render in
 
 The buttons sit in the footer's brand column, under the strapline, on every
 shell that renders `partials/footer` — the public site, the auth pages and the
-API reference. The button rules live once in `design-system.css`; the only
-footer-specific override is a specificity shim (`.ws-footer .ws-social-btn`)
-that stops the footer's text-link rules from dimming or underlining the white
-marks.
+API reference. The button rules live once in `design-system.css` (white
+circles, the flex row); the brand colours live on the marks themselves, in the
+partial. The only footer-specific override is a specificity shim
+(`.ws-footer .ws-social-btn`) that stops the footer's text-link rules from
+underlining the marks.
 
 Icon-only links have no accessible name unless they carry one, so each button
 has `aria-label="MarvySocials on Facebook"` (built from the configured site
@@ -140,11 +145,11 @@ keeps all data):
    | `application/helpers/marvy_helper.php` | `marvy_social_links()` — without it the footer's `function_exists` guard silently prints no row at all. |
    | `application/views/partials/footer.php` | The drifted file being replaced. |
    | `application/views/partials/social_icon.php` | New file: the seven brand marks. |
-   | `assets/css/design-system.css` | The `.ws-social` button rules (circles, brand colours, flex row). |
+   | `assets/css/design-system.css` | The `.ws-social` button rules (white circles, flex row; the brand colours live on the marks themselves). |
 
-   Without the CSS the buttons still render — inline, at attribute size, with
-   no names — but they lose the circles and brand colours, and that is half
-   the design.
+   Without the CSS the buttons still render — inline, at attribute size, in
+   their brand colours, with no names — but they lose the white circles that
+   keep every mark visible on the navy footer.
 4. **Migration 043 is optional for display.** The row falls back to the
    platform home pages per channel until the settings rows exist; the
    migration (data-only, insert-or-leave) is what makes the seven fields
