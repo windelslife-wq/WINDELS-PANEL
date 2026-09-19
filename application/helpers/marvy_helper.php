@@ -143,6 +143,63 @@ if (!function_exists('marvy_brand_setting')) {
     }
 }
 
+if (!function_exists('marvy_social_links')) {
+    /**
+     * The social channels rendered in the footer: channel => link URL.
+     *
+     * Each channel is one settings row (social_facebook_url, …) editable
+     * under Admin → Settings → Social channels. A channel can be in one of
+     * three states, and the footer does a different thing with each:
+     *
+     *   - a stored URL  → the button opens it in a new tab;
+     *   - no row yet    → the platform's home page, so a fresh install (or a
+     *                     deployment that skipped the migration) still shows
+     *                     all seven buttons instead of a half-empty row;
+     *   - an empty row  → the button is hidden. Clearing the field in admin
+     *                     is the documented way to drop a channel the
+     *                     operator does not use.
+     *
+     * Only channels with a non-empty URL are returned. Reads go through
+     * Setting_model::all(), which is memoised per request, so calling this
+     * from the footer costs no extra round-trip — and the database guard is
+     * the same one marvy_brand_setting() uses, so a database that is not
+     * reachable simply gets the shipped defaults.
+     */
+    function marvy_social_links() {
+        $defaults = array(
+            'facebook'  => 'https://www.facebook.com/',
+            'instagram' => 'https://www.instagram.com/',
+            'whatsapp'  => 'https://www.whatsapp.com/',
+            'x'         => 'https://x.com/',
+            'linkedin'  => 'https://www.linkedin.com/',
+            'telegram'  => 'https://t.me/',
+            'youtube'   => 'https://www.youtube.com/',
+        );
+        $stored = array();
+        try {
+            if (function_exists('get_instance')) {
+                $ci =& get_instance();
+                if ($ci && isset($ci->db) && is_object($ci->db) && !empty($ci->db->conn_id)) {
+                    $ci->load->model('Setting_model');
+                    $all = $ci->Setting_model->all();
+                    foreach ($defaults as $channel => $fallback) {
+                        $key = 'social_'.$channel.'_url';
+                        if (array_key_exists($key, $all)) $stored[$channel] = $all[$key];
+                    }
+                }
+            }
+        } catch (Throwable $e) { /* fall back to the shipped defaults */ }
+
+        $out = array();
+        foreach ($defaults as $channel => $fallback) {
+            if (!array_key_exists($channel, $stored)) { $out[$channel] = $fallback; continue; }
+            $url = $stored[$channel] === null ? '' : trim((string)$stored[$channel]);
+            if ($url !== '') $out[$channel] = $url;
+        }
+        return $out;
+    }
+}
+
 if (!function_exists('marvy_default_theme')) {
     /**
      * The site-wide default theme: 'system', 'light' or 'dark'.

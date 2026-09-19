@@ -7,6 +7,7 @@ $category_titles = array(
     'legal'    => 'Legal and company details',
     'general'   => 'General',
     'homepage'  => 'Homepage content',
+    'social'    => 'Social channels',
     'security'  => 'Registration and security',
     'payments'  => 'Deposits',
     'affiliate' => 'Referrals',

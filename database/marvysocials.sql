@@ -12,7 +12,7 @@
 --   3. Edit .env with the database name/user/password and your domain.
 --
 -- After the import the database is fully initialised: schema, indexes,
--- foreign keys, migration bookkeeping (version 42), roles,
+-- foreign keys, migration bookkeeping (version 43), roles,
 -- permissions, settings, feature flags, payment methods, email templates,
 -- FAQs, currencies, catalogues and the first-login accounts. No migration,
 -- seed or installer command has to run afterwards.
@@ -2328,6 +2328,10 @@ ADD COLUMN base_amount DECIMAL(20,8) NULL COMMENT 'amount in base currency at fx
 ADD COLUMN credited_base_amount DECIMAL(20,8) NULL COMMENT 'what the wallet is credited, in base currency',
 ADD COLUMN fx_rate DECIMAL(20,8) NULL COMMENT 'units of the charge currency per 1 unit of base, pinned at initiation';
 
+-- ---------------------------------------------------------------------
+-- migration 043_footer_social_channels
+-- ---------------------------------------------------------------------
+
 -- ======================================================================
 -- MIGRATION BOOKKEEPING
 -- ======================================================================
@@ -2342,7 +2346,7 @@ CREATE TABLE IF NOT EXISTS migrations (
 
 DELETE FROM migrations;
 
-INSERT INTO migrations (version) VALUES (42);
+INSERT INTO migrations (version) VALUES (43);
 
 -- ======================================================================
 -- CORE DATA
@@ -2999,6 +3003,27 @@ VALUES ('brand_favicon_url', '{"value":null}', 'branding', 1);
 
 INSERT INTO `settings` (`setting_key`, `setting_value`, `category`, `is_public`)
 VALUES ('default_theme', '{"value":"system"}', 'branding', 1);
+
+INSERT INTO `settings` (`setting_key`, `setting_value`, `category`, `is_public`)
+VALUES ('social_facebook_url', '{"value":"https:\\/\\/www.facebook.com\\/"}', 'social', 1);
+
+INSERT INTO `settings` (`setting_key`, `setting_value`, `category`, `is_public`)
+VALUES ('social_instagram_url', '{"value":"https:\\/\\/www.instagram.com\\/"}', 'social', 1);
+
+INSERT INTO `settings` (`setting_key`, `setting_value`, `category`, `is_public`)
+VALUES ('social_whatsapp_url', '{"value":"https:\\/\\/www.whatsapp.com\\/"}', 'social', 1);
+
+INSERT INTO `settings` (`setting_key`, `setting_value`, `category`, `is_public`)
+VALUES ('social_x_url', '{"value":"https:\\/\\/x.com\\/"}', 'social', 1);
+
+INSERT INTO `settings` (`setting_key`, `setting_value`, `category`, `is_public`)
+VALUES ('social_linkedin_url', '{"value":"https:\\/\\/www.linkedin.com\\/"}', 'social', 1);
+
+INSERT INTO `settings` (`setting_key`, `setting_value`, `category`, `is_public`)
+VALUES ('social_telegram_url', '{"value":"https:\\/\\/t.me\\/"}', 'social', 1);
+
+INSERT INTO `settings` (`setting_key`, `setting_value`, `category`, `is_public`)
+VALUES ('social_youtube_url', '{"value":"https:\\/\\/www.youtube.com\\/"}', 'social', 1);
 
 INSERT INTO `settings` (`setting_key`, `setting_value`, `category`, `is_public`)
 VALUES ('base_currency', '{"value":"NGN"}', 'currency', 1);
