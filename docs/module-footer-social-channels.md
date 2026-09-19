@@ -105,6 +105,54 @@ marks, same classes, same 18px attributes — so the design can be looked at
 without a PHP runtime. The mirror is pinned by a test too, because a preview
 that stops mirroring the views previews a site that no longer exists.
 
+## 5. marvysocials.com is running drifted footer files
+
+**Diagnosis (2026-09-19).** The live footer renders the social entries as
+*icon + platform name, stacked vertically* — and no version of this repository
+ever produced that. Both commits on this branch are icon-only (the name lives
+in the `aria-label`), and the live `assets/css/design-system.css`, fetched and
+read in full, is the pre-feature file: it contains no `.ws-social` rule at
+all. Even a partial deploy of only `application/` would not stack names —
+unstyled, the repo markup flows inline with no text. Every branch on the
+remote was checked; only this one touches footer socials.
+
+The conclusion is that the deployed `application/views/partials/footer.php`
+was hand-edited on the server (cPanel File Manager) or uploaded from outside
+git. **A push cannot fix it; the drifted files have to be replaced with the
+package.** That is worth writing down, because the next "fix the footer on the
+live site" request starts here.
+
+**Reconciling the live panel with the repository** (existing installation —
+keeps all data):
+
+1. **Rescue any real links first.** Open the live footer in File Manager and
+   copy out any real profile URLs someone hand-added — they will be
+   overwritten in step 2. Real links then belong in **Admin → Settings →
+   Social channels**, where they survive every future deploy.
+2. **Back up**: phpMyAdmin → Export the live database; File Manager → copy
+   `.env` and the current `application/views/partials/footer.php` aside.
+3. **Replace the drifted files.** Either extract `application-deployment.zip`
+   over the application files (keep `.env` and `storage/`), or upload just
+   the minimum set that the social row spans — relative to the document root:
+
+   | File | Why the row needs it |
+   | --- | --- |
+   | `application/helpers/marvy_helper.php` | `marvy_social_links()` — without it the footer's `function_exists` guard silently prints no row at all. |
+   | `application/views/partials/footer.php` | The drifted file being replaced. |
+   | `application/views/partials/social_icon.php` | New file: the seven brand marks. |
+   | `assets/css/design-system.css` | The `.ws-social` button rules (circles, brand colours, flex row). |
+
+   Without the CSS the buttons still render — inline, at attribute size, with
+   no names — but they lose the circles and brand colours, and that is half
+   the design.
+4. **Migration 043 is optional for display.** The row falls back to the
+   platform home pages per channel until the settings rows exist; the
+   migration (data-only, insert-or-leave) is what makes the seven fields
+   appear under Admin → Settings on an already-deployed panel.
+5. **Purge caches.** Hard-refresh (Ctrl/Cmd+Shift+R) and clear any Cloudflare
+   cache for `assets/css/design-system.css` — a stale stylesheet is the other
+   way a correct footer ships and still renders wrong.
+
 ---
 
 ## Proofs
