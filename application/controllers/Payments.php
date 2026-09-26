@@ -34,7 +34,7 @@ class Payments extends MY_Controller {
      * still hold a FAILED record explaining why, rather than a silent gap.
      */
     public function initialize() {
-        if ($this->input->method(true) !== 'POST') return $this->json_error(405, 'METHOD', 'POST required.');
+        if ($this->input->method(true) !== 'POST') return $this->json_fail(405, 'METHOD', 'POST required.');
 
         $user = $this->require_customer();
         if (!$user) return;
@@ -43,7 +43,7 @@ class Payments extends MY_Controller {
         $this->load->library('RateLimiter');
         $bucket = RateLimiter::scope('payinit', (string)$user->id);
         if ($this->ratelimiter->too_many_failures($this->input->ip_address(), $bucket, 10, 300)) {
-            return $this->json_error(429, 'RATE_LIMITED', 'Too many payment attempts. Try again shortly.');
+            return $this->json_fail(429, 'RATE_LIMITED', 'Too many payment attempts. Try again shortly.');
         }
 
         $payload = $this->json_input();
@@ -60,7 +60,7 @@ class Payments extends MY_Controller {
 
         if (empty($res['ok'])) {
             $this->ratelimiter->record($this->input->ip_address(), $bucket, false, $res['code'] ?? 'DEPOSIT_FAILED');
-            return $this->json_error(422, $res['code'] ?? 'DEPOSIT_FAILED', $res['error']);
+            return $this->json_fail(422, $res['code'] ?? 'DEPOSIT_FAILED', $res['error']);
         }
 
         $tx = $res['transaction'];
@@ -97,7 +97,7 @@ class Payments extends MY_Controller {
      * its reference is returned alongside the account.
      */
     public function virtual_account() {
-        if ($this->input->method(true) !== 'POST') return $this->json_error(405, 'METHOD', 'POST required.');
+        if ($this->input->method(true) !== 'POST') return $this->json_fail(405, 'METHOD', 'POST required.');
 
         $user = $this->require_customer();
         if (!$user) return;
@@ -106,7 +106,7 @@ class Payments extends MY_Controller {
         $this->load->library('RateLimiter');
         $bucket = RateLimiter::scope('payinit', (string)$user->id);
         if ($this->ratelimiter->too_many_failures($this->input->ip_address(), $bucket, 10, 300)) {
-            return $this->json_error(429, 'RATE_LIMITED', 'Too many requests. Try again shortly.');
+            return $this->json_fail(429, 'RATE_LIMITED', 'Too many requests. Try again shortly.');
         }
 
         $payload = $this->json_input();
@@ -118,12 +118,12 @@ class Payments extends MY_Controller {
                 : $this->paymentservice->virtual_account($user);
         } catch (Throwable $e) {
             log_message('error', 'virtual-account endpoint threw: '.$e->getMessage());
-            return $this->json_error(500, 'VA_FAILED', 'The bank account service is unavailable right now.');
+            return $this->json_fail(500, 'VA_FAILED', 'The bank account service is unavailable right now.');
         }
 
         if (empty($res['ok'])) {
             $this->ratelimiter->record($this->input->ip_address(), $bucket, false, $res['code'] ?? 'VA_FAILED');
-            return $this->json_error(422, $res['code'] ?? 'VA_FAILED', $res['error']);
+            return $this->json_fail(422, $res['code'] ?? 'VA_FAILED', $res['error']);
         }
 
         $account = $res['account'];
@@ -152,10 +152,10 @@ class Payments extends MY_Controller {
         $user = $this->require_customer();
         if (!$user) return;
 
-        if (!$reference) return $this->json_error(400, 'NO_REFERENCE', 'A payment reference is required.');
+        if (!$reference) return $this->json_fail(400, 'NO_REFERENCE', 'A payment reference is required.');
 
         $tx = $this->Payment_transaction_model->for_user_reference($user->id, $reference);
-        if (!$tx) return $this->json_error(404, 'NOT_FOUND', 'No payment with that reference.');
+        if (!$tx) return $this->json_fail(404, 'NOT_FOUND', 'No payment with that reference.');
 
         return $this->json_ok($this->present($tx));
     }
@@ -267,7 +267,7 @@ class Payments extends MY_Controller {
     private function require_customer() {
         $user = $this->authservice->check() ? $this->authservice->user() : null;
         if (!$user) {
-            $this->json_error(401, 'UNAUTHENTICATED', 'Sign in to use this endpoint.');
+            $this->json_fail(401, 'UNAUTHENTICATED', 'Sign in to use this endpoint.');
             return null;
         }
         return $user;
@@ -288,7 +288,7 @@ class Payments extends MY_Controller {
             ->set_output(json_encode(array('success' => true, 'data' => $data), JSON_UNESCAPED_SLASHES));
     }
 
-    private function json_error($http, $code, $message) {
+    private function json_fail($http, $code, $message) {
         return $this->output
             ->set_content_type('application/json')
             ->set_status_header($http)
