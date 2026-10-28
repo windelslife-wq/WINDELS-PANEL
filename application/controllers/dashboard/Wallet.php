@@ -12,7 +12,7 @@ class Wallet extends Auth_Controller {
     public function __construct() {
         parent::__construct();
         $this->load->model(array('Wallet_model','Wallet_transaction_model','Payment_transaction_model'));
-        $this->load->library(array('DashboardStats','PaymentService','form_validation'));
+        $this->load->library(array('PaymentService','form_validation'));
     }
 
     public function transactions() {
@@ -25,7 +25,6 @@ class Wallet extends Auth_Controller {
         $this->load->view('layouts/app', array(
             'title' => 'Transactions',
             'nav_active' => 'dashboard/transactions',
-            'unread' => $this->dashboardstats->unread_count($this->current_user->id),
             'content_view' => 'dashboard/wallet/transactions',
             'current_user' => $this->current_user,
             'permissions' => $this->auth->permissions(),
@@ -95,7 +94,6 @@ class Wallet extends Auth_Controller {
         $this->load->view('layouts/app', array(
             'title' => 'Add Funds',
             'nav_active' => 'dashboard/add-funds',
-            'unread' => $this->dashboardstats->unread_count($this->current_user->id),
             'content_view' => 'dashboard/wallet/add_funds',
             'current_user' => $this->current_user,
             'permissions' => $this->auth->permissions(),
@@ -348,7 +346,6 @@ class Wallet extends Auth_Controller {
         $this->load->view('layouts/app', array(
             'title' => 'Deposits',
             'nav_active' => 'dashboard/add-funds',
-            'unread' => $this->dashboardstats->unread_count($this->current_user->id),
             'content_view' => 'dashboard/wallet/deposits',
             'current_user' => $this->current_user,
             'permissions' => $this->auth->permissions(),

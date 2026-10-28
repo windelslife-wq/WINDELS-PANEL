@@ -1,6 +1,6 @@
 'use strict';
 /**
- * MarvySocials dev database — a MySQL-wire-protocol server backed by SQLite.
+ * Active Digital Hub dev database — a MySQL-wire-protocol server backed by SQLite.
  *
  * DEV TOOLING ONLY. See tools/devdb/README.md.
  *
@@ -242,7 +242,7 @@ function handleAdminQuery(sql, session) {
         ? { ssl_cipher: '', Threads_connected: '1', Uptime: '1000' }
         : {
             version: '8.0.36-marvysocials-devdb',
-            version_comment: 'MarvySocials dev database (SQLite-backed)',
+            version_comment: 'Active Digital Hub dev database (SQLite-backed)',
             sql_mode: 'STRICT_ALL_TABLES',
             character_set_client: 'utf8mb4',
             character_set_connection: 'utf8mb4',

@@ -277,10 +277,10 @@ class MailGreetingTest extends TestCase
                     public $values = array(
                         'mail_transport'  => 'smtp',
                         'mail_from_email' => 'noreply@marvy.test',
-                        'mail_from_name'  => 'MarvySocials',
+                        'mail_from_name'  => 'Active Digital Hub',
                         'mail_helo'       => '',
                         'support_email'   => 'support@marvy.test',
-                        'site_name'       => 'MarvySocials',
+                        'site_name'       => 'Active Digital Hub',
                     );
                     public function get($key, $default = null) {
                         return array_key_exists($key, $this->values) ? $this->values[$key] : $default;
@@ -336,7 +336,7 @@ class MailGreetingTest extends TestCase
         $mail = new _MailGreetingTestEmail();
         $mail->initialize($this->smtpConfig($behavior, $user, $pass));
         $mail->helo_host = $helo;
-        $mail->from('noreply@marvy.test', 'MarvySocials');
+        $mail->from('noreply@marvy.test', 'Active Digital Hub');
         $mail->to('customer@example.test');
         $mail->subject('greeting test '.gmdate('His'));
         $mail->message("Body line one.\nBody line two.");

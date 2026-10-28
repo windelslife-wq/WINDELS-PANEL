@@ -386,7 +386,20 @@ class AdminPanelTest extends TestCase
         $ctrl = file_get_contents(self::$root.'/application/controllers/admin/Dashboard.php');
         $this->assertStringContainsString('AdminStats', $ctrl);
         $this->assertStringContainsString("require_perm('reports.view')", $ctrl);
-        $this->assertStringContainsString("'unread'", $ctrl);
+        $shell = file_get_contents(self::$root.'/application/views/layouts/_app_context.php');
+        $this->assertStringContainsString('shell_unread_count()', $shell);
+    }
+
+    public function testAdminDashboardReusesTheAuthenticatedShellUnreadCount()
+    {
+        $src = file_get_contents(self::$root.'/application/controllers/admin/Dashboard.php');
+        $this->assertStringNotContainsString('dashboardstats->unread_count', $src);
+        $base = file_get_contents(self::$root.'/application/core/MY_Controller.php');
+        $this->assertStringContainsString('function shell_unread_count()', $base);
+        $this->assertStringNotContainsString("'unread'        => \$this->auth->unread_count()", $base,
+            'the unread COUNT must not run during controller boot; the shell resolves it lazily');
+        $context = file_get_contents(self::$root.'/application/views/layouts/_app_context.php');
+        $this->assertStringContainsString('shell_unread_count()', $context);
     }
 
     public function testAdminStatsOnlyReads()

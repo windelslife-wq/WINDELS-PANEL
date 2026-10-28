@@ -32,7 +32,7 @@ class Catalogue extends Admin_Controller {
     public function __construct() {
         parent::__construct();
         $this->require_perm('services.view');
-        $this->load->library(array('CatalogueService', 'DashboardStats'));
+        $this->load->library(array('CatalogueService'));
         $this->load->model(array(
             'Vtu_product_model', 'Vtu_network_model',
             'Number_product_model', 'Number_country_model', 'Number_service_model',
@@ -165,7 +165,6 @@ class Catalogue extends Admin_Controller {
             'content_view' => $view,
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
             'domain'       => $domain,
             'domains'      => CatalogueService::domains(),
         ), $data));

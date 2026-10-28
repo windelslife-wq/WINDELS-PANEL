@@ -1,4 +1,4 @@
-# MarvySocials — CI pipeline (two jobs, ~31 steps)
+# Active Digital Hub — CI pipeline (two jobs, ~31 steps)
 #
 # Active since 2026-08-21 (moved from repo root, where it was staged as
 # ci.yml.workflow-ready because automation tokens without the `workflows`

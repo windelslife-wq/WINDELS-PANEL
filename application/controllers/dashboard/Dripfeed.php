@@ -9,7 +9,7 @@ class Dripfeed extends Auth_Controller {
     public function __construct() {
         parent::__construct();
         $this->load->model(array('Dripfeed_order_model', 'Dripfeed_run_model', 'Service_model'));
-        $this->load->library(array('DripfeedService', 'DashboardStats', 'form_validation'));
+        $this->load->library(array('DripfeedService', 'form_validation'));
     }
 
     private function guard_enabled() {
@@ -29,7 +29,6 @@ class Dripfeed extends Auth_Controller {
             'content_view' => 'dashboard/dripfeed/index',
             'current_user' => $this->current_user,
             'permissions' => $this->auth->permissions(),
-            'unread' => $this->dashboardstats->unread_count($this->current_user->id),
             'dripfeeds' => $rows,
             'services' => $this->Service_model->active_for_picker(),
             'page' => $page,
@@ -59,7 +58,6 @@ class Dripfeed extends Auth_Controller {
             'content_view' => 'dashboard/dripfeed/detail',
             'current_user' => $this->current_user,
             'permissions' => $this->auth->permissions(),
-            'unread' => $this->dashboardstats->unread_count($this->current_user->id),
             'dripfeed' => $drip, 'service' => $service, 'runs' => $runs,
         ));
     }

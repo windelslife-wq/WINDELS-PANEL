@@ -89,5 +89,5 @@ $t = $ticket;
 </div>
 <style>
 .ws-msg{padding:.85rem 1rem;border:1px solid var(--slate-100);border-radius:.75rem;background:#fff}
-.ws-msg.is-staff{border-color:var(--brand-200,#c7d2fe);background:var(--brand-50,#eef2ff)}
+.ws-msg.is-staff{border-color:var(--brand-200,#c7d2fe);background:var(--brand-50,#eff6ff)}
 </style>

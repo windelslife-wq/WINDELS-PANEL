@@ -20,7 +20,7 @@ class Orders extends Admin_Controller {
     public function __construct() {
         parent::__construct();
         $this->require_perm('orders.view');
-        $this->load->library(array('OrderService', 'DashboardStats'));
+        $this->load->library(array('OrderService'));
         $this->load->model(array(
             'Order_model', 'Order_status_history_model', 'Service_model',
             'Provider_model', 'User_model', 'Audit_log_model',
@@ -54,7 +54,6 @@ class Orders extends Admin_Controller {
             'content_view' => 'admin/orders/refunds',
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
             'orders'       => $rows,
             'page'         => $page,
             'total'        => $total,
@@ -81,7 +80,6 @@ class Orders extends Admin_Controller {
             'content_view' => 'admin/orders/index',
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
             'orders'       => $this->Order_model->admin_search($filters, $limit, ($page - 1) * $limit),
             'counts'       => $this->Order_model->status_counts(),
             'filters'      => $filters,
@@ -101,7 +99,6 @@ class Orders extends Admin_Controller {
             'content_view' => 'admin/orders/detail',
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
             'order'        => $order,
             'history'      => $this->Order_status_history_model->for_order($order->id),
         ));

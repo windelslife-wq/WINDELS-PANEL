@@ -1,4 +1,4 @@
-# MarvySocials — Step-by-Step Installation Guide
+# Active Digital Hub — Step-by-Step Installation Guide
 
 This is the complete, click-by-click installation walkthrough for a **cPanel
 shared host** — the platform's primary deployment target. It assumes **no

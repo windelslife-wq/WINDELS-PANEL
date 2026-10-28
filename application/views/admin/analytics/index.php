@@ -90,7 +90,7 @@ $has_series = bccomp($peak, '0', 8) > 0;
       ?>
         <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%"
              title="<?=htmlspecialchars($day)?> — <?=htmlspecialchars(marvy_money($point['net']))?> from <?=(int)$point['sales']?> sale(s)">
-          <div style="height:<?=$h?>%;background:var(--brand-500,#6366f1);border-radius:2px 2px 0 0"></div>
+          <div style="height:<?=$h?>%;background:var(--brand-500,#1877f2);border-radius:2px 2px 0 0"></div>
         </div>
       <?php endforeach; ?>
     </div>

@@ -141,12 +141,18 @@ check('the mail transport is selectable in Settings',
 const queuePage0 = await admin.get('/admin/mail-queue');
 check('the mail queue screen reports the transport it will use', /<strong class="mono">log<\/strong>/.test(queuePage0.text));
 
-runCron('email_queue');
+// Each worker invocation is deliberately bounded to 50 messages. Earlier E2E
+// suites may have queued more than one batch, so drain due batches rather than
+// assuming this test starts with an empty shared dev database.
+const dueCount = () => withDb((db) => db.prepare(
+  `SELECT COUNT(*) AS n FROM email_queue WHERE status = 'QUEUED' AND scheduled_at <= datetime('now')`).get().n);
+for (let batch = 0; batch < 10 && dueCount() > 0; batch++) {
+  runCron('email_queue');
+}
 
 // Messages whose backoff has not elapsed are deliberately still waiting; the
 // worker's job is to clear everything that is DUE.
-const stillQueued = withDb((db) => db.prepare(
-  `SELECT COUNT(*) AS n FROM email_queue WHERE status = 'QUEUED' AND scheduled_at <= datetime('now')`).get().n);
+const stillQueued = dueCount();
 const sent = withDb((db) => db.prepare(`SELECT COUNT(*) AS n FROM email_queue WHERE status = 'SENT'`).get().n);
 check('everything due is delivered', stillQueued === 0, `${stillQueued} still due`);
 const backingOff = withDb((db) => db.prepare(
@@ -170,11 +176,11 @@ check('the screen names the transport in use', /transport/i.test(queuePage.text)
 const failedId = withDb((db) => db.prepare(
   `SELECT id FROM email_queue WHERE to_email = 'bounce@example.com' ORDER BY id DESC LIMIT 1`).get().id);
 const retried = await admin.postForm(`/admin/mail-queue/${failedId}/retry`, {}, { fromHtml: queuePage.text });
-check('retry re-queues it', /re-queued/i.test(retried.text),
+check('retry reports the immediate delivery result', /Message delivered/i.test(retried.text),
   (retried.text.match(/alert alert-\w+"[^>]*>([^<]*)/) || [])[1]);
 const afterRetry = withDb((db) => db.prepare(`SELECT status, attempts FROM email_queue WHERE id = ?`).get(failedId));
-check('its attempt counter is reset so the backoff starts again',
-  afterRetry.status === 'QUEUED' && Number(afterRetry.attempts) === 0, JSON.stringify(afterRetry));
+check('successful retry is recorded as sent exactly once',
+  afterRetry.status === 'SENT' && Number(afterRetry.attempts) === 1, JSON.stringify(afterRetry));
 
 // ---------------------------------------------------------------------------
 console.log('\n── Notifications · the customer\'s preferences are honoured');

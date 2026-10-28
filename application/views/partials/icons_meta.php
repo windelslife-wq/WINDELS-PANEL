@@ -14,6 +14,6 @@ $custom_fav = function_exists('marvy_brand_setting') ? marvy_brand_setting('bran
 <link rel="apple-touch-icon" href="<?=base_url('assets/brand/apple-touch-icon.png')?>">
 <?php endif; ?>
 <link rel="manifest" href="<?=base_url('assets/brand/site.webmanifest')?>">
-<meta name="theme-color" content="#4F46E5">
+<meta name="theme-color" content="#1877f2">
 <meta name="application-name" content="<?=htmlspecialchars($icon_site)?>">
 <meta name="apple-mobile-web-app-title" content="<?=htmlspecialchars($icon_short)?>">

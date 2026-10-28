@@ -17,7 +17,7 @@ class Checkout extends Auth_Controller {
     public function __construct() {
         parent::__construct();
         if (!marvy_feature_enabled('marketplace', true)) show_404();
-        $this->load->library(array('CartService', 'ShopCheckoutService', 'DashboardStats'));
+        $this->load->library(array('CartService', 'ShopCheckoutService'));
         $this->load->model(array('Wallet_model', 'Shipping_address_model', 'Shipping_method_model'));
     }
 

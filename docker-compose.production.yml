@@ -1,4 +1,4 @@
-# MarvySocials — PRODUCTION stack.
+# Active Digital Hub — PRODUCTION stack.
 #
 #   docker compose -f docker-compose.production.yml up -d
 #

@@ -9,7 +9,7 @@ class Api_keys extends Admin_Controller {
         parent::__construct();
         $this->require_perm('api.manage');
         $this->load->model('Api_key_model');
-        $this->load->library(array('ApiKeyPolicy', 'ApiKeyAdminService', 'DashboardStats'));
+        $this->load->library(array('ApiKeyPolicy', 'ApiKeyAdminService'));
     }
 
     public function index() {
@@ -89,7 +89,6 @@ class Api_keys extends Admin_Controller {
             'content_view'=>$view,
             'current_user'=>$this->current_user,
             'permissions'=>$this->auth->permissions(),
-            'unread'=>$this->dashboardstats->unread_count($this->current_user->id),
         ), $data));
     }
 

@@ -26,7 +26,7 @@ class HomepageTest extends TestCase
         foreach (array(
             'Services on the panel', 'How it works',
             'Browse by category', 'Frequently asked questions',
-            'Why choose MarvySocials', 'Ready to get started?',
+            'Why choose Active Digital Hub', 'Ready to get started?',
         ) as $section) {
             $this->assertStringContainsString($section, $html, "AURORA missing section: {$section}");
         }

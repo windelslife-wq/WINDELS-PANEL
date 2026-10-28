@@ -45,7 +45,7 @@ if (!$NODB) {
 $rows = $CHECK->rows();
 $counts = $CHECK->counts();
 
-echo "MarvySocials — installation check\n";
+echo "Active Digital Hub — installation check\n";
 echo "root: {$ROOT}\n" . str_repeat('-', 68) . "\n";
 $section = null;
 foreach ($rows as $r) {

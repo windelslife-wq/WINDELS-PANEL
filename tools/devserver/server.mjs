@@ -1,5 +1,5 @@
 /**
- * MarvySocials dev application server.
+ * Active Digital Hub dev application server.
  *
  * DEV TOOLING ONLY. Production runs PHP-FPM behind Nginx (see docker/), and
  * nothing in application/ knows this file exists.
@@ -284,6 +284,6 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(args.port, args.host, () => {
   console.log(
-    `[devserver] MarvySocials on http://${args.host}:${args.port} (root ${ROOT}, ${args.workers} workers)`
+    `[devserver] Active Digital Hub on http://${args.host}:${args.port} (root ${ROOT}, ${args.workers} workers)`
   );
 });

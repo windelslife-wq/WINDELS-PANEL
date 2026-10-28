@@ -36,7 +36,7 @@ require_once $ROOT . '/application/libraries/SchemaManifest.php';
 $CHECK = new InstallCheck($ROOT);
 
 /* ------------------------------------------------------------------ */
-echo "MarvySocials — schema verification\n";
+echo "Active Digital Hub — schema verification\n";
 echo str_repeat('-', 68) . "\n";
 
 /* 1. the expectation */

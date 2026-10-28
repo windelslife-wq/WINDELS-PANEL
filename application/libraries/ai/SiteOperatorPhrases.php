@@ -58,9 +58,8 @@ class SiteOperatorPhrases {
                 'help me', 'i need assistance',
             ),
             'about' => array(
-                'what does marvysocials do', 'what is marvysocials',
-                'tell me about marvysocials', 'what does marvy do',
-                'what is marvy', 'tell me about marvy',
+                'what does active digital hub do', 'what is active digital hub',
+                'tell me about active digital hub', 'what does this platform do',
                 'what does this site do', 'what is this website for',
                 'what is this website', 'tell me about this website',
                 'what can i do here', 'what is this site',

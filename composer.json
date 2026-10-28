@@ -1,6 +1,6 @@
 {
   "name": "marvysocials/panel",
-  "description": "MarvySocials \u2014 Enterprise SMM Reseller Platform (CodeIgniter 3.x + MySQL/MariaDB)",
+  "description": "Active Digital Hub \u2014 Enterprise SMM Reseller Platform (CodeIgniter 3.x + MySQL/MariaDB)",
   "type": "project",
   "require": {
     "php": ">=7.4",

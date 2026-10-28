@@ -416,7 +416,7 @@ class Core_seeder extends Seeder {
             array('maintenance_mode',FALSE,'general',1),
             // homepage / appearance
             array('active_homepage','AURORA','homepage',1),
-            array('brand_primary_color','#6366f1','branding',1),
+            array('brand_primary_color','#1877f2','branding',1),
             array('brand_logo_url',NULL,'branding',1),
             array('brand_favicon_url',NULL,'branding',1),
             array('default_theme','system','branding',1),

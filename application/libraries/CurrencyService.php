@@ -106,6 +106,11 @@ class CurrencyService {
         return bcmul((string)$amount, (string)$row->exchange_rate, 8);
     }
 
+    /** Whether `$from` has a usable path into the accounting currency. */
+    public function can_convert_to_base($from = null) {
+        return $this->to_base('1', $from) !== null;
+    }
+
     /**
      * Convert an amount denominated in `$from` into the base/accounting
      * currency. Exchange rates are stored as "units of currency per 1 base",

@@ -91,7 +91,7 @@ class ContactInboxTest extends TestCase
             'Thanks {{name}}! {{totally_unknown}}');
         $this->assertNotEmpty($res['ok']);
 
-        $this->assertSame('Re: Do you deliver to Nigeria? (from MarvySocials)',
+        $this->assertSame('Re: Do you deliver to Nigeria? (from Active Digital Hub)',
             $app->sent_mail[0]['subject']);
         $saved = $app->db->where('id', $row->id)->get('contact_messages')->row();
         $this->assertSame('Thanks Ada Visitor! ', (string)$saved->reply_body,

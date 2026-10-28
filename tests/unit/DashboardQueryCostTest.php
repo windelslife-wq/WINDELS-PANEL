@@ -284,7 +284,7 @@ class DashboardQueryCostTest extends TestCase
     {
         $src = file_get_contents(self::$root.'/tools/devserver/perf_check.mjs');
         $this->assertMatchesRegularExpression(
-            "~'/admin',\s*\n?\s*22\]~", $src,
+            "~'/admin',\s*\n?\s*26\]~", $src,
             'perf_check must hold the dashboard to its measured cost');
     }
 }

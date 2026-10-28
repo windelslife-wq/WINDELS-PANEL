@@ -1,7 +1,7 @@
--- MarvySocials existing-install upgrade: migration 042
+-- Active Digital Hub existing-install upgrade: migration 042
 -- ==================================================
 --
--- Use this file ONLY on an existing MarvySocials database that predates
+-- Use this file ONLY on an existing Active Digital Hub database that predates
 -- migration 042. For a new installation, import marvysocials.sql instead.
 --
 -- cPanel / phpMyAdmin:

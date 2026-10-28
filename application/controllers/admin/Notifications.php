@@ -24,7 +24,7 @@ class Notifications extends Admin_Controller {
     public function __construct() {
         parent::__construct();
         $this->require_perm('notifications.send');
-        $this->load->library(array('NotificationService', 'DashboardStats'));
+        $this->load->library(array('NotificationService'));
         $this->load->model(array('User_model', 'Audit_log_model'));
     }
 
@@ -108,7 +108,6 @@ class Notifications extends Admin_Controller {
             'content_view' => $view,
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
         ), $data));
     }
 }

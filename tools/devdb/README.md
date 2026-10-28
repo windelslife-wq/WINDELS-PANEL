@@ -7,7 +7,7 @@ from the production package. Production runs PHP-FPM behind Nginx against MySQL
 
 ## Why they exist
 
-MarvySocials targets MySQL, and the application, migrations and mysqli/PDO
+Active Digital Hub targets MySQL, and the application, migrations and mysqli/PDO
 drivers are written for it. In an environment where no MySQL server and no PHP
 runtime can be installed, the alternatives are to test nothing or to test
 something that is not the real application. Neither is acceptable for a payment

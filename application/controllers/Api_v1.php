@@ -332,7 +332,7 @@ class Api_v1 extends MY_Controller {
     /** GET /api/docs/json — machine-readable endpoint list */
     public function docs_json() {
         $this->ok(array(
-            'name' => 'MarvySocials Reseller API',
+            'name' => 'Active Digital Hub Reseller API',
             'version' => 'v1',
             'auth' => 'Send your key as `X-Api-Key: wind_...`.',
             'envelope' => '{ success:bool, data?:mixed, error?:{code,message}, meta?:object, requestId:string }',

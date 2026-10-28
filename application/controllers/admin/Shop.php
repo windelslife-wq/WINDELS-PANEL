@@ -20,7 +20,7 @@ class Shop extends Admin_Controller {
     public function __construct() {
         parent::__construct();
         $this->require_perm('marketplace.view');
-        $this->load->library(array('DashboardStats', 'ShopDeliveryService', 'CouponService', 'ShopShippingService'));
+        $this->load->library(array('ShopDeliveryService', 'CouponService', 'ShopShippingService'));
         $this->load->model(array(
             'Digital_delivery_model', 'Shop_order_shipment_model',
             'Shipping_method_model', 'Coupon_model', 'Product_review_model',
@@ -315,7 +315,6 @@ class Shop extends Admin_Controller {
             'content_view' => $view,
             'current_user' => $this->current_user,
             'permissions' => $this->auth->permissions(),
-            'unread' => $this->dashboardstats->unread_count($this->current_user->id),
         ), $data));
     }
 }

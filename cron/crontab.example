@@ -1,5 +1,5 @@
 # =============================================================================
-# MarvySocials — example crontab for background jobs
+# Active Digital Hub — example crontab for background jobs
 # =============================================================================
 # AUTO-RUN FIRST: the panel already runs due jobs by itself with site traffic
 # (see Admin -> System -> Cron jobs -> Auto-run). Any page load — or an uptime

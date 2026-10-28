@@ -35,7 +35,6 @@ class Affiliates extends Admin_Controller {
             'content_view' => 'admin/affiliates/index',
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => 0,
             'accounts'     => $accounts,
             'totals'       => $this->program_totals(),
             'settings'     => array(

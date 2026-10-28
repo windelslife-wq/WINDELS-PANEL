@@ -77,7 +77,6 @@ class Cart extends Auth_Controller {
     }
 
     private function render($title, $view, array $data) {
-        $this->load->library('DashboardStats');
         $this->load->view('layouts/main', array(
             'content_view' => $view,
             'data' => array_merge(array('title' => $title), $data),

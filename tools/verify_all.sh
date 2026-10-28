@@ -11,11 +11,12 @@
 #   · node + the repo's npm dependencies
 #   · vendor/codeigniter/framework + the system/ symlink
 #   · a dev database on :3399 (with --stats-port 3400 for the performance run)
-#   · the application server on :8080
+#   · the application server (defaults to http://127.0.0.1:8080)
 #   · .env with HTTP_ALLOW_PRIVATE_HOSTS=true (the fake provider panels are
 #     on localhost and SecureHttpClient blocks private hosts by default)
 #
 #   bash tools/verify_all.sh --admin-password '…'
+#   bash tools/verify_all.sh --base http://127.0.0.1:8081 --admin-password '…'
 #   bash tools/verify_all.sh --admin-password '…' --with-load   # + performance
 #
 # Exit code is the number of failed stages, so CI can gate on it.
@@ -25,16 +26,19 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${ROOT}"
 
 ADMIN_PASSWORD=""
+BASE_URL="${BASE_URL:-http://127.0.0.1:8080}"
 WITH_LOAD=0
 SKIP_E2E=0
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --admin-password) ADMIN_PASSWORD="$2"; shift 2 ;;
+    --base)           BASE_URL="$2"; shift 2 ;;
     --with-load)      WITH_LOAD=1; shift ;;
     --unit-only)      SKIP_E2E=1; shift ;;
     *) echo "unknown option: $1" >&2; exit 2 ;;
   esac
 done
+export BASE_URL
 
 PASS=0
 FAIL=0
@@ -79,10 +83,10 @@ else
   fi
 
   # A dead server turns every stage below into a phantom failure. Ask once.
-  if ! curl -fsS -o /dev/null --max-time 10 http://127.0.0.1:8080/ 2>/dev/null; then
+  if ! curl -fsS -o /dev/null --max-time 10 "${BASE_URL%/}/" 2>/dev/null; then
     echo
-    echo "  The application server is not answering on :8080." >&2
-    echo "  Start it first:  node tools/devserver/server.mjs --port 8080 --host 0.0.0.0" >&2
+    echo "  The application server is not answering at ${BASE_URL}." >&2
+    echo "  Start it first:  node tools/devserver/server.mjs --port <port> --host 0.0.0.0" >&2
     echo "  (and the database: node tools/devdb/server.js --port 3399 --stats-port 3400 \\" >&2
     echo "     --db storage/devdb/marvy.sqlite)" >&2
     exit 2
@@ -92,7 +96,7 @@ else
   for check in smoke journey page_audit link_crawl image_audit responsive_check \
                ux_separation_check content_check contact_map_check; do
     stage "${check}" node "tools/devserver/${check}.mjs" \
-      --admin-password "${ADMIN_PASSWORD}" --password "${ADMIN_PASSWORD}"
+      --base "${BASE_URL}" --admin-password "${ADMIN_PASSWORD}" --password "${ADMIN_PASSWORD}"
   done
 
   bold "5. End-to-end · money"
@@ -102,7 +106,7 @@ else
                coupon_discovery_check coupon_domains_check currency_check currency_wallet_check earnings_check affiliate_withdrawal_check \
                fundsvera_check blockonomics_check; do
     stage "${check}" node "tools/devserver/${check}.mjs" \
-      --admin-password "${ADMIN_PASSWORD}" --password "${ADMIN_PASSWORD}"
+      --base "${BASE_URL}" --admin-password "${ADMIN_PASSWORD}" --password "${ADMIN_PASSWORD}"
   done
 
   bold "6. End-to-end · providers, staff surfaces and security"
@@ -110,7 +114,7 @@ else
                notifications_check support_check api_check analytics_check security_check \
                chrome_check attachment_check legal_check pin_check pin_rotation_check; do
     stage "${check}" node "tools/devserver/${check}.mjs" \
-      --admin-password "${ADMIN_PASSWORD}" --password "${ADMIN_PASSWORD}"
+      --base "${BASE_URL}" --admin-password "${ADMIN_PASSWORD}" --password "${ADMIN_PASSWORD}"
   done
 
   bold "7. Deployment"
@@ -119,7 +123,7 @@ else
   if [[ "${WITH_LOAD}" -eq 1 ]]; then
     bold "8. Performance under load"
     stage "seed a year of trading"  node tools/devserver/seed_load.mjs
-    stage "perf_check"              node tools/devserver/perf_check.mjs --admin-password "${ADMIN_PASSWORD}"
+    stage "perf_check"              node tools/devserver/perf_check.mjs --base "${BASE_URL}" --admin-password "${ADMIN_PASSWORD}"
     stage "remove the load data"    node tools/devserver/seed_load.mjs --clean
   fi
 fi

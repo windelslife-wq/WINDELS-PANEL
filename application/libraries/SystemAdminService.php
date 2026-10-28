@@ -123,7 +123,7 @@ class SystemAdminService {
         // specifically (or any path `which php` reports) stays a one-line edit
         // in PHP= below.
         $lines = array(
-            '# MarvySocials background jobs — paste into: crontab -e',
+            '# Active Digital Hub background jobs — paste into: crontab -e',
             '# Both lines below are the parts that usually stop a crontab from',
             '# running: the PHP binary must be on the cron PATH, and MYPANEL must',
             '# point at the real document root.',

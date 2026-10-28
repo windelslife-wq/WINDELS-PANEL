@@ -29,7 +29,7 @@ class Identity extends Admin_Controller {
     public function __construct() {
         parent::__construct();
         $this->require_perm('identity.view');
-        $this->load->library(array('TransactionEngine', 'IdentityService', 'DashboardStats'));
+        $this->load->library(array('TransactionEngine', 'IdentityService'));
         $this->load->model(array(
             'Service_transaction_model', 'Identity_check_model', 'Identity_product_model',
             'Service_transaction_status_history_model', 'Provider_transaction_model',
@@ -54,7 +54,6 @@ class Identity extends Admin_Controller {
             'content_view' => 'admin/identity/index',
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
             'transactions' => $this->Service_transaction_model->admin_search($filters, $limit, ($page - 1) * $limit),
             'counts'       => $this->Service_transaction_model->status_counts(self::DOMAIN),
             'check_counts' => $this->Identity_check_model->status_counts(),
@@ -157,7 +156,6 @@ class Identity extends Admin_Controller {
             'content_view'   => 'admin/identity/detail',
             'current_user'   => $this->current_user,
             'permissions'    => $this->auth->permissions(),
-            'unread'         => $this->dashboardstats->unread_count($this->current_user->id),
             'tx'             => $tx,
             'check'          => $check,
             'entity'         => $entity,

@@ -495,7 +495,7 @@ class GiftcardService {
     private function sender_name() {
         $configured = $this->ci->Setting_model->get('giftcard_sender_name');
         $configured = trim((string)$configured);
-        return $configured !== '' ? $configured : 'MarvySocials';
+        return $configured !== '' ? $configured : 'Active Digital Hub';
     }
 
     /**

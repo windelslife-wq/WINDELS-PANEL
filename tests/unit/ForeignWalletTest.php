@@ -63,9 +63,18 @@ class ForeignWalletTest extends TestCase
             'exchange_rate' => $rate, 'is_base' => 0, 'is_active' => 1,
             'updated_at' => $now,
         ));
-        $app->library(array('LedgerService', 'OrderService', 'VtuService'));
+        $app->library(array('LedgerService', 'OrderService', 'VtuService', 'CurrencyService'));
         $app->model(array('Wallet_model', 'Coupon_model', 'Service_transaction_model'));
         return $app;
+    }
+
+    public function testCurrencyServiceOwnsTheCanConvertDecision()
+    {
+        $app = $this->app();
+
+        $this->assertTrue($app->currencyservice->can_convert_to_base('NGN'));
+        $this->assertTrue($app->currencyservice->can_convert_to_base('USD'));
+        $this->assertFalse($app->currencyservice->can_convert_to_base('ZZZ'));
     }
 
     /** A customer whose wallet holds USD, funded by a staff adjustment. */

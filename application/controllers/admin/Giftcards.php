@@ -34,7 +34,7 @@ class Giftcards extends Admin_Controller {
     public function __construct() {
         parent::__construct();
         $this->require_perm('giftcards.view');
-        $this->load->library(array('TransactionEngine', 'GiftcardService', 'DashboardStats'));
+        $this->load->library(array('TransactionEngine', 'GiftcardService'));
         $this->load->model(array(
             'Service_transaction_model', 'Giftcard_order_model', 'Giftcard_code_model',
             'Giftcard_product_model', 'Giftcard_brand_model',
@@ -60,7 +60,6 @@ class Giftcards extends Admin_Controller {
             'content_view' => 'admin/giftcards/index',
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
             'transactions' => $this->Service_transaction_model->admin_search($filters, $limit, ($page - 1) * $limit),
             'counts'       => $this->Service_transaction_model->status_counts(self::DOMAIN),
             'order_counts' => $this->Giftcard_order_model->status_counts(),
@@ -201,7 +200,6 @@ class Giftcards extends Admin_Controller {
             'content_view'   => 'admin/giftcards/detail',
             'current_user'   => $this->current_user,
             'permissions'    => $this->auth->permissions(),
-            'unread'         => $this->dashboardstats->unread_count($this->current_user->id),
             'tx'             => $tx,
             'order'          => $order,
             'plain'          => $plain,

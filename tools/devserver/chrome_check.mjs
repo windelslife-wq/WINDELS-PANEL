@@ -86,7 +86,7 @@ check('even a 404 keeps the menu and the footer',
   && /ws-footer/.test(fetched['/definitely-not-a-page'].text));
 
 const css = await anon.get('/assets/css/design-system.css');
-check('the stylesheet defines the navy palette', /--ws-navy-900:\s*#0b1b3a/.test(css.text));
+check('the stylesheet defines the navy palette', /--ws-navy-900:\s*#0b3f91/.test(css.text));
 for (const [label, selector] of [
   ['public menu', '.ws-public-nav'],
   ['sign-in header', '.ws-auth-header'],
@@ -103,7 +103,7 @@ check('the ink on navy is white', /--ws-navy-ink:\s*#ffffff/.test(css.text));
 console.log('\n── The old brand name is gone');
 const stillBranded = PUBLIC_PAGES.filter((u) => /WINDELSOCIALS/i.test(fetched[u].text));
 check('no public page says WINDELSOCIALS', stillBranded.length === 0, stillBranded.join(', '));
-check('the pages say MarvySocials instead', /MarvySocials|MARVYSOCIALS/.test(fetched['/'].text));
+check('homepage uses the Active Digital Hub brand', /Active Digital Hub/.test(fetched['/'].text));
 
 /* ================== 4 · the sign-in panel's arrangement ================== */
 

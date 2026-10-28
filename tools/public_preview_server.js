@@ -1,5 +1,5 @@
 /**
- * Visual preview of the public MarvySocials site.
+ * Visual preview of the public Active Digital Hub site.
  * Serves the real design-system CSS / app.js and static HTML that mirrors
  * the PHP views, plus a local /assistant/chat that uses the same knowledge.
  * Not a replacement for the CodeIgniter app.
@@ -14,7 +14,7 @@ const PORT = Number(process.env.PORT || 8080);
 const HOST = process.env.HOST || '0.0.0.0';
 
 const faqs = [
-  ['General', 'What is MarvySocials?', 'A prepaid reseller platform for SMM, Nigerian VTU, virtual numbers, identity lookups, gift cards and a platform-owned marketplace. The wallet is a spending balance — there are no customer withdrawals.'],
+  ['General', 'What is Active Digital Hub?', 'A prepaid reseller platform for SMM, Nigerian VTU, virtual numbers, identity lookups, gift cards and a platform-owned marketplace. The wallet is a spending balance — there are no customer withdrawals.'],
   ['General', 'Do I need a subscription?', 'No. Accounts are free. You pay published rates from a prepaid wallet. There is no public monthly SaaS plan.'],
   ['Accounts', 'How do I create an account?', 'Register with a username, email and password (at least 8 characters) and accept the Terms. A wallet is created automatically.'],
   ['Accounts', 'I forgot my password.', 'Use Forgot password. If an account matches we email a reset link. The confirmation is the same either way so addresses cannot be probed.'],
@@ -55,7 +55,7 @@ const socialChannels = [
   ['youtube', 'YouTube', 'https://www.youtube.com/'],
 ];
 const socialRow = `<nav class="ws-social" aria-label="Social channels">${socialChannels
-  .map(([glyph, label, url]) => `<a class="ws-social-btn ws-social-btn--${glyph}" href="${url}" target="_blank" rel="noopener" aria-label="MarvySocials on ${label}"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" class="ws-social-mark">${socialGlyphs[glyph]}</svg></a>`)
+  .map(([glyph, label, url]) => `<a class="ws-social-btn ws-social-btn--${glyph}" href="${url}" target="_blank" rel="noopener" aria-label="Active Digital Hub on ${label}"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" class="ws-social-mark">${socialGlyphs[glyph]}</svg></a>`)
   .join('')}</nav>`;
 
 function layout(title, desc, body, extra = '') {
@@ -64,7 +64,7 @@ function layout(title, desc, body, extra = '') {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${esc(title)} · MarvySocials</title>
+<title>${esc(title)} · Active Digital Hub</title>
 <meta name="description" content="${esc(desc)}">
 <link rel="canonical" href="/">
 <meta property="og:title" content="${esc(title)}">
@@ -90,7 +90,7 @@ function layout(title, desc, body, extra = '') {
 </div>
 <nav class="ws-public-nav ws-sticky-below-announce" aria-label="Primary">
   <div class="ws-public-nav-inner">
-    <a class="ws-brand" href="/"><img class="ws-logo" src="/assets/brand/logo-horizontal.svg" alt="MarvySocials" height="32" width="240"></a>
+    <a class="ws-brand" href="/"><img class="ws-logo" src="/assets/brand/logo-dark.svg" alt="Active Digital Hub" height="32" width="240"></a>
     <div class="ws-nav-links">
       <a href="/services">Services</a><a href="/pricing">Pricing</a><a href="/faq">FAQ</a><a href="/blog">Blog</a><a href="/contact">Contact</a>
     </div>
@@ -113,7 +113,7 @@ function layout(title, desc, body, extra = '') {
   <div class="container">
     <div class="ws-footer-grid">
       <div>
-        <a class="ws-brand" href="/"><img class="ws-logo" src="/assets/brand/logo.svg" alt="MarvySocials" height="40" width="176"></a>
+        <a class="ws-brand" href="/"><img class="ws-logo" src="/assets/brand/logo-dark.svg" alt="Active Digital Hub" height="40" width="176"></a>
         <p class="muted mt-2">A prepaid reseller panel for social-media services, Nigerian VTU, virtual numbers, identity checks, gift cards and a platform-owned marketplace.</p>
         ${socialRow}
       </div>
@@ -131,7 +131,7 @@ function layout(title, desc, body, extra = '') {
         <li><a href="/refund-policy">Refund policy</a></li><li><a href="/acceptable-use">Acceptable use</a></li></ul></div>
     </div>
     <div class="ws-footer-meta">
-      <div>© ${new Date().getFullYear()} MarvySocials. Wallet balances are for spending on this platform only.</div>
+      <div>© ${new Date().getFullYear()} Active Digital Hub. Wallet balances are for spending on this platform only.</div>
       <div><a href="/login">Customer login</a> · <a href="/admin/login">Staff login</a></div>
     </div>
   </div>
@@ -148,7 +148,7 @@ function layout(title, desc, body, extra = '') {
     <button type="button" class="btn btn-ghost btn-sm" id="ws-assistant-close">Close</button>
   </header>
   <div class="ws-assistant-log" id="ws-assistant-log">
-    <div class="ws-bubble ws-bubble-assistant">I am MarvySocials’s on-site assistant. I answer from the panel’s built-in knowledge. I am not a cloud generative AI model and I cannot place orders.
+    <div class="ws-bubble ws-bubble-assistant">I am Active Digital Hub’s on-site assistant. I answer from the panel’s built-in knowledge. I am not a cloud generative AI model and I cannot place orders.
 
 Ask about services, pricing, accounts or where to find a page.</div>
   </div>
@@ -172,13 +172,13 @@ ${extra}
 
 const pages = {
   '/': () => layout('Prepaid SMM, VTU and digital-goods panel',
-    'MarvySocials is a prepaid reseller platform for social-media services, Nigerian VTU, virtual numbers, identity checks, gift cards and a platform marketplace.',
+    'Active Digital Hub is a prepaid reseller platform for social-media services, Nigerian VTU, virtual numbers, identity checks, gift cards and a platform marketplace.',
     `<section class="ws-page-hero">
       <div class="container" style="max-width:1180px">
         <div class="ws-hero-split">
           <div>
         <span class="badge badge-brand">Prepaid reseller panel</span>
-        <h1 class="mt-4">Grow your social presence<br><span class="gradient-text">with MarvySocials</span></h1>
+        <h1 class="mt-4">Grow your social presence<br><span class="gradient-text">with Active Digital Hub</span></h1>
         <p class="ws-lede">One platform for SMM, VTU and digital goods — automated fulfilment when providers are connected, and a wallet ledger you can audit.</p>
         <div class="row" style="margin-top:1.5rem">
           <a class="btn btn-primary btn-lg" href="/register">Start ordering →</a>
@@ -244,7 +244,7 @@ const pages = {
     `<section class="ws-page-hero"><div class="container" style="max-width:1100px">
       <div class="ws-hero-split"><div>
       <p class="ws-kicker">Pricing</p><h1>Prepaid wallet. Published rates. No fake plans.</h1>
-      <p class="ws-lede">MarvySocials does not sell a public monthly subscription. You add funds and pay the rate shown on each service.</p>
+      <p class="ws-lede">Active Digital Hub does not sell a public monthly subscription. You add funds and pay the rate shown on each service.</p>
       </div><div class="ws-hero-media"><img src="/assets/images/services/marketplace.jpg" alt="Curated digital storefront representing prepaid catalogue pricing." width="800" height="600"></div></div>
     </div></section>
     <section class="ws-section-sm"><div class="container"><div class="grid grid-3">
@@ -280,10 +280,10 @@ const pages = {
         <a class="btn btn-primary" href="/contact">Contact support</a></div>
     </div></section>`),
 
-  '/about': () => layout('About', 'What MarvySocials is and who it is for.',
+  '/about': () => layout('About', 'What Active Digital Hub is and who it is for.',
     `<section class="ws-page-hero"><div class="container" style="max-width:760px">
       <p class="ws-kicker">About</p><h1>A panel for selling digital fulfilment — not a marketing slogan</h1>
-      <p class="ws-lede">MarvySocials is the software that runs this site. It is operated by whoever deployed this instance.</p>
+      <p class="ws-lede">Active Digital Hub is the software that runs this site. It is operated by whoever deployed this instance.</p>
     </div></section>
     <section class="ws-section-sm"><div class="container ws-prose">
       <p>One customer account can buy social-media services, Nigerian VTU, virtual numbers, identity lookups, gift cards and platform-owned marketplace listings — when those products are connected and priced.</p>
@@ -291,7 +291,7 @@ const pages = {
       <a class="btn btn-primary" href="/contact">Contact</a>
     </div></section>`),
 
-  '/contact': () => layout('Contact', 'Contact MarvySocials support.',
+  '/contact': () => layout('Contact', 'Contact Active Digital Hub support.',
     `<section class="ws-page-hero"><div class="container" style="max-width:720px">
       <p class="ws-kicker">Support</p><h1>Contact us</h1>
       <p class="ws-lede">A person answers. The on-site assistant cannot open a ticket for you.</p>
@@ -399,7 +399,7 @@ function legal(title, sections) {
     ],
   };
   const blocks = copy[title] || sections.map((s) => [s, 'See the PHP view for the full clause.']);
-  return layout(title, title + ' for this MarvySocials instance.',
+  return layout(title, title + ' for this Active Digital Hub instance.',
     `<section class="ws-page-hero"><div class="container"><p class="ws-kicker">Legal</p><h1>${esc(title)}</h1>
       <p class="hint">Effective 19 August 2026 · Last updated 22 August 2026</p></div></section>
      <section class="ws-section-sm"><div class="container ws-prose">
@@ -431,30 +431,30 @@ function assistantReply(message) {
   if (q === 'night' || /good night|have a good night|goodbye|^bye$/.test(q)) {
     return ok('Good night. I will be here when you come back if you need help with the site.');
   }
-  if (/good morning|^morning$/.test(q)) return ok('Good morning. I can help with MarvySocials — services, pricing, accounts, or finding a page.');
+  if (/good morning|^morning$/.test(q)) return ok('Good morning. I can help with Active Digital Hub — services, pricing, accounts, or finding a page.');
   if (/good afternoon|^afternoon$/.test(q)) return ok('Good afternoon. Ask me about this panel’s services, pricing, or how to create an account.');
   if (/good evening|^evening$/.test(q)) return ok('Good evening. I am here if you want a walkthrough of services, pricing, or signing in.');
   if (/good day/.test(q)) return ok('Good day. I can explain what this site does and point you to the right page.');
   if (/^(hi|hey|hello|howdy|greetings|hi there|hey there|hello there|hello ai|hey assistant|hello assistant)$/.test(q)) {
-    return ok('Hello. I can explain what MarvySocials sells, how the wallet works, and where to sign up or log in.',
+    return ok('Hello. I can explain what Active Digital Hub sells, how the wallet works, and where to sign up or log in.',
       [{label:'Sign up', href:'/register'},{label:'View Services', href:'/services'}]);
   }
   if (/^(ok|okay|great|perfect|good|nice|awesome|alright|got it|cool|i understand|thats fine|that is fine)$/.test(q)) {
     return ok('Sounds good. I am here if you need anything.');
   }
   if (/thank/.test(q) && q.split(' ').length <= 5) {
-    return ok("You're welcome. If you need anything else about MarvySocials, I am here to help.");
+    return ok("You're welcome. If you need anything else about Active Digital Hub, I am here to help.");
   }
   if (/youre welcome|you are welcome|no problem/.test(q)) return ok('Glad that helped.');
   if (/how are you|what is going on|whats going on|how are things/.test(q)) {
     return ok('I am the local site assistant — running fine, and ready to help. I can explain this website, or we can pick a page to open.');
   }
   if (/what can you do|can you help|i need help|i have a question|what can you help/.test(q)) {
-    return ok('I can help with MarvySocials services, pricing, account registration, login, password reset, FAQs, privacy, terms, and navigating the website. I cannot create an account or place an order from this chat.',
+    return ok('I can help with Active Digital Hub services, pricing, account registration, login, password reset, FAQs, privacy, terms, and navigating the website. I cannot create an account or place an order from this chat.',
       [{label:'View Services', href:'/services'},{label:'Sign up', href:'/register'}]);
   }
   if (/this website|this site|what can i do here|what is marvy|tell me about this/.test(q)) {
-    return ok('MarvySocials is a prepaid reseller panel for social-media services, Nigerian VTU, virtual numbers, identity lookups, gift cards and a platform marketplace. You add funds to a wallet and spend that balance here.',
+    return ok('Active Digital Hub is a prepaid reseller panel for social-media services, Nigerian VTU, virtual numbers, identity lookups, gift cards and a platform marketplace. You add funds to a wallet and spend that balance here.',
       [{label:'View Services', href:'/services'},{label:'View Pricing', href:'/pricing'}]);
   }
   if (/forgot|reset my password|cant log in|cannot log in|login isnt working/.test(q)) {
@@ -462,7 +462,7 @@ function assistantReply(message) {
       [{label:'Forgot password', href:'/forgot-password'}]);
   }
   if (/sign up|signup|register|create an account|create account|i want to join|need an account/.test(q)) {
-    return ok('To create your MarvySocials account, open the registration page, choose a username and a password of at least 8 characters, and accept the Terms. I cannot register you from this chat.',
+    return ok('To create your Active Digital Hub account, open the registration page, choose a username and a password of at least 8 characters, and accept the Terms. I cannot register you from this chat.',
       [{label:'Sign up', href:'/register'}]);
   }
   if (/log in|login|sign me in|sign in|access my account/.test(q)) {
@@ -486,12 +486,12 @@ function assistantReply(message) {
       [{label:'Staff sign-in', href:'/admin/login'}]);
   }
   if (/vtu|airtime|service|what can i buy|what do you sell/.test(q)) {
-    return ok('MarvySocials sells SMM services, Nigerian VTU, virtual numbers, identity lookups, gift cards, a platform marketplace and a reseller API — when the operator has enabled and priced them.',
+    return ok('Active Digital Hub sells SMM services, Nigerian VTU, virtual numbers, identity lookups, gift cards, a platform marketplace and a reseller API — when the operator has enabled and priced them.',
       [{label:'View Services', href:'/services'}]);
   }
   const hit = faqs.find(([, question]) => q.includes(norm(question).slice(0, 12)));
   if (hit) return ok(hit[2], [{label:'View FAQ', href:'/faq'}]);
-  return ok('I am not sure I understood that. I can help with MarvySocials services, pricing, account registration, login, FAQs, privacy, terms, and navigating the website. What would you like to know?',
+  return ok('I am not sure I understood that. I can help with Active Digital Hub services, pricing, account registration, login, FAQs, privacy, terms, and navigating the website. What would you like to know?',
     [{label:'View FAQ', href:'/faq'},{label:'Contact', href:'/contact'}]);
 }
 
@@ -550,5 +550,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, HOST, () => {
-  console.log('MARVYSOCIALS public preview on http://' + HOST + ':' + PORT);
+  console.log('Active Digital Hub public preview on http://' + HOST + ':' + PORT);
 });

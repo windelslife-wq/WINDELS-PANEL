@@ -13,7 +13,6 @@ class Favorites extends Auth_Controller {
     public function __construct() {
         parent::__construct();
         $this->load->model('Service_model');
-        $this->load->library('DashboardStats');
     }
 
     /** POST /dashboard/favorites/add/:public_id */

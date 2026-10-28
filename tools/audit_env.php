@@ -143,7 +143,7 @@ foreach ($documented as $file => $keys) {
 }
 
 /* ---- report ---------------------------------------------------------------- */
-echo "MarvySocials — environment audit\n";
+echo "Active Digital Hub — environment audit\n";
 echo "code references: " . count($read) . " distinct variables\n";
 foreach ($documented as $file => $keys)
     echo "{$file}: " . count($keys) . " documented keys\n";

@@ -11,7 +11,6 @@ class Notifications extends Auth_Controller {
     public function __construct() {
         parent::__construct();
         $this->load->model('Notification_model');
-        $this->load->library('DashboardStats');
     }
 
     public function index() {
@@ -27,7 +26,6 @@ class Notifications extends Auth_Controller {
             'content_view' => 'dashboard/notifications/index',
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
             'notifications'=> $rows,
             'page'         => $page,
             'total_pages'  => max(1, (int)ceil($total / $limit)),

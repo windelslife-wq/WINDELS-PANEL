@@ -82,7 +82,7 @@ $auth_site = function_exists('marvy_site_name') ? marvy_site_name() : 'Active Di
         </div>
       <?php endif; ?>
 
-      <div class="bg-surface rounded-2xl shadow-sm border border-slate-200 p-8">
+      <div class="ws-auth-form-card bg-surface rounded-2xl shadow-sm border border-slate-200 p-8">
         <?php
         // Expose every view variable (title, referral, token, error, …) to the partial.
         $this->load->view($content_view, array_diff_key(get_defined_vars(), array_flip(array('content_view'))));

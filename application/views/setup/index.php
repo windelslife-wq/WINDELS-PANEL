@@ -40,13 +40,15 @@ foreach ($checks as $c) { if ($c['status'] === 'fail') $failed++; }
   label { display: block; font-weight: 600; margin: 1rem 0 .25rem; }
   input[type=text], input[type=email], input[type=password] {
       width: 100%; padding: .6rem .7rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; }
-  button { margin-top: 1.5rem; background: #4f46e5; color: #fff; border: 0; border-radius: 8px;
+  button { margin-top: 1.5rem; background: #1877f2; color: #fff; border: 0; border-radius: 8px;
            padding: .7rem 1.4rem; font-size: 1rem; font-weight: 600; cursor: pointer; }
   .flash { border-radius: 10px; padding: .9rem 1.1rem; margin: 1.25rem 0; }
   .flash.error { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
   .flash.success { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; }
   .flash.notice { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
   code { background: #f1f5f9; border-radius: 5px; padding: .1rem .35rem; font-size: .9em; }
+  .brand { display: inline-flex; align-items: center; gap: .7rem; margin-bottom: 1.5rem; color: #0f172a; font-weight: 700; font-size: 1.15rem; text-decoration: none; }
+  .brand img { width: 42px; height: 42px; border-radius: 12px; }
   footer { margin-top: 3rem; color: #64748b; font-size: .9rem; }
 </style>
   .ws-announce{background:#fff;color:#000;border-bottom:1px solid #e5e7eb;height:2.75rem;overflow:hidden;display:flex;align-items:center}
@@ -65,6 +67,7 @@ foreach ($checks as $c) { if ($c['status'] === 'fail') $failed++; }
   </div>
 </div>
 <main>
+  <a class="brand" href="/"><img src="/assets/brand/logo-icon.svg" alt="" width="42" height="42">Active Digital Hub</a>
   <h1>Deployment setup</h1>
   <p class="lede">
     Everything below is read from <code>.env</code> and the database. Nothing on this page

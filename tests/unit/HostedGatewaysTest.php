@@ -36,7 +36,7 @@ class HostedGatewaysTest extends TestCase
         if (!function_exists('site_url')) {
             eval('function site_url($p=""){ return "https://panel.example/".ltrim($p,"/"); }');
         }
-        if (!function_exists('marvy_site_name')) eval('function marvy_site_name(){ return "MarvySocials"; }');
+        if (!function_exists('marvy_site_name')) eval('function marvy_site_name(){ return "Active Digital Hub"; }');
         if (!function_exists('marvy_request_id')) eval('function marvy_request_id(){ return "req-test"; }');
 
         require_once self::$root.'/application/libraries/GatewayInterface.php';

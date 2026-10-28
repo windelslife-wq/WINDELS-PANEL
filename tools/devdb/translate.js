@@ -379,8 +379,77 @@ function translateAlterTable(sql, registry) {
   return { statements: statements.length ? statements : [NOOP] };
 }
 
+/** Lower MySQL full-text predicates to the app's portable LIKE fallback. */
+function lowerFullTextForSqlite(sql) {
+  const opaque = [];
+  let masked = '';
+  let i = 0;
+  const token = (value) => {
+    const id = opaque.length;
+    opaque.push(value);
+    return `__DEVDB_OPAQUE_${id}__`;
+  };
+
+  // Hide strings, quoted identifiers and comments before rewriting so a
+  // literal that mentions MATCH/AGAINST is never mistaken for SQL syntax.
+  while (i < sql.length) {
+    const ch = sql[i];
+    if (ch === "'" || ch === '"' || ch === '`') {
+      const quote = ch;
+      let value = ch;
+      i++;
+      while (i < sql.length) {
+        if (sql[i] === '\\' && quote !== '`') {
+          value += sql[i] + (sql[i + 1] || '');
+          i += 2;
+          continue;
+        }
+        if (sql[i] === quote) {
+          value += quote;
+          if (sql[i + 1] === quote) {
+            value += quote;
+            i += 2;
+            continue;
+          }
+          i++;
+          break;
+        }
+        value += sql[i++];
+      }
+      masked += token(value);
+      continue;
+    }
+    if (ch === '-' && sql[i + 1] === '-') {
+      const end = sql.indexOf('\n', i);
+      const stop = end === -1 ? sql.length : end;
+      masked += token(sql.slice(i, stop));
+      i = stop;
+      continue;
+    }
+    if (ch === '/' && sql[i + 1] === '*') {
+      const end = sql.indexOf('*/', i + 2);
+      const stop = end === -1 ? sql.length : end + 2;
+      masked += token(sql.slice(i, stop));
+      i = stop;
+      continue;
+    }
+    masked += ch;
+    i++;
+  }
+
+  masked = masked.replace(/\bMATCH\s*\([^)]*\)\s*AGAINST\s*\([^)]*\)/gi, '0');
+  return masked.replace(/__DEVDB_OPAQUE_(\d+)__/g, (_all, id) => opaque[Number(id)]);
+}
+
 /** Rewrite MySQL expressions/functions that SQLite spells differently. */
 function translateExpressions(sql) {
+  // The JSON path is itself a quoted string, so this MySQL wrapper must be
+  // lowered before mapOutsideStrings splits SQL code from literal contents.
+  sql = lowerFullTextForSqlite(sql);
+  sql = sql.replace(
+    /\bJSON_UNQUOTE\s*\(\s*JSON_EXTRACT\s*\(\s*([^,()]+?)\s*,\s*('(?:[^'\\\\]|\\\\.)*')\s*\)\s*\)/gi,
+    'json_extract($1, $2)'
+  );
   return mapOutsideStrings(sql, (code) => {
     let s = code;
 
@@ -394,7 +463,18 @@ function translateExpressions(sql) {
     s = s.replace(/\bROW_FORMAT\s*=\s*\w+/gi, '');
     s = s.replace(/\bCOMMENT\s+'(?:[^'\\]|\\.)*'/gi, '');
 
+    // Full-text search is a MySQL-only index feature. The application pairs
+    // MATCH/AGAINST with a LIKE fallback in the same predicate, so in this
+    // SQLite dev backend make the MATCH term false and retain the portable
+    // LIKE branch instead of returning a 500 for ordinary catalogue searches.
+    s = s.replace(/\bMATCH\s*\([^)]*\)\s*AGAINST\s*\([^)]*\)/gi, '0');
+
     // Functions.
+    // SQLite's JSON_EXTRACT already returns unquoted scalar strings; strip
+    // MySQL's JSON_UNQUOTE wrapper before lowering the function name. Keeping
+    // this in the dev dialect lets upgrade migrations exercise their real
+    // JSON backfills against the local SQLite-backed wire server.
+    s = s.replace(/\bJSON_EXTRACT\s*\(/gi, 'json_extract(');
     s = s.replace(/\bIFNULL\s*\(/gi, 'COALESCE(');
     s = s.replace(/\bNOW\s*\(\s*\)/gi, "STRFTIME('%Y-%m-%d %H:%M:%S','now')");
     s = s.replace(/\bUTC_TIMESTAMP\s*\(\s*\)/gi, "STRFTIME('%Y-%m-%d %H:%M:%S','now')");

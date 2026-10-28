@@ -363,7 +363,9 @@ class AffiliateTest extends TestCase
         $this->assertStringContainsString('function index(', $src);
         $this->assertStringContainsString('function commissions(', $src);
         $this->assertStringContainsString("'nav_active'", $src);
-        $this->assertStringContainsString("'unread'", $src);
+        $this->assertStringNotContainsString('dashboardstats->unread_count', $src);
+        $context = file_get_contents(self::$root.'/application/views/layouts/_app_context.php');
+        $this->assertStringContainsString('shell_unread_count()', $context);
         // Customers never mutate affiliate state.
         $this->assertStringNotContainsString('->pay(', $src);
         $this->assertStringNotContainsString('pay_due', $src);

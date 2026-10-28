@@ -11,7 +11,7 @@ class Dashboard extends Admin_Controller {
 
     public function index() {
         $this->require_perm('reports.view');
-        $this->load->library(array('AdminStats', 'ActivityFeed', 'DashboardStats'));
+        $this->load->library(array('AdminStats', 'ActivityFeed'));
         $permissions = $this->auth->permissions();
 
         // Today and the month come from one pass over each money table
@@ -39,7 +39,6 @@ class Dashboard extends Admin_Controller {
             'content_view'  => 'admin/dashboard',
             'current_user'  => $this->current_user,
             'permissions'   => $permissions,
-            'unread'        => $this->dashboardstats->unread_count($this->current_user->id),
             'overview'      => $this->adminstats->platform_overview(),
             'series'        => $this->adminstats->revenue_series(14),
             'today'         => $revenue[1],

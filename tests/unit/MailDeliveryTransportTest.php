@@ -154,7 +154,7 @@ class MailDeliveryTransportTest extends TestCase
         return (object)array(
             'to_email'  => 'customer@example.test',
             'to_name'   => 'Customer',
-            'subject'   => 'Reset your MarvySocials password',
+            'subject'   => 'Reset your Active Digital Hub password',
             'body_text' => 'Use the link below to set a new password.',
             'body_html' => '<p>Use the link below to set a new password.</p>'
                           .'<p><a href="http://www.marvysocials.com/reset-password/TOKEN123">Reset password</a></p>',

@@ -51,7 +51,7 @@ const saved = await a.postForm(
   '/admin/pages/refund-policy/save',
   {
     title: 'Refund Policy',
-    meta_description: 'How refunds work at MarvySocials.',
+    meta_description: 'How refunds work at Active Digital Hub.',
     body_html: `<h2>Refunds</h2><p>${marker}</p><p>Undelivered quantity is returned to your wallet.</p>`,
     is_published: '1',
   },

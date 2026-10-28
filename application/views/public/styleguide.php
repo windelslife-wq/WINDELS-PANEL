@@ -12,13 +12,13 @@
 
   <section class="card" id="logo">
     <h2 class="card-title">Logo</h2>
-    <p class="muted">The mark pairs a white A on Facebook blue with the Active Digital Hub wordmark. The public header, footer, auth shell and assistant load the same assets through <code>partials/brand_logo.php</code>.</p>
+    <p class="muted">On light surfaces, the mark pairs a white A on brand blue; on blue menus and footers it switches to a white tile with a deep-blue A so it remains distinct. The public header, footer, auth shell and assistant load the same assets through <code>partials/brand_logo.php</code>.</p>
     <div class="grid grid-3 mt-4">
       <div class="card" style="background:#fff">
         <?php $this->load->view('partials/brand_logo', array('variant'=>'horizontal','height'=>48,'class'=>'ws-logo-lg')); ?>
         <p class="hint">Primary / light</p>
       </div>
-      <div class="card" style="background:#0b1020">
+      <div class="card" style="background:#0b3f91">
         <?php $this->load->view('partials/brand_logo', array('variant'=>'dark','height'=>48,'class'=>'ws-logo-lg')); ?>
         <p class="hint" style="color:#94a3b8">Dark background</p>
       </div>
@@ -35,17 +35,17 @@
 
   <section class="card" id="imagery">
     <h2 class="card-title">Imagery</h2>
-    <p>Photography is indigo-navy with a single fuchsia accent. No fake customers, no stock handshakes, no competitor logos. Hero images load with <code>fetchpriority="high"</code>; supporting images use <code>loading="lazy"</code>.</p>
+    <p>Photography and interface accents use a consistent blue palette. No fake customers, no stock handshakes, no competitor logos. Hero images load with <code>fetchpriority="high"</code>; supporting images use <code>loading="lazy"</code>.</p>
     <img class="ws-visual mt-4" src="<?=base_url('assets/images/home/hero.jpg')?>" alt="Example hero visual" width="960" height="540" loading="lazy">
   </section>
 
   <section class="card" id="colors">
     <h2 class="card-title">Brand colours</h2>
-    <p class="muted">Indigo brand, fuchsia accent, slate neutrals. Same custom properties the buttons, links and hero gradients read.</p>
+    <p class="muted">Blue brand and accent, slate neutrals. Same custom properties the buttons, links and hero gradients read.</p>
     <div class="stack">
       <?php $scales = array(
-        'Brand (indigo)' => array('brand', array(50,100,200,300,400,500,600,700,800,900,950)),
-        'Accent (fuchsia)'=>array('accent', array(50,100,200,300,400,500,600,700)),
+        'Brand (blue)' => array('brand', array(50,100,200,300,400,500,600,700,800,900,950)),
+        'Accent (blue)'=>array('accent', array(50,100,200,300,400,500,600,700)),
         'Slate'          => array('slate', array(50,100,200,300,400,500,600,700,800,900,950)),
       ); ?>
       <?php foreach ($scales as $label => $pair): list($key,$steps)=$pair; ?>

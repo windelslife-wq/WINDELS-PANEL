@@ -15,7 +15,7 @@ class Totp {
     const DIGITS    = 6;
     const ALGORITHM = 'sha1';
     const SECRET_BYTES = 20; // 160-bit secret -> 32 base32 chars
-    const ISSUER    = 'MarvySocials';
+    const ISSUER    = 'Active Digital Hub';
     const WINDOW    = 1;  // accept +/-1 period for clock skew
 
     /**

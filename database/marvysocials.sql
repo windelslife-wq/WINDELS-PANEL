@@ -2993,7 +2993,7 @@ INSERT INTO `settings` (`setting_key`, `setting_value`, `category`, `is_public`)
 VALUES ('active_homepage', '{"value":"AURORA"}', 'homepage', 1);
 
 INSERT INTO `settings` (`setting_key`, `setting_value`, `category`, `is_public`)
-VALUES ('brand_primary_color', '{"value":"#6366f1"}', 'branding', 1);
+VALUES ('brand_primary_color', '{"value":"#1877f2"}', 'branding', 1);
 
 INSERT INTO `settings` (`setting_key`, `setting_value`, `category`, `is_public`)
 VALUES ('brand_logo_url', '{"value":null}', 'branding', 1);
