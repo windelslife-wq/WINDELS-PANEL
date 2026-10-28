@@ -182,6 +182,12 @@ Support staff
   It lets you set the administrator's **own** email + password directly
   (minimum 12 chars), shows the same health checks, and writes the change to
   `audit_logs`. **Delete the `VP_SETUP_TOKEN` line from `.env` when done.**
+- **No administrator at all** (an empty database with no staff account):
+  the first account you register at `https://yourdomain.com/register` becomes
+  the SUPER_ADMIN, even if sign-ups are switched off in Settings. It is marked
+  verified straight away. Then open **Admin → Administrators** to add the other
+  administrators. Register immediately after the database is created, because
+  whoever registers first on an empty install gets this role.
 
 ## Step 7 — Lock down the verification page
 

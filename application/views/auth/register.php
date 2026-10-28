@@ -2,6 +2,13 @@
 <h1 class="text-2xl font-bold tracking-tight">Create your account</h1>
 <p class="mt-1 text-sm text-slate-500">A wallet is created with the account. No payment is required to register.</p>
 
+<?php if (!empty($bootstrap_open)): ?>
+  <div class="flash notice mt-4">
+    No administrator exists yet. The account you create here becomes the <strong>first administrator</strong>.
+    Use a strong password you control; you can add other administrators afterwards.
+  </div>
+<?php endif; ?>
+
 <?=form_open('register', array('class' => 'mt-6 space-y-4', 'autocomplete' => 'on'))?>
   <?php if (!empty($referral)): ?>
     <input type="hidden" name="ref" value="<?=htmlspecialchars($referral)?>">
