@@ -21,7 +21,7 @@ class Payments extends Admin_Controller {
     public function __construct() {
         parent::__construct();
         $this->require_perm('payments.view');
-        $this->load->library(array('PaymentService', 'DashboardStats'));
+        $this->load->library(array('PaymentService'));
         $this->load->model(array(
             'Payment_transaction_model', 'Payment_event_model', 'Audit_log_model',
         ));
@@ -53,7 +53,6 @@ class Payments extends Admin_Controller {
             'content_view' => 'admin/payments/webhooks',
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
             'events'       => $this->Payment_webhook_admin_model->admin_search($filters, $limit, ($page - 1) * $limit),
             'total'        => $this->Payment_webhook_admin_model->admin_count($filters),
             'health'       => $this->Payment_webhook_admin_model->health(),
@@ -142,7 +141,6 @@ class Payments extends Admin_Controller {
             'content_view' => 'admin/payments/methods',
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
             'methods'      => $rows,
             'state'        => $state,
             'page_description' => 'Which deposit methods customers see, what each charges, and whether its '
@@ -243,7 +241,6 @@ class Payments extends Admin_Controller {
             'content_view' => 'admin/payments/index',
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
             'transactions' => $this->Payment_transaction_model->admin_search($filters, $limit, ($page - 1) * $limit),
             'totals'       => $this->Payment_transaction_model->admin_totals(),
             // Keep the queue usable when code is uploaded before the matching
@@ -268,7 +265,6 @@ class Payments extends Admin_Controller {
             'content_view' => 'admin/payments/detail',
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
             'tx'           => $tx,
             'events'       => $this->Payment_event_model->for_transaction($tx->id),
         ));

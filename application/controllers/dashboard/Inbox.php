@@ -27,7 +27,6 @@ class Inbox extends Auth_Controller {
     public function __construct() {
         parent::__construct();
         $this->load->library('InboxService');
-        $this->load->library('DashboardStats');
     }
 
     /** GET /dashboard/inbox — my mail, newest first. */
@@ -45,7 +44,6 @@ class Inbox extends Auth_Controller {
             'content_view' => 'dashboard/inbox/index',
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
             'rows'         => $rows,
             'inbox_unread' => $this->inboxservice->count_user($this->current_user->id, 'UNREAD'),
             'total'        => $total,
@@ -70,7 +68,6 @@ class Inbox extends Auth_Controller {
             'content_view' => 'dashboard/inbox/compose',
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
         ));
     }
 
@@ -146,7 +143,6 @@ class Inbox extends Auth_Controller {
             'content_view' => 'dashboard/inbox/detail',
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
             'msg'          => $msg,
         ));
     }

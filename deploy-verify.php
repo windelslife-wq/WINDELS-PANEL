@@ -1,6 +1,6 @@
 <?php
 /**
- * MarvySocials — deployment verification (browser or CLI, no terminal required)
+ * Active Digital Hub — deployment verification (browser or CLI, no terminal required)
  *
  * Open https://yourdomain.com/deploy-verify.php after extracting the package
  * and editing .env. It verifies:
@@ -80,7 +80,7 @@ header('Content-Type: text/html; charset=utf-8');
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>MarvySocials — deployment verification</title>
+<title>Active Digital Hub — deployment verification</title>
 <style>
   body{font:15px/1.55 system-ui,sans-serif;margin:0;background:#f6f7f9;color:#1c2430}
   main{max-width:52em;margin:2em auto;padding:0 1em}
@@ -98,7 +98,7 @@ header('Content-Type: text/html; charset=utf-8');
 </style>
 </head>
 <body><main>
-<h1>MarvySocials — deployment verification</h1>
+<h1>Active Digital Hub — deployment verification</h1>
 <p><small><?php echo htmlspecialchars(PHP_VERSION . ' · ' . PHP_SAPI . ' · ' . $VERIFY_ROOT, ENT_QUOTES, 'UTF-8'); ?></small></p>
 <div class="overall <?php echo $counts['fail'] === 0 ? 'ok' : 'bad'; ?>">
   <?php echo htmlspecialchars($headline, ENT_QUOTES, 'UTF-8'); ?>

@@ -1,7 +1,7 @@
 /**
- * MarvySocials — Tailwind config (design tokens, Session 04)
+ * Active Digital Hub — Tailwind config (design tokens, Session 04)
  *
- * The brand palette lives here as the source of truth for the Tailwind BUILD
+ * The blue brand palette lives here as the source of truth for the Tailwind BUILD
  * (`npm run build:css` -> assets/css/tailwind.css, git-ignored). The same tokens
  * are mirrored as CSS custom properties in assets/css/design-system.css so the
  * PHP views render correctly even WITHOUT a Tailwind/Node build. Keep both in
@@ -16,15 +16,15 @@
  * design-system.css and do not need safelisting.
  */
 const stateSafelist = [
-  'hover:bg-indigo-700', 'hover:bg-amber-700', 'hover:bg-slate-100',
-  'hover:bg-indigo-50', 'hover:text-indigo-700', 'hover:bg-slate-900',
-  'focus:border-indigo-500', 'focus:ring-2', 'focus:ring-indigo-100',
-  'focus:ring-indigo-500', 'bg-indigo-50', 'text-indigo-700',
+  'hover:bg-brand-700', 'hover:bg-amber-700', 'hover:bg-slate-100',
+  'hover:bg-brand-50', 'hover:text-brand-700', 'hover:bg-slate-900',
+  'focus:border-brand-500', 'focus:ring-2', 'focus:ring-brand-100',
+  'focus:ring-brand-500', 'bg-brand-50', 'text-brand-700',
   'bg-rose-50', 'text-rose-700', 'text-amber-600', 'border-rose-100',
-  'border-indigo-500', 'font-medium',
+  'border-brand-500', 'font-medium',
 ];
 
-const marvyTokens = {
+const brandTokens = {
   brand: {
     50:  '#eff6ff',
     100: '#dbeafe',
@@ -64,15 +64,14 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // ADDITIVE brand tokens — Tailwind's default palette (indigo, rose,
-        // cyan, gray, ...) stays intact, so existing utility classes in the
-        // homepages/auth views keep compiling.
-        brand: marvyTokens.brand,
-        accent: marvyTokens.accent,
-        success: marvyTokens.success,
-        warning: marvyTokens.warning,
-        danger: marvyTokens.danger,
-        info: marvyTokens.info,
+        // Shared blue brand tokens — used by all pages so utility-based components
+        // match the design-system CSS variables.
+        brand: brandTokens.brand,
+        accent: brandTokens.accent,
+        success: brandTokens.success,
+        warning: brandTokens.warning,
+        danger: brandTokens.danger,
+        info: brandTokens.info,
         // Themeable neutrals. `slate` and `surface` are driven by CSS
         // variables (--ws-slate-*, --ws-surface) defined in
         // assets/css/design-system.css, so a single `.dark` class on <html>
@@ -123,4 +122,4 @@ module.exports = {
   plugins: [],
 };
 
-module.exports.marvyTokens = marvyTokens;
+module.exports.brandTokens = brandTokens;

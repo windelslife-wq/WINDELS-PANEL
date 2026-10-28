@@ -36,7 +36,7 @@ class System extends Admin_Controller {
             && !$this->auth->can('api.manage')) {
             $this->require_perm('audit.view');
         }
-        $this->load->library(array('SystemAdminService', 'DashboardStats'));
+        $this->load->library(array('SystemAdminService'));
         $this->load->model(array(
             'Service_category_model', 'Blacklist_model', 'Audit_log_model',
             'User_model', 'Service_model',
@@ -534,7 +534,6 @@ class System extends Admin_Controller {
             'content_view' => $view,
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
             'area'         => $area,
             'tabs'         => $tabs,
         ), $data));

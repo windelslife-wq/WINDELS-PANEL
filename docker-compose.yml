@@ -1,4 +1,4 @@
-# MarvySocials — DEVELOPMENT stack.
+# Active Digital Hub — DEVELOPMENT stack.
 #
 # One command from a fresh clone:
 #   cp .env.example .env && docker compose up -d --build

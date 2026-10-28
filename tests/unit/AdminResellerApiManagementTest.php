@@ -192,7 +192,8 @@ class AdminResellerApiManagementTest extends TestCase
         $nav = ShellSource::app(self::$root);
 
         $this->assertStringContainsString("require_perm('api.manage')", $controller);
-        $this->assertStringContainsString("'DashboardStats'", $controller);
+        $this->assertStringNotContainsString('DashboardStats', $controller,
+            'the admin shell resolves its shared unread count lazily; this page should not load dashboard stats');
         $this->assertStringContainsString('private function render(', $controller);
         $this->assertStringContainsString('$this->current_user->id', $controller);
         $this->assertStringContainsString("admin/api-keys/(:any)/policy", $routes);

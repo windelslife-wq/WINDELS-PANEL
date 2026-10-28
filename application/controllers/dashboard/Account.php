@@ -10,7 +10,6 @@ class Account extends Auth_Controller {
         parent::__construct();
         $this->load->library(array('form_validation', 'AuthService', 'ApiKeyPolicy'));
         $this->load->model(array('Api_key_model', 'Audit_log_model', 'User_model'));
-        $this->load->library('DashboardStats');
     }
 
     /* ----------------------------- profile ----------------------------- */
@@ -411,7 +410,6 @@ class Account extends Auth_Controller {
             'content_view' => $view,
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
         );
         $this->load->view('layouts/app', array_merge($data, $extra));
     }

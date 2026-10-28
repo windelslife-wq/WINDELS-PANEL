@@ -11,7 +11,7 @@ class Downloads extends Auth_Controller {
 
     public function __construct() {
         parent::__construct();
-        $this->load->library(array('ShopDeliveryService', 'DashboardStats'));
+        $this->load->library(array('ShopDeliveryService'));
     }
 
     /** One page of downloads; the list is bounded so a long purchase history
@@ -53,7 +53,6 @@ class Downloads extends Auth_Controller {
             'content_view' => $view,
             'current_user' => $this->current_user,
             'permissions' => $this->auth->permissions(),
-            'unread' => $this->dashboardstats->unread_count($this->current_user->id),
         ), $data));
     }
 }

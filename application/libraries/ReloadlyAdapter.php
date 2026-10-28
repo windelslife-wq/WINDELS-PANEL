@@ -715,7 +715,7 @@ class ReloadlyAdapter implements GiftcardProviderInterface {
         if ($name !== '') return mb_substr($name, 0, 60);
         $cfg = $this->config_blob();
         if (!empty($cfg['sender_name'])) return mb_substr((string)$cfg['sender_name'], 0, 60);
-        return 'MarvySocials';
+        return 'Active Digital Hub';
     }
 
     private function number($v) {

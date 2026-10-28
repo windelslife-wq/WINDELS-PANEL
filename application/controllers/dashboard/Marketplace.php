@@ -14,7 +14,7 @@ class Marketplace extends Auth_Controller {
 
     public function __construct() {
         parent::__construct();
-        $this->load->library(array('MarketplaceService', 'DashboardStats'));
+        $this->load->library(array('MarketplaceService'));
         $this->load->model(array(
             'Marketplace_listing_model', 'Marketplace_order_model',
             'Marketplace_category_model', 'Wallet_model', 'Setting_model',
@@ -186,7 +186,6 @@ class Marketplace extends Auth_Controller {
         $this->load->view('layouts/app', array_merge(array(
             'title' => $title,
             'nav_active' => 'dashboard/marketplace',
-            'unread' => $this->dashboardstats->unread_count($this->current_user->id),
             'content_view' => 'dashboard/marketplace/'.$view,
             'current_user' => $this->current_user,
             'permissions' => $this->auth->permissions(),

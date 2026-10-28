@@ -2,7 +2,7 @@
 <div class="card max-w-4xl">
   <div class="row justify-between">
     <h2 class="card-title mb-0">Inbox
-      <?php if ($unread > 0): ?><span class="badge badge-info badge-dot"><?=$unread?> new</span><?php endif; ?>
+      <?php if ($inbox_unread > 0): ?><span class="badge badge-info badge-dot"><?=$inbox_unread?> new</span><?php endif; ?>
     </h2>
     <div class="row" style="gap:.5rem">
       <a class="btn btn-ghost btn-sm <?=$status==='UNREAD'?'is-disabled':''?>"

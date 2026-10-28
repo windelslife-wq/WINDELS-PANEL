@@ -34,7 +34,7 @@ $__links = ($is_admin ?? false)
 
   <nav class="hidden sm:flex items-center gap-6" aria-label="Quick links">
     <?php foreach ($__links as $l): ?>
-      <a href="<?=site_url($l[0])?>" class="text-sm font-medium hover:text-purple-400 transition-colors"><?=htmlspecialchars($l[1])?></a>
+      <a href="<?=site_url($l[0])?>" class="text-sm font-medium hover:text-brand-400 transition-colors"><?=htmlspecialchars($l[1])?></a>
     <?php endforeach; ?>
   </nav>
 

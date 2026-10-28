@@ -76,6 +76,34 @@ class SiteChromeTest extends TestCase
         }
     }
 
+    public function testHighContrastLogoIsSharedAcrossMenusAndStandalonePages()
+    {
+        $dark_logo = file_get_contents(self::$root.'/assets/brand/logo-dark.svg');
+        $icon_logo = file_get_contents(self::$root.'/assets/brand/logo-icon.svg');
+        $this->assertStringContainsString('fill="#ffffff"', $dark_logo,
+            'the wordmark and tile must stay bright on the blue menu/footer');
+        $this->assertStringContainsString('fill="#0b3f91"', $dark_logo,
+            'the A mark must contrast against the white tile');
+        $this->assertStringContainsString('fill="#ffffff"', $icon_logo,
+            'the sidebar icon tile must be white for contrast');
+
+        $logo_partial = $this->view('partials/brand_logo.php');
+        $this->assertStringContainsString("'dark'       => array('logo-dark.png', 'logo-dark.svg')", $logo_partial);
+        $this->assertStringContainsString("'icon'       => array('logo-icon.png', 'logo-icon.svg')", $logo_partial);
+
+        foreach (array('partials/navbar.php', 'partials/footer.php', 'layouts/auth.php',
+                       'partials/navigation/sidebar.php', 'partials/theme/sidebar.php') as $rel) {
+            $this->assertStringContainsString('partials/brand_logo', $this->view($rel),
+                $rel.' must use the shared, high-contrast mark');
+        }
+        foreach (array('setup/index.php', 'errors/html/error_404.php', 'errors/html/error_general.php',
+                       'errors/html/error_db.php', 'errors/html/error_exception.php',
+                       'errors/html/error_php.php', 'errors/html/maintenance.php') as $rel) {
+            $this->assertStringContainsString('assets/brand/logo-icon.svg', $this->view($rel),
+                $rel.' must include the site mark even without a standard layout');
+        }
+    }
+
     /* ============================ the navy chrome ======================== */
 
     public function testTheNavyTreatmentIsDefinedOnceForMenuAndFooter()
@@ -246,7 +274,7 @@ class SiteChromeTest extends TestCase
             $src = file_get_contents($path);
             $this->assertStringNotContainsStringIgnoringCase('WINDELSOCIALS', $src, $file);
             if (strpos($file, 'icon') === false && strpos($file, 'favicon') === false) {
-                $this->assertStringContainsString('MarvySocials', $src,
+                $this->assertStringContainsString('Active Digital Hub', $src,
                     $file.' must carry the current wordmark');
             }
         }

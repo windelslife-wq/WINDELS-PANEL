@@ -45,7 +45,7 @@ class CpanelDeploymentTest extends TestCase
             'export VP_DB_USER=cpaneluser_admin',
             "VP_DB_PASS='p@ss word#not-a-comment'",
             'VP_BASE_URL="https://example.test"',
-            'VP_MAIL_FROM_NAME=MarvySocials   # trailing comment',
+            'VP_MAIL_FROM_NAME=Active Digital Hub   # trailing comment',
             'VP_SESSION_SAVE_PATH=${VP_BASE_URL}/x',
             'not a variable line',
         )));
@@ -55,7 +55,7 @@ class CpanelDeploymentTest extends TestCase
         $this->assertSame('p@ss word#not-a-comment', $parsed['VP_DB_PASS'],
             'a # inside a quoted value is part of the password, not a comment');
         $this->assertSame('https://example.test', $parsed['VP_BASE_URL']);
-        $this->assertSame('MarvySocials', $parsed['VP_MAIL_FROM_NAME'],
+        $this->assertSame('Active Digital Hub', $parsed['VP_MAIL_FROM_NAME'],
             'an unquoted value ends at the trailing comment');
         $this->assertSame('https://example.test/x', $parsed['VP_SESSION_SAVE_PATH'],
             '${VAR} interpolation');
@@ -470,6 +470,23 @@ class CpanelDeploymentTest extends TestCase
             'the complete seeded database is not an existing-install upgrade');
     }
 
+    public function testBrandingRefreshUpdatesOnlyLegacyDefaults()
+    {
+        $path = self::$root.'/database/upgrade-branding-active-digital-hub.sql';
+        $this->assertFileExists($path);
+        $sql = file_get_contents($path);
+        $this->assertStringContainsString("'Active Digital Hub'", $sql);
+        $this->assertStringContainsString("'#1877f2'", $sql);
+        $this->assertStringContainsString("= 'MarvySocials'", $sql);
+        $this->assertStringContainsString("IN ('#6366f1', '#4f46e5')", $sql);
+        $this->assertStringNotContainsStringIgnoringCase('DROP TABLE', $sql);
+        $this->assertStringNotContainsStringIgnoringCase('DELETE FROM', $sql);
+
+        $validator = file_get_contents(self::$root.'/tools/validate_deployment_zip.sh');
+        $this->assertStringContainsString('database/upgrade-branding-active-digital-hub.sql', $validator,
+            'the built archive must be checked for the existing-install branding refresh');
+    }
+
     /* ===================== packaging and documentation ==================== */
 
     public function testTheDeploymentPackageIsBuiltWithoutTheDeveloperMachineMattering()
@@ -479,7 +496,8 @@ class CpanelDeploymentTest extends TestCase
         $src = file_get_contents($script);
 
         foreach (array('index.php', 'application', 'assets', 'database/marvysocials.sql',
-                       'database/upgrade-042-deposit-currency.sql', '.env.example', '.htaccess') as $needed) {
+                       'database/upgrade-042-deposit-currency.sql',
+                       'database/upgrade-branding-active-digital-hub.sql', '.env.example', '.htaccess') as $needed) {
             $this->assertStringContainsString($needed, $src, "the package must contain {$needed}");
         }
         $this->assertStringContainsString('system', $src,
@@ -584,7 +602,7 @@ class CpanelDeploymentTest extends TestCase
 
         foreach (array('index.php', '.htaccess', '.env.example', 'system/core/CodeIgniter.php',
                        'database/marvysocials.sql', 'database/upgrade-042-deposit-currency.sql',
-                       'README-DEPLOYMENT.txt') as $entry) {
+                       'database/upgrade-branding-active-digital-hub.sql', 'README-DEPLOYMENT.txt') as $entry) {
             $this->assertNotFalse($zip->locateName($entry), "the package is missing {$entry}");
         }
         $this->assertFalse($zip->locateName('composer.json'), 'nothing to install on the host');

@@ -60,7 +60,7 @@ const customer = {
 };
 
 async function customerJourney() {
-  const c = new Client();
+  const c = new Client(BASE);
 
   section('Customer · registration');
   let r = await c.get('/register');
@@ -82,7 +82,7 @@ async function customerJourney() {
   );
 
   section('Customer · login');
-  const c2 = new Client();
+  const c2 = new Client(BASE);
   r = await c2.get('/login');
   pageOk('GET /login renders', r, (t) => t.includes('name="password"'));
   r = await c2.postForm('/login', { identifier: customer.username, password: customer.password });
@@ -127,7 +127,7 @@ async function customerJourney() {
 }
 
 async function adminJourney(password) {
-  const a = new Client();
+  const a = new Client(BASE);
   section('Admin · login');
   let r = await a.get('/admin/login');
   pageOk('GET /admin/login renders', r, (t) => t.includes('name="password"'));

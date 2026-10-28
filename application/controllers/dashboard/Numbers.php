@@ -28,7 +28,7 @@ class Numbers extends Auth_Controller {
             'Virtual_number_model', 'Otp_message_model',
             'Service_transaction_model', 'Wallet_model',
         ));
-        $this->load->library(array('NumberService', 'DashboardStats'));
+        $this->load->library(array('NumberService'));
     }
 
     /** The rental form, plus whatever the customer currently has live. */
@@ -218,7 +218,6 @@ class Numbers extends Auth_Controller {
         $this->load->view('layouts/app', array_merge(array(
             'title'        => $title,
             'nav_active'   => 'dashboard/numbers',
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
             'content_view' => 'dashboard/numbers/'.$view,
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),

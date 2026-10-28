@@ -15,7 +15,7 @@ class SiteOperatorKnowledge {
 
     public static function site_name() {
         if (function_exists('marvy_site_name')) return marvy_site_name();
-        return 'MarvySocials';
+        return 'Active Digital Hub';
     }
 
     public static function tagline() {

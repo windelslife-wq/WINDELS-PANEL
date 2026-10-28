@@ -106,10 +106,10 @@ $ci = new class {
                 $map = array(
                     'mail_transport'  => 'smtp',
                     'mail_from_email' => 'noreply@marvy.test',
-                    'mail_from_name'  => 'MarvySocials',
+                    'mail_from_name'  => 'Active Digital Hub',
                     'mail_helo'       => '',
                     'support_email'   => 'support@marvy.test',
-                    'site_name'       => 'MarvySocials',
+                    'site_name'       => 'Active Digital Hub',
                 );
                 return array_key_exists($key, $map) ? $map[$key] : $default;
             }

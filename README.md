@@ -1,4 +1,4 @@
-# MarvySocials
+# Active Digital Hub
 
 Enterprise SMM / VTU / digital-goods reseller platform. One panel sells social-media
 services, airtime & data (VTU), virtual numbers, identity verification, gift cards,
@@ -8,16 +8,16 @@ API, and a full admin back office.
 **Stack:** PHP ≥ 7.4 / CodeIgniter 3.1.13 · MySQL 8 (or MariaDB) · Redis 7 ·
 Tailwind CSS (PHP-rendered views — no JS framework) · Docker Compose.
 
-> **MarvySocials is a traditional PHP MVC enterprise reseller and commerce
+> **Active Digital Hub is a traditional PHP MVC enterprise reseller and commerce
 > platform built on CodeIgniter 3.x, using MySQL/MariaDB as its primary
 > database. Redis is used for supporting caching or background-processing
 > functionality where required. The application is served through PHP-FPM and
 > Nginx. Node.js/npm is used only for optional frontend asset compilation
 > (Tailwind CSS) and is not part of the application's backend architecture.**
 
-**The wallet is a platform spending balance.** MarvySocials does not support
+**The wallet is a platform spending balance.** Active Digital Hub does not support
 customer wallet withdrawals: customers add funds and spend that balance on
-services and supported products within the MarvySocials ecosystem.
+services and supported products within the Active Digital Hub ecosystem.
 
 ---
 
@@ -128,7 +128,7 @@ encryption keys intact: **[docs/cpanel-deployment.md](docs/cpanel-deployment.md)
 Every command a new developer needs, end to end:
 
 ```bash
-git clone <repo-url> MarvySocials && cd MarvySocials
+git clone <repo-url> active-digital-hub && cd active-digital-hub
 
 cp .env.example .env        # fill at minimum: APP_URL, ENCRYPTION_KEY, DB_*
                             # generate the key: php -r "echo bin2hex(random_bytes(32)),PHP_EOL;"

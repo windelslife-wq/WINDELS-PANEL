@@ -14,7 +14,7 @@ class Payouts extends Admin_Controller {
 
     public function __construct() {
         parent::__construct();
-        $this->load->library(array('DashboardStats', 'PayoutService', 'EarningsService', 'ReferralService'));
+        $this->load->library(array('PayoutService', 'EarningsService', 'ReferralService'));
         $this->load->model(array('Payout_request_model', 'Earning_model',
                                  'Referral_signup_model', 'Referral_campaign_model',
                                  'Referral_code_model', 'Audit_log_model'));
@@ -281,7 +281,6 @@ class Payouts extends Admin_Controller {
             'content_view' => $view,
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
         ), $data));
     }
 }

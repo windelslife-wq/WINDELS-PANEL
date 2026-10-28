@@ -71,7 +71,7 @@ class AdminSettingsTest extends TestCase
 
         $this->assertTrue($res['ok'], $res['error'] ?? '');
         $this->assertArrayHasKey('site_name', $res['changed']);
-        $this->assertSame('MarvySocials', $res['changed']['site_name']['before']);
+        $this->assertSame('Active Digital Hub', $res['changed']['site_name']['before']);
         $this->assertSame('Naija Panel', $res['changed']['site_name']['after']);
 
         Setting_model::flush_cache();
@@ -99,7 +99,7 @@ class AdminSettingsTest extends TestCase
     {
         $app = $this->app();
 
-        $res = $app->settingsservice->save(array('site_name' => 'MarvySocials'));
+        $res = $app->settingsservice->save(array('site_name' => 'Active Digital Hub'));
 
         $this->assertTrue($res['ok']);
         $this->assertSame(array(), $res['changed'],

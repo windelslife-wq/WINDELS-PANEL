@@ -75,30 +75,39 @@ class DashboardTest extends TestCase
         }
     }
 
-    public function testDashboardControllerPassesNavActiveAndUnread()
+    public function testDashboardControllersUseSharedLazyUnreadAndNavActive()
     {
-        // The app shell relies on $nav_active and $unread — every dashboard
-        // controller must provide them so the sidebar/notification bell work.
+        // Authenticated page controllers supply navigation state; the shared
+        // layout resolves the notification bell count once, only when HTML is
+        // rendered. No individual page should issue the duplicate COUNT.
+        $base = file_get_contents(self::$root.'/application/core/MY_Controller.php');
+        $context = file_get_contents(self::$root.'/application/views/layouts/_app_context.php');
+        $this->assertStringContainsString('function shell_unread_count()', $base);
+        $this->assertStringContainsString('shell_unread_count()', $context);
+
+        foreach (array_merge(
+            glob(self::$root.'/application/controllers/dashboard/*.php'),
+            glob(self::$root.'/application/controllers/admin/*.php')
+        ) as $file) {
+            $src = file_get_contents($file);
+            $this->assertStringNotContainsString('dashboardstats->unread_count', $src,
+                basename($file).' must reuse the shared notification badge count');
+            $this->assertDoesNotMatchRegularExpression("/'unread'\\s*=>\\s*0/", $src,
+                basename($file).' must not hide the shared notification badge');
+        }
+
         foreach (glob(self::$root.'/application/controllers/dashboard/*.php') as $file) {
             $src = file_get_contents($file);
             // Controllers that only POST-and-redirect never render the shell,
-            // so they have no view variables to pass.
-            // Both authenticated shells (layouts/app and the themed
-            // layouts/app_theme) take the same variables.
+            // so they do not need navigation view variables.
             if (strpos($src, "load->view('layouts/app'") === false
                 && strpos($src, "load->view('layouts/app_theme'") === false) {
                 $this->assertStringContainsString('redirect(', $src,
                     basename($file).' renders no shell, so it must redirect');
                 continue;
             }
-            // The render() helper covers Account; the others pass inline.
-            if (strpos(basename($file), 'Account.php') !== false) {
-                $this->assertStringContainsString("'nav_active'", $src);
-                $this->assertStringContainsString("'unread'", $src);
-                continue;
-            }
-            $this->assertStringContainsString("'nav_active'", $src, basename($file).' must set nav_active');
-            $this->assertStringContainsString("'unread'", $src, basename($file).' must pass unread count');
+            $this->assertStringContainsString("'nav_active'", $src,
+                basename($file).' must identify its active navigation item');
         }
     }
 
@@ -145,6 +154,19 @@ class DashboardTest extends TestCase
         $this->assertCount(2, $out['recent_transactions']);
         $this->assertSame(5, $out['unread_notifications']);
         $this->assertCount(1, $out['unread']);
+    }
+
+    public function testOverviewCanSkipNotificationCountAlreadyProvidedByShell()
+    {
+        $ci = new DashboardFakeCI();
+        $GLOBALS['__fake_ci'] = $ci;
+        $stats = new DashboardStats();
+
+        $out = $stats->overview(42, false);
+
+        $this->assertNull($out['unread_notifications']);
+        $this->assertSame(0, $ci->db->notification_counts,
+            'the authenticated shell already reads the bell count for rendered pages');
     }
 
     public function testDashboardViewsUseDesignSystemAndNoSecrets()
@@ -233,6 +255,7 @@ class DashboardFakeNotificationModel {
     }
 }
 class DashboardFakeDb {
+    public $notification_counts = 0;
     private $selects = array();
     private $last_table;
     public function select($s, $b=false){ $this->selects[]=$s; return $this; }
@@ -248,7 +271,7 @@ class DashboardFakeDb {
     public function insert($t,$d=array()){ return true; }
     public function insert_id(){ return 1; }
     public function count_all_results($t){
-        if ($t==='notifications') return 5;
+        if ($t==='notifications') { $this->notification_counts++; return 5; }
         return 3;
     }
     public function get($t=null){

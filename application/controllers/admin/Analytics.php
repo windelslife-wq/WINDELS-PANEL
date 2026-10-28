@@ -27,7 +27,7 @@ class Analytics extends Admin_Controller {
     public function __construct() {
         parent::__construct();
         $this->require_perm('reports.view');
-        $this->load->library(array('AdminStats', 'ActivityFeed', 'DashboardStats'));
+        $this->load->library(array('AdminStats', 'ActivityFeed'));
     }
 
     public function index() {
@@ -42,7 +42,6 @@ class Analytics extends Admin_Controller {
             'content_view' => 'admin/analytics/index',
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
             'days'         => $days,
             'ranges'       => self::$ranges,
             'summary'      => $this->adminstats->revenue($days),

@@ -14,7 +14,7 @@ class Orders extends Auth_Controller {
     public function __construct() {
         parent::__construct();
         $this->load->model(array('Order_model', 'Service_model', 'Order_status_history_model', 'Refill_model'));
-        $this->load->library(array('DashboardStats', 'OrderService', 'PricingService', 'RefillService', 'form_validation'));
+        $this->load->library(array('OrderService', 'PricingService', 'RefillService', 'form_validation'));
     }
 
     public function index() {
@@ -33,7 +33,6 @@ class Orders extends Auth_Controller {
         $this->load->view('layouts/app', array(
             'title'        => 'My Orders',
             'nav_active'   => 'dashboard/orders',
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
             'content_view' => 'dashboard/orders/index',
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
@@ -65,7 +64,6 @@ class Orders extends Auth_Controller {
         $this->load->view('layouts/app', array(
             'title'        => 'Order #'.$public_id,
             'nav_active'   => 'dashboard/orders',
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
             'content_view' => 'dashboard/orders/detail',
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
@@ -101,7 +99,6 @@ class Orders extends Auth_Controller {
         $this->load->view('layouts/app', array(
             'title'        => 'New Order',
             'nav_active'   => 'dashboard/new-order',
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
             'content_view' => 'dashboard/orders/new_order',
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
@@ -179,7 +176,6 @@ class Orders extends Auth_Controller {
         $this->load->view('layouts/app', array(
             'title'        => 'Mass Order',
             'nav_active'   => 'dashboard/mass-order',
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
             'content_view' => 'dashboard/orders/mass_order',
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),

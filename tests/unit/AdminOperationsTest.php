@@ -298,6 +298,23 @@ class AdminOperationsTest extends TestCase
         }
     }
 
+    /** A removed optional library must not leave an empty PHP array item. */
+    public function testControllerSourcesHaveNoEmptyArrayItems()
+    {
+        $root = self::$root.'/application/controllers';
+        $files = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS)
+        );
+        foreach ($files as $file) {
+            if (!$file->isFile() || substr($file->getFilename(), -4) !== '.php') {
+                continue;
+            }
+            $source = file_get_contents($file->getPathname());
+            $this->assertSame(0, preg_match('/^[\t ]*,[\t ]*$/m', $source),
+                $file->getPathname().' contains an empty comma-only array item');
+        }
+    }
+
     /** Only pause/resume/cancel may be dispatched from a URL segment. */
     public function testTheActionDispatcherIsAllowListed()
     {

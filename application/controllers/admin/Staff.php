@@ -31,7 +31,7 @@ class Staff extends Admin_Controller {
     public function __construct() {
         parent::__construct();
         $this->require_perm('staff.manage');
-        $this->load->library(array('RbacService', 'UserAdminService', 'DashboardStats'));
+        $this->load->library(array('RbacService', 'UserAdminService'));
         $this->load->model(array('User_model', 'Role_model', 'Permission_model', 'Audit_log_model'));
     }
 
@@ -165,7 +165,6 @@ class Staff extends Admin_Controller {
             'content_view' => $view,
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
         ), $data));
     }
 

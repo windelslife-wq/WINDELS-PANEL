@@ -29,7 +29,7 @@ class DashboardStats {
      *   unread: array
      * }
      */
-    public function overview($user_id) {
+    public function overview($user_id, $include_unread_count = true) {
         $wallet = $this->ci->Wallet_model->for_user($user_id);
 
         return array(
@@ -37,7 +37,7 @@ class DashboardStats {
             'totals'              => $this->totals($user_id),
             'recent_orders'       => $this->ci->Order_model->for_user($user_id, 5),
             'recent_transactions' => $this->recent_transactions($wallet->id ?? 0, 5),
-            'unread_notifications'=> $this->unread_count($user_id),
+            'unread_notifications'=> $include_unread_count ? $this->unread_count($user_id) : null,
             'unread'              => $this->ci->Notification_model->unread_for_user($user_id, 5),
         );
     }

@@ -927,9 +927,7 @@ class MarketplaceService {
     private function currency_can_settle($currency) {
         $currency = strtoupper((string)$currency);
         if ($currency === marvy_base_currency()) return true;
-        $row = $this->ci->Currency_model->find($currency);
-        return $row && (int)$row->is_active === 1 && is_numeric($row->exchange_rate)
-            && bccomp((string)$row->exchange_rate, '0', 8) > 0;
+        return $this->ci->currencyservice->can_convert_to_base($currency);
     }
 
     private function user_id($user) {

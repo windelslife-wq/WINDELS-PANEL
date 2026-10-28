@@ -37,7 +37,7 @@ class Shop extends Public_Controller {
 
         $this->render_public('public/shop/index', array(
             'title' => 'Shop',
-            'meta_description' => 'Digital products, physical goods and gift cards from the MarvySocials shop — one prepaid wallet, one checkout.',
+            'meta_description' => 'Digital products, physical goods and gift cards from the Active Digital Hub shop — one prepaid wallet, one checkout.',
             'listings'   => $this->Marketplace_listing_model->catalogue($filters, self::PER_PAGE, $offset),
             'total'      => $this->Marketplace_listing_model->catalogue_count($filters),
             'featured'   => $this->Marketplace_listing_model->featured(6),
@@ -52,7 +52,7 @@ class Shop extends Public_Controller {
         $this->load->model(array('Giftcard_brand_model', 'Giftcard_product_model'));
         $this->render_public('public/shop/gift_cards', array(
             'title' => 'Gift cards',
-            'meta_description' => 'Buy gift cards from top brands, paid from your MarvySocials wallet and delivered instantly.',
+            'meta_description' => 'Buy gift cards from top brands, paid from your Active Digital Hub wallet and delivered instantly.',
             'brands' => $this->Giftcard_brand_model->sellable(),
             'cart_count' => $this->cart_count(),
         ));
@@ -69,7 +69,7 @@ class Shop extends Public_Controller {
 
         $this->render_public('public/shop/product', array(
             'title' => $listing->title,
-            'meta_description' => trim(strip_tags((string)$listing->description)) ?: 'Buy '.$listing->title.' on MarvySocials.',
+            'meta_description' => trim(strip_tags((string)$listing->description)) ?: 'Buy '.$listing->title.' on Active Digital Hub.',
             'listing' => $listing,
             'reviews' => $this->Product_review_model->approved_for_listing($listing->id, 10),
             'rating'  => $this->Product_review_model->rating_summary($listing->id),

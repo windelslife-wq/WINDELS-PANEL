@@ -423,8 +423,9 @@ class PaymentsTest extends TestCase
                     'amount_paid'        => '1000',
                 )), 'request_id' => 'r'),
             ));
-            $gateway = new FundsveraGateway(null, $http);
-            $res = $gateway->verify('MVS-PAY00000000000000001');
+            $ci = $this->fresh();
+            $ci->Fundsvera_checkout_model = new PayFakeCheckoutModel();
+            $res = (new FundsveraGateway(null, $http))->verify('MVS-PAY00000000000000001');
 
             $this->assertTrue($res['ok']);
             $this->assertSame('SUCCESS', $res['status']);
@@ -447,6 +448,8 @@ class PaymentsTest extends TestCase
                 array('http_code' => 404, 'body' => '', 'request_id' => 'r'),
                 array('http_code' => 404, 'body' => '', 'request_id' => 'r'),
             ));
+            $ci = $this->fresh();
+            $ci->Fundsvera_checkout_model = new PayFakeCheckoutModel();
             $res = (new FundsveraGateway(null, $http))->verify('MVS-UNKNOWN0000000001');
 
             $this->assertTrue($res['ok']);
@@ -466,6 +469,8 @@ class PaymentsTest extends TestCase
             $http = new PayFakeHttp(array(
                 array('http_code' => 0, 'body' => null, 'error' => 'connection timed out', 'request_id' => 'r'),
             ));
+            $ci = $this->fresh();
+            $ci->Fundsvera_checkout_model = new PayFakeCheckoutModel();
             $res = (new FundsveraGateway(null, $http))->verify('MVS-PAY00000000000000001');
 
             $this->assertFalse($res['ok']);
@@ -513,7 +518,7 @@ class PaymentsTest extends TestCase
 
             $this->assertFalse($res['ok']);
             $this->assertSame('CURRENCY_UNSUPPORTED', $res['code']);
-            $this->assertStringContainsString('default currency to NGN', $res['error']);
+            $this->assertStringContainsString('Fundsvera bank transfers collect NGN only', $res['error']);
             $this->assertCount(0, $http->calls, 'an unsupported currency must fail before any API call');
         } finally {
             putenv('FUNDSVERA_PUBLIC_KEY'); putenv('FUNDSVERA_SECRET_KEY'); putenv('FUNDSVERA_ENABLED');
@@ -783,6 +788,8 @@ class PaymentsTest extends TestCase
         try {
             $ci->tx->provider = 'paypal';
             $ci->tx->status = 'PENDING';
+            $ci->tx->amount = '100.00';
+            $ci->tx->currency = 'USD';
             $ci->tx->metadata = json_encode(array('checkout' => array(
                 'provider' => 'paypal', 'order_id' => '5O190127TN364715T')));
             $svc = new PaymentService();

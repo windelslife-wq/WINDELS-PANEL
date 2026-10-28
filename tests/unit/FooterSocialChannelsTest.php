@@ -192,7 +192,7 @@ class FooterSocialChannelsTest extends TestCase
         $app = new IntegrationHarness();
         $app->seed_minimal();
         $app->model('Setting_model');
-        $app->Setting_model->set('social_facebook_url', 'https://www.facebook.com/MarvySocials', 'social');
+        $app->Setting_model->set('social_facebook_url', 'https://www.facebook.com/Active Digital Hub', 'social');
         $app->Setting_model->set('social_telegram_url', 'https://t.me/marvysocials', 'social');
         // The documented way to drop a channel the operator does not use.
         $app->Setting_model->set('social_youtube_url', '', 'social');
@@ -200,7 +200,7 @@ class FooterSocialChannelsTest extends TestCase
 
         $links = marvy_social_links();
 
-        $this->assertSame('https://www.facebook.com/MarvySocials', $links['facebook'],
+        $this->assertSame('https://www.facebook.com/Active Digital Hub', $links['facebook'],
             'a stored URL wins over the fallback');
         $this->assertSame('https://t.me/marvysocials', $links['telegram']);
         $this->assertArrayNotHasKey('youtube', $links,

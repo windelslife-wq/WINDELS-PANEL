@@ -30,7 +30,7 @@ class Media extends Admin_Controller {
         if (!$this->auth->can('media.manage') && !$this->auth->can('appearance.manage')) {
             $this->require_perm('media.manage');
         }
-        $this->load->library(array('MediaService', 'DashboardStats'));
+        $this->load->library(array('MediaService'));
         $this->load->model(array('Media_model', 'Setting_model', 'Audit_log_model'));
     }
 
@@ -113,9 +113,9 @@ class Media extends Admin_Controller {
 
         $colour = trim((string)$this->input->post('brand_primary_color', true));
         if ($colour !== '' && !preg_match('/^#[0-9a-f]{6}$/i', $colour)) {
-            $errors[] = 'The brand colour must be a six-digit hex value such as #6366f1.';
+            $errors[] = 'The brand colour must be a six-digit hex value such as #1877f2.';
         } else {
-            $after['brand_primary_color'] = $colour ?: '#6366f1';
+            $after['brand_primary_color'] = $colour ?: '#1877f2';
         }
 
         // Logos are chosen from the library, so the stored value is always a
@@ -143,7 +143,7 @@ class Media extends Admin_Controller {
 
     private function branding() {
         return array(
-            'brand_primary_color' => $this->Setting_model->get('brand_primary_color', '#6366f1'),
+            'brand_primary_color' => $this->Setting_model->get('brand_primary_color', '#1877f2'),
             'brand_logo_url'      => $this->Setting_model->get('brand_logo_url'),
             'brand_favicon_url'   => $this->Setting_model->get('brand_favicon_url'),
         );
@@ -160,7 +160,6 @@ class Media extends Admin_Controller {
             'content_view' => $view,
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
             'area'         => $area,
             'tabs'         => $tabs,
         ), $data));

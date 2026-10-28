@@ -53,7 +53,7 @@ class Users extends Admin_Controller {
     public function __construct() {
         parent::__construct();
         $this->require_perm('users.view');
-        $this->load->library(array('UserAdminService', 'ImpersonationService', 'DashboardStats'));
+        $this->load->library(array('UserAdminService', 'ImpersonationService'));
         $this->load->model(array(
             'User_model', 'Wallet_model', 'Wallet_transaction_model',
             'Order_model', 'Service_transaction_model', 'Audit_log_model',
@@ -619,12 +619,12 @@ class Users extends Admin_Controller {
             $this->load->library('MailService');
             $this->mailservice->enqueue_raw(
                 $user->email,
-                'Your MarvySocials account was deleted',
+                'Your Active Digital Hub account was deleted',
                 '<p>Hi '.htmlspecialchars((string)$user->username).',</p><p>'.
-                    'Your MarvySocials account was permanently deleted by an administrator. '.
+                    'Your Active Digital Hub account was permanently deleted by an administrator. '.
                     'Your sign-in, sessions and security keys no longer work. '.
                     'If you believe this was a mistake, contact support immediately.</p>',
-                'Hi '.$user->username.",\n\nYour MarvySocials account was permanently deleted by an "
+                'Hi '.$user->username.",\n\nYour Active Digital Hub account was permanently deleted by an "
                 ."administrator. Your sign-in, sessions and security keys no longer work. If you "
                 ."believe this was a mistake, contact support immediately.",
                 $user->username,
@@ -659,7 +659,6 @@ class Users extends Admin_Controller {
             'content_view' => $view,
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
         ), $data));
     }
 
@@ -716,7 +715,7 @@ class Users extends Admin_Controller {
             $this->load->library('MailService');
             $this->mailservice->enqueue_raw(
                 $user->email,
-                'Your MarvySocials account: '.$title,
+                'Your Active Digital Hub account: '.$title,
                 '<p>Hi '.htmlspecialchars((string)$user->username).',</p><p>'.
                     htmlspecialchars($body).'</p>',
                 'Hi '.$user->username.",\n\n".$body,

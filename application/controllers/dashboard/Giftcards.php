@@ -31,7 +31,7 @@ class Giftcards extends Auth_Controller {
             'Giftcard_order_model', 'Giftcard_code_model',
             'Service_transaction_model', 'Wallet_model',
         ));
-        $this->load->library(array('GiftcardService', 'DashboardStats'));
+        $this->load->library(array('GiftcardService'));
     }
 
     /** The storefront. */
@@ -174,7 +174,6 @@ class Giftcards extends Auth_Controller {
         $this->load->view('layouts/app', array_merge(array(
             'title'        => $title,
             'nav_active'   => 'dashboard/giftcards',
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
             'content_view' => 'dashboard/giftcards/'.$view,
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),

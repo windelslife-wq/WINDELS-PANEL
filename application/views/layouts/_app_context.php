@@ -25,8 +25,28 @@
 $__controller_vars = get_defined_vars();
 unset($__controller_vars['content_view']);
 
+// Authenticated content views share these small, read-only presentation
+// helpers for statuses and ledger labels. Loading the definition here avoids
+// making each controller load DashboardStats solely for static view helpers.
+if (!class_exists('DashboardStats', false) && defined('APPPATH')) {
+    $dashboard_stats_file = APPPATH.'libraries/DashboardStats.php';
+    if (is_file($dashboard_stats_file)) require_once $dashboard_stats_file;
+    unset($dashboard_stats_file);
+}
+
 $is_admin = isset($current_user) && in_array($current_user->role, array('SUPER_ADMIN','ADMIN','STAFF'), true);
-$unread   = isset($unread) ? (int)$unread : 0;
+// Controllers that render the authenticated shell inherit this count from
+// Auth_Controller. Resolve it here, not during controller boot, so JSON and
+// POST/redirect requests avoid a notification COUNT they never display.
+if (!isset($unread) && function_exists('get_instance')) {
+    $CI =& get_instance();
+    if (is_object($CI) && method_exists($CI, 'shell_unread_count')) {
+        try { $unread = $CI->shell_unread_count(); } catch (Throwable $e) { $unread = 0; }
+    }
+    unset($CI);
+}
+$unread = isset($unread) ? max(0, (int)$unread) : 0;
+if (!array_key_exists('unread', $__controller_vars)) $__controller_vars['unread'] = $unread;
 $active   = isset($nav_active) ? $nav_active : trim($this->uri->uri_string(), '/');
 $nav_groups = $is_admin ? array(
     array('Overview', array(

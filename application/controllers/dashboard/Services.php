@@ -9,7 +9,7 @@ class Services extends Auth_Controller {
     public function __construct() {
         parent::__construct();
         $this->load->model(array('Service_model', 'Service_category_model'));
-        $this->load->library(array('PricingService', 'DashboardStats'));
+        $this->load->library(array('PricingService'));
     }
 
     public function index() {
@@ -26,7 +26,6 @@ class Services extends Auth_Controller {
             'content_view' => 'dashboard/services/index',
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
             'services'     => $services,
             'categories'   => $categories,
             'active_cat'   => $category,
@@ -52,7 +51,6 @@ class Services extends Auth_Controller {
             'content_view' => 'dashboard/services/index',
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
             'services'     => $rows,
             'categories'   => $this->Service_category_model->active(),
             'active_cat'   => 0,

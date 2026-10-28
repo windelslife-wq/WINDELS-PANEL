@@ -25,7 +25,7 @@ require __DIR__.'/_app_context.php';
 <meta name="csrf-name" content="<?=htmlspecialchars($this->security->get_csrf_token_name())?>">
 <meta name="csrf-token" content="<?=htmlspecialchars($this->security->get_csrf_hash())?>">
 <meta name="csrf-endpoint" content="<?=htmlspecialchars(site_url('csrf'))?>">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<?php $this->load->view('partials/web_fonts', array('font_variant' => 'sans')); ?>
 <link rel="stylesheet" href="<?=base_url('assets/css/tailwind.css')?>">
 <link rel="stylesheet" href="<?=base_url('assets/css/design-system.css')?>">
 <?php if (!empty($brand['brand_primary_color'])): ?>

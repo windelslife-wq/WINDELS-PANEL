@@ -15,7 +15,7 @@ class Marketplace extends Admin_Controller {
     public function __construct() {
         parent::__construct();
         $this->require_perm('marketplace.view');
-        $this->load->library(array('MarketplaceService', 'DashboardStats', 'MediaService'));
+        $this->load->library(array('MarketplaceService', 'MediaService'));
         $this->load->model(array(
             'Marketplace_listing_model',
             'Marketplace_order_model', 'Marketplace_category_model', 'Shop_order_shipment_model', 'Audit_log_model', 'Currency_model'
@@ -468,7 +468,6 @@ class Marketplace extends Admin_Controller {
         $this->load->view('layouts/app', array_merge(array(
             'title' => $title,
             'nav_active' => 'admin/marketplace',
-            'unread' => $this->dashboardstats->unread_count($this->current_user->id),
             'content_view' => 'admin/marketplace/'.$view,
             'current_user' => $this->current_user,
             'permissions' => $this->auth->permissions(),

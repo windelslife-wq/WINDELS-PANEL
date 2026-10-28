@@ -1,4 +1,4 @@
-# Deploying MarvySocials on cPanel
+# Deploying Active Digital Hub on cPanel
 
 **Upload the files → create the database → import one SQL file → edit `.env` →
 open the domain.** That is the whole process. No Terminal, no SSH, no Composer,
@@ -7,16 +7,19 @@ no Node.js, no migration command, no seed command, no installer script.
 The numbered installation steps below are for a new database or a move to a
 new hosting account. **Do not import the complete new-install SQL over a live
 database that already contains customers or transactions.** Existing-install
-updates use the release-specific upgrade file described below.
+updates use the included release-specific upgrade files described below.
 
-### Updating an existing installation to migration 042
+### Updating an existing installation
 
 1. Export a complete database backup in phpMyAdmin.
 2. Upload/extract the updated application package, preserving the current
    `.env`, user uploads, and storage data.
 3. In phpMyAdmin, select the existing database and import
-   `database/upgrade-042-deposit-currency.sql`.
-4. Open `/deploy-verify.php`; confirm every schema check passes, then delete the
+   `database/upgrade-042-deposit-currency.sql` (if the deposit-currency columns
+   have not already been added).
+4. Import `database/upgrade-branding-active-digital-hub.sql` to refresh legacy
+   default name and colour values while preserving custom settings.
+5. Open `/deploy-verify.php`; confirm every schema check passes, then delete the
    verifier.
 
 The upgrade is repeatable and preserves all live records. Until it is imported,

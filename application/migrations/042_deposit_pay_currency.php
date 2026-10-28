@@ -124,6 +124,15 @@ class Migration_Deposit_pay_currency extends CI_Migration {
         return $ddl[$col];
     }
 
+    /* CI_Migration has no table_exists; keep the driver call portable. */
+    private function table_exists($table) {
+        try {
+            return (bool)$this->db->table_exists($table);
+        } catch (Throwable $e) {
+            return false;
+        }
+    }
+
     /* CI_Migration has no column_exists; portable across MySQL and SQLite. */
     private function column_exists($table, $column) {
         try {

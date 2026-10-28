@@ -41,7 +41,6 @@ class Operations extends Admin_Controller {
         $this->require_perm('orders.view');
         $this->load->library(array(
             'RefillService', 'OrderService', 'DripfeedService', 'SubscriptionService',
-            'DashboardStats',
         ));
         $this->load->model(array(
             'Refill_model', 'Order_model', 'Subscription_model', 'Dripfeed_order_model',
@@ -261,7 +260,6 @@ class Operations extends Admin_Controller {
             'content_view' => $view,
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
             'queue'        => $queue,
             'tabs'         => $tabs,
         ), $data));

@@ -247,7 +247,7 @@ try {
     ['refund a VTU purchase',  'vtu.refund',         `/admin/vtu/${targets.vtu}/refund`,      { reason: 'e2e' }],
     ['adjust a wallet',        'wallets.adjust',     `/admin/customers/${targets.customer}/adjust`,
                                                      { direction: 'CREDIT', amount: '1', note: 'e2e' }],
-    ['change a setting',       'settings.manage',    '/admin/settings/save', { site_name: 'MarvySocials' }],
+    ['change a setting',       'settings.manage',    '/admin/settings/save', { site_name: 'Active Digital Hub' }],
   ];
 
   const page = await staff.get('/admin/orders');

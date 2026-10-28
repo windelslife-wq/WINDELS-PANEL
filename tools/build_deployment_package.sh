@@ -166,6 +166,7 @@ copy assets
 copy cron
 copy database/marvysocials.sql
 copy database/upgrade-042-deposit-currency.sql
+copy database/upgrade-branding-active-digital-hub.sql
 copy database/schema_verification.php
 copy database/README.md
 copy docs/cpanel-deployment.md
@@ -303,7 +304,7 @@ done
 # 5. A README the operator sees first
 # ---------------------------------------------------------------------------
 cat > "${STAGE}/README-DEPLOYMENT.txt" <<'TXT'
-MarvySocials — cPanel deployment
+Active Digital Hub — cPanel deployment
 =================================
 
 Six steps, no terminal, no Composer, no npm, no symlinks.
@@ -356,7 +357,8 @@ EXISTING INSTALLATION UPDATE (preserves all live data)
    2. Upload/extract the new application package over the application files.
       Keep the existing .env and storage uploads.
    3. In phpMyAdmin select the EXISTING database and import:
-         database/upgrade-042-deposit-currency.sql
+         database/upgrade-042-deposit-currency.sql (if not already applied)
+         database/upgrade-branding-active-digital-hub.sql
       Do NOT import marvysocials.sql over a live database; that file is the
       complete new-install database and includes seed records.
    4. Open /deploy-verify.php. When every check is green, delete that file.
@@ -421,7 +423,7 @@ echo "  ${SIZE}, ${FILES} files"
 echo
 echo "  Contents: index.php .htaccess .env.example deploy-verify.php application/"
 echo "            system/ (real files) vendor/ (framework + autoloader) assets/"
-echo "            storage/ database/marvysocials.sql database/upgrade-042-deposit-currency.sql"
+echo "            storage/ database/marvysocials.sql database/upgrade-042-deposit-currency.sql database/upgrade-branding-active-digital-hub.sql"
 echo "            cron/ README-DEPLOYMENT.txt"
 echo
 echo "  New install: extract, import database/marvysocials.sql, configure .env."

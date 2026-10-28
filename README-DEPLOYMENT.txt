@@ -1,4 +1,4 @@
-MarvySocials — cPanel deployment
+Active Digital Hub — cPanel deployment
 =================================
 
 Six steps, no terminal, no Composer, no npm, no symlinks.

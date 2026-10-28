@@ -102,7 +102,7 @@ class Services extends Public_Controller {
 
         $this->render_public('public/services/detail', array(
             'title'        => $service->name,
-            'meta_description' => trim(strip_tags((string)$service->description)) ?: 'Order '.$service->name.' on MarvySocials.',
+            'meta_description' => trim(strip_tags((string)$service->description)) ?: 'Order '.$service->name.' on Active Digital Hub.',
             'service'      => $service,
             'category'     => $category,
             'user_price'   => $user_price,

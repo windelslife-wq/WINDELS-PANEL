@@ -13,7 +13,7 @@ class Earnings extends Auth_Controller {
 
     public function __construct() {
         parent::__construct();
-        $this->load->library(array('DashboardStats', 'EarningsService', 'PayoutService', 'ReferralService'));
+        $this->load->library(array('EarningsService', 'PayoutService', 'ReferralService'));
         $this->load->model(array('Earning_model', 'Payout_request_model'));
     }
 
@@ -89,7 +89,6 @@ class Earnings extends Auth_Controller {
             'content_view' => $view,
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
         ), $data));
     }
 }

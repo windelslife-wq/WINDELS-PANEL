@@ -1,13 +1,15 @@
 # Unfinished work — MarvySocials
 
-*As of 2026-08-31, branch `arena/01a058f9-windels-panel`. Item 5's
+*Reviewed 2026-10-28 on branch `arena/e14939c8-windels-panel`. Item 5's
 auto-run remainder is closed by module 38
 ([module-cron-autorun.md](module-cron-autorun.md), commit `987c488`): the
 panel now runs its own due jobs from ordinary traffic — no crontab
 required — and the dead-DB crash in the `cron` CLI is fixed with it.
-Item 22 moved: both workflows are now authored and stored in
-[github-actions/](github-actions/); what remains is the one-time UI
-activation, still blocked on the `workflows` permission.*
+Item 22 remains externally blocked: both workflows are authored and stored
+in [github-actions/](github-actions/), but activation still needs a push with
+the `workflows` permission. The latest local code audit also resolved the
+stale payment fixtures and moved marketplace currency-eligibility checks
+behind `CurrencyService`; the full verification pipeline is recorded below.*
 
 **Progress:** items 11 and 12 are **closed** by module 17
 ([module-private-attachments.md](module-private-attachments.md)) and item 13 by
@@ -27,11 +29,16 @@ physical-shipping escrow audit in this session
 Closed items stay in the table below, struck through, so the list reads as a
 record rather than a moving target.
 
-There are **no half-built modules left**. Every module in
-[modules.md](modules.md) is implemented, tested and driven end to end
-(`tools/verify_all.sh` — 48 stages, 0 failed re-confirmed 2026-08-31; 1658
-PHP tests, 0 failures), and a grep of `application/` finds no `TODO`,
-`FIXME`, "not implemented" or scaffold markers.
+There are **no half-built modules left**: every module in
+[modules.md](modules.md) has an implementation, and remaining work is either a
+known infrastructure validation or listed explicitly below. The latest
+locally available verification run (`tools/verify_all.sh --unit-only`,
+2026-10-28) passed all five stages: syntax, JavaScript checks, the PHP suite,
+production SQL freshness, and deployment-package build. The PHP suite reports
+1,811 tests, 0 failures, and 1 documented platform skip. A grep of
+`application/` finds no actionable `TODO`, `FIXME`, "not implemented" or
+scaffold markers. End-to-end checks requiring the live dev database and
+application server were not run in this audit.
 
 What follows is the honest list of what is **not finished**, in three
 categories: features deliberately left incomplete, known defects/races still
@@ -61,9 +68,9 @@ open, and things this sandbox cannot prove.
 | ~~11~~ | ~~**Digital-file URL after revocation**~~ | **Closed (module 17).** Proved by replaying a link captured *before* a refund: refused, and no fresh link can be minted. The concern was unfounded — `resolve_download()` re-checks revocation on every request — but the check that should have shown that was fetching a file that did not exist. Fixture corrected. |
 | ~~12~~ | ~~**Ticket-attachment URLs**~~ | **Closed (module 17).** Attachments now live outside the document root and are served only by `Attachment::ticket()`, which checks the session, the ticket's owner and the internal-note flag. Migration 029 moves the files that already exist and breaks the old URLs. |
 | ~~13~~ | ~~**Per-customer coupon race**~~ | **Closed (module 18).** Migration 030 adds `redemption_slot` and a UNIQUE index over `(coupon_id, user_id, redemption_slot)`; the slot is reserved before any charge and released if the checkout does not complete. Proved by two simultaneous `/checkout/place` requests: exactly one redemption. |
-| ~~14~~ | ~~**Admin dashboard query cost**~~ | **Closed (module 20).** 31 queries → 20: the status GROUP BY is memoised and carries "today" and "stuck", two nested revenue windows cost one pass per table instead of eight queries, `users` and `tickets` are each scanned once. Held at 22 by `perf_check` under the 12,000-order load fixture. |
+| ~~14~~ | ~~**Admin dashboard query cost**~~ | **Closed (module 20; re-audited 2026-10-28).** The status GROUP BY is memoised and carries "today" and "stuck", nested revenue windows scan each money table once, and `users` and `tickets` are each scanned once. The expanded command center now uses 26 fixed queries (including inbox, contact-message, freshness and cross-domain widgets); a duplicate unread count was removed. `perf_check` warms the admin dashboard once (so a due auto-cron batch is not attributed to its widgets), then measures the full admin/customer dashboard set against 12,000 orders, 20,000 wallet movements and 800 tickets; the isolated dashboard query cost remains independent of list size. |
 | 15 | **No index review under load** | SQLite's planner is not MySQL's, so no `EXPLAIN` work has been done on the real engine. |
-| ~~16~~ | ~~**`testAJobCannotOverlapItself`**~~ | **Closed (this session).** The skip was load-bearing, not lazy: the aliasing was re-probed on the current build (two `fopen()` handles on one lock file — the second `flock(LOCK_EX|LOCK_NB)` returns `true` under emscripten, `false` on a kernel), so the *primitive* still cannot be asserted under wasm, and the visible platform skip stays. What the lock exists **for** now is pinned on every runtime by a new portable test, `testAnUnavailableLockIsSkippedWithoutRunning`: a directory placed where the lock file should be makes `fopen()` fail on every POSIX kernel and in the wasm filesystem alike, driving the exact skip branch a held lock would — skipped reported, work not run, no `RUNNING` row left behind. The suite is 1603 tests, 0 failures, and its one remaining skip is documented in the test itself, with a cross-reference to the portable coverage. |
+| ~~16~~ | ~~**`testAJobCannotOverlapItself`**~~ | **Closed (this session).** The skip was load-bearing, not lazy: the aliasing was re-probed on the current build (two `fopen()` handles on one lock file — the second `flock(LOCK_EX|LOCK_NB)` returns `true` under emscripten, `false` on a kernel), so the *primitive* still cannot be asserted under wasm, and the visible platform skip stays. What the lock exists **for** now is pinned on every runtime by a new portable test, `testAnUnavailableLockIsSkippedWithoutRunning`: a directory placed where the lock file should be makes `fopen()` fail on every POSIX kernel and in the wasm filesystem alike, driving the exact skip branch a held lock would — skipped reported, work not run, no `RUNNING` row left behind. The suite has 1,811 tests, 0 failures, and its one remaining skip is documented in the test itself, with a cross-reference to the portable coverage. |
 
 ## C. Cannot be finished in this environment (no credentials / no services)
 

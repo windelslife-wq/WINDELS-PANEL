@@ -48,9 +48,9 @@ $picker = function ($field, $current) use ($images) {
     <p class="muted text-xs mb-3">Used for buttons and accents across the panel and the homepages.</p>
     <div class="row" style="gap:.5rem;align-items:center">
       <input class="input" type="color" name="brand_primary_color"
-             value="<?=htmlspecialchars($branding['brand_primary_color'] ?: '#6366f1')?>"
+             value="<?=htmlspecialchars($branding['brand_primary_color'] ?: '#1877f2')?>"
              style="width:4rem;padding:.2rem" aria-label="Brand colour">
-      <span class="mono text-xs muted"><?=htmlspecialchars($branding['brand_primary_color'] ?: '#6366f1')?></span>
+      <span class="mono text-xs muted"><?=htmlspecialchars($branding['brand_primary_color'] ?: '#1877f2')?></span>
     </div>
   </div>
 

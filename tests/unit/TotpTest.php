@@ -24,10 +24,10 @@ class TotpTest extends TestCase
 
     public function testProvisioningUriFormat()
     {
-        $uri = Totp::provisioning_uri('JBSWY3DPEHPK3PXP', 'user@example.com', 'MARVYSOCIALS');
+        $uri = Totp::provisioning_uri('JBSWY3DPEHPK3PXP', 'user@example.com', 'Active Digital Hub');
         $this->assertStringStartsWith('otpauth://totp/', $uri);
         $this->assertStringContainsString('secret=JBSWY3DPEHPK3PXP', $uri);
-        $this->assertStringContainsString('issuer=MARVYSOCIALS', $uri);
+        $this->assertStringContainsString('issuer=Active+Digital+Hub', $uri);
         $this->assertStringContainsString('digits=6', $uri);
     }
 

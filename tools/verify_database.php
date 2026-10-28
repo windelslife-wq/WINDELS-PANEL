@@ -322,7 +322,7 @@ $counts = array('table'=>0,'column'=>0,'type'=>0,'fk'=>0,'index'=>0);
 foreach ($errors as $e) $counts[$e[0]]++;
 
 if (!$QUIET || $errors) {
-    echo "MarvySocials — database ↔ code audit\n";
+    echo "Active Digital Hub — database ↔ code audit\n";
     echo "schema: database/marvysocials.sql — " . count($TABLES) . " tables\n";
     echo "code:   " . count($files) . " PHP files scanned\n";
     echo str_repeat('-', 68) . "\n";

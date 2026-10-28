@@ -30,7 +30,7 @@ class Inbox extends Admin_Controller {
         // the mail configuration permission: whoever runs the mail queue
         // reads the inbox.
         $this->require_perm('settings.manage');
-        $this->load->library(array('InboxService', 'MailService', 'DashboardStats'));
+        $this->load->library(array('InboxService', 'MailService'));
         $this->load->model('Audit_log_model');
     }
 
@@ -46,7 +46,7 @@ class Inbox extends Admin_Controller {
         $this->render('Inbox', 'admin/inbox/index', array(
             'rows'         => $rows,
             'total'        => $total,
-            'unread'       => $this->inboxservice->count_admin('UNREAD'),
+            'inbox_unread' => $this->inboxservice->count_admin('UNREAD'),
             'status'       => $status,
             'page'         => $page,
             'total_pages'  => max(1, (int) ceil($total / $limit)),
@@ -175,7 +175,6 @@ class Inbox extends Admin_Controller {
             'content_view' => $view,
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
         ), $data));
     }
 }

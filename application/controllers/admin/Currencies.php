@@ -18,7 +18,7 @@ class Currencies extends Admin_Controller {
     public function __construct() {
         parent::__construct();
         $this->require_perm('settings.manage');
-        $this->load->library(array('CurrencyService', 'SettingsService', 'DashboardStats'));
+        $this->load->library(array('CurrencyService', 'SettingsService'));
     }
 
     /** GET /admin/currencies */
@@ -29,7 +29,6 @@ class Currencies extends Admin_Controller {
             'content_view' => 'admin/currencies/index',
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
             'currencies'   => $this->currencyservice->all(),
             'base_currency'=> $this->currencyservice->base_code(),
             'display_currency' => $this->currencyservice->display_code(),

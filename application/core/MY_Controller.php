@@ -459,12 +459,18 @@ class Auth_Controller extends MY_Controller {
             }
         }
 
-        // Expose the unread count and the persistent impersonation banner to
-        // every authenticated layout.
+        // The persistent banner is needed by every authenticated layout.
+        // The unread badge is resolved lazily by the shared shell: API and
+        // POST/redirect requests never render that badge and should not pay
+        // for its notification COUNT query.
         $this->load->vars(array(
-            'unread'        => $this->auth->unread_count(),
             'impersonation' => $this->impersonation,
         ));
+    }
+
+    /** Read the bell count only when an authenticated HTML shell is rendered. */
+    public function shell_unread_count() {
+        return $this->auth ? $this->auth->unread_count() : 0;
     }
 }
 

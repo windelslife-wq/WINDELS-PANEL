@@ -35,7 +35,7 @@ class Content extends Admin_Controller {
             && !$this->auth->can('announcements.manage')) {
             $this->require_perm('blog.manage');
         }
-        $this->load->library(array('ContentService', 'DashboardStats'));
+        $this->load->library(array('ContentService'));
         $this->load->model(array(
             'Blog_post_model', 'Blog_category_model', 'Faq_model',
             'Announcement_model', 'Audit_log_model', 'Managed_page_model',
@@ -474,7 +474,6 @@ class Content extends Admin_Controller {
             'content_view' => $view,
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
             'domain'       => $domain,
             'domains'      => ContentService::domains(),
         ), $data));

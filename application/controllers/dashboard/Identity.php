@@ -29,7 +29,7 @@ class Identity extends Auth_Controller {
             'Identity_product_model', 'Identity_check_model',
             'Service_transaction_model', 'Wallet_model',
         ));
-        $this->load->library(array('IdentityService', 'DashboardStats'));
+        $this->load->library(array('IdentityService'));
     }
 
     /** The check form. */
@@ -163,7 +163,6 @@ class Identity extends Auth_Controller {
         $this->load->view('layouts/app', array_merge(array(
             'title'        => $title,
             'nav_active'   => 'dashboard/identity',
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
             'content_view' => 'dashboard/identity/'.$view,
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),

@@ -30,7 +30,7 @@ class Numbers extends Admin_Controller {
     public function __construct() {
         parent::__construct();
         $this->require_perm('numbers.view');
-        $this->load->library(array('TransactionEngine', 'NumberService', 'DashboardStats'));
+        $this->load->library(array('TransactionEngine', 'NumberService'));
         $this->load->model(array(
             'Service_transaction_model', 'Virtual_number_model', 'Otp_message_model',
             'Service_transaction_status_history_model', 'Provider_transaction_model',
@@ -55,7 +55,6 @@ class Numbers extends Admin_Controller {
             'content_view' => 'admin/numbers/index',
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
             'transactions' => $this->Service_transaction_model->admin_search($filters, $limit, ($page - 1) * $limit),
             'counts'       => $this->Service_transaction_model->status_counts(self::DOMAIN),
             'filters'      => $filters,
@@ -77,7 +76,6 @@ class Numbers extends Admin_Controller {
             'content_view'   => 'admin/numbers/detail',
             'current_user'   => $this->current_user,
             'permissions'    => $this->auth->permissions(),
-            'unread'         => $this->dashboardstats->unread_count($this->current_user->id),
             'tx'             => $tx,
             'number'         => $number,
             'messages'       => $number ? $this->Otp_message_model->for_number($number->id) : array(),

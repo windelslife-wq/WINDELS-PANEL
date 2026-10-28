@@ -13,6 +13,8 @@
  */
 import { DatabaseSync } from 'node:sqlite';
 import crypto from 'node:crypto';
+import net from 'node:net';
+import { spawn } from 'node:child_process';
 import { Client } from './client.mjs';
 
 const argv = process.argv.slice(2);
@@ -342,12 +344,46 @@ check('no earning is created merely by signing up', after === before,
 // POST must answer quickly with a redirect to the provider's checkout_url —
 // never hang, never die, never land the customer somewhere unexplained.
 //
-// Requires: node tools/devserver/fake_fundsvera.mjs --port 9410
+// Starts the local fake automatically unless FAKE_FV_URL points at an external fixture.
 // ---------------------------------------------------------------------------
 const FAKE_FV = process.env.FAKE_FV_URL || 'http://127.0.0.1:9410';
 const FV_SECRET = process.env.FAKE_FV_SECRET || 'fv-secret-for-dev-only';
 const FV_PUBLIC = process.env.FAKE_FV_PUBLIC || 'pk_dev_fake';
 const CARD_SECRET = 'card-secret-' + crypto.randomBytes(6).toString('hex');
+
+// The e2e suite owns its provider fixture so verify_all.sh is reproducible
+// from a clean checkout. An explicit FAKE_FV_URL remains an operator-managed
+// external fixture for focused debugging.
+let fakeFundsvera = null;
+if (!process.env.FAKE_FV_URL && process.env.FAKE_FV_EXTERNAL !== '1') {
+  const fakePort = Number(new URL(FAKE_FV).port || 80);
+  const portIsFree = await new Promise((resolve) => {
+    const socket = net.connect(fakePort, '127.0.0.1');
+    socket.once('connect', () => { socket.destroy(); resolve(false); });
+    socket.once('error', () => resolve(true));
+  });
+  if (!portIsFree) {
+    console.error(`Fundsvera fixture port ${fakePort} is already in use; refusing to test another process.`);
+    process.exit(2);
+  }
+  fakeFundsvera = spawn(process.execPath,
+    ['tools/devserver/fake_fundsvera.mjs', '--port', String(fakePort)],
+    { cwd: process.cwd(), env: { ...process.env, FAKE_FV_SECRET: FV_SECRET, FAKE_FV_PUBLIC: FV_PUBLIC }, stdio: 'ignore' });
+  process.once('exit', () => { if (fakeFundsvera && fakeFundsvera.exitCode === null) fakeFundsvera.kill('SIGTERM'); });
+  let ready = false;
+  for (let i = 0; i < 50; i++) {
+    if (fakeFundsvera.exitCode !== null) break;
+    try {
+      const health = await fetch(`${FAKE_FV}/__stats`);
+      if (health.ok) { ready = true; break; }
+    } catch {}
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  if (!ready) {
+    fakeFundsvera.kill('SIGTERM');
+    throw new Error(`Fundsvera fixture did not start on ${FAKE_FV}`);
+  }
+}
 
 async function fvBehavior(behavior) {
   await fetch(`${FAKE_FV}/__control/behavior`, {

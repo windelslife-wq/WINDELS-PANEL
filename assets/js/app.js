@@ -1,5 +1,5 @@
 /**
- * MarvySocials — vanilla JS (no framework).
+ * Active Digital Hub — vanilla JS (no framework).
  *
  * Its one job today is CSRF plumbing, because that is what silently breaks
  * every page that posts more than once.

@@ -1,5 +1,5 @@
 /* =========================================================================
-   MarvySocials — Design System
+   Active Digital Hub — Design System
    -------------------------------------------------------------------------
    Self-contained stylesheet: brand tokens, base reset, typography, and
    reusable component classes. It is loaded AFTER tailwind.css in the layouts
@@ -347,7 +347,7 @@ button { font-family:inherit; cursor:pointer; }
    contact / services / shop write-ups. --text-secondary flips with the theme. */
 .ws-lede{font-size:1.125rem;color:var(--text-secondary);max-width:40rem}
 /* Kicker uses the themeable --primary, not the fixed --brand-700: the hero
-   eyebrows ("Support", "Services", "Shop") sat dark-indigo on a dark hero in
+   eyebrows ("Support", "Services", "Shop") sat dark blue on a dark hero in
    dark mode. --primary flips (brand-600 light, brand-500 dark). */
 .ws-kicker{display:inline-block;font-size:.75rem;font-weight:700;letter-spacing:.12em;
   text-transform:uppercase;color:var(--primary);margin-bottom:.75rem}
@@ -473,7 +473,7 @@ button { font-family:inherit; cursor:pointer; }
 .ws-toc a{display:block;padding:.35rem 0;color:var(--text-secondary);font-size:.9rem}
 .ws-legal-grid{display:grid;grid-template-columns:220px 1fr;gap:2.5rem;align-items:start}
 @media(max-width:800px){.ws-legal-grid{grid-template-columns:1fr}.ws-toc{position:static}}
-/* The callout panel keeps its fixed pale-indigo background in BOTH themes —
+/* The callout panel keeps its fixed pale-blue background in BOTH themes —
    the dark theme re-themes the text variables, not --brand-50 — so the text
    must be pinned black for both: left to inherit, it tracked the theme and
    turned near-white on the pale panel in dark mode (the security-practices
@@ -856,23 +856,18 @@ button { font-family:inherit; cursor:pointer; }
 .ws-app-footer a:hover{opacity:1;text-decoration:underline}
 .dark .ws-app-footer{border-top-color:rgba(148,163,184,.25)}
 
-/* ===================== Navy chrome: menu + footer ========================
+/* ===================== Blue chrome: menu + footer ========================
  *
- * One navy treatment, written once, applied to every navigation surface and
- * to the footer. Before this the public site had two different headers (the
- * shared navbar on some pages, a hand-written one in the themed shell on the
- * rest) and the footer inherited the page background, so "the menu" looked
- * different depending on which page you were on.
- *
- * The palette is fixed rather than derived from --brand: an operator changing
- * their accent colour should not be able to make the navigation illegible.
- * Accent hovers still use the brand colour where it stays readable on navy.
+ * One accessible blue treatment, written once, applied to every navigation
+ * surface and to the footer so the whole site shares one unmistakable brand.
+ * The fixed blue ramp keeps white navigation text readable even when an
+ * operator changes the editable accent color elsewhere in settings.
  */
 :root{
-  --ws-navy-900:#0b1b3a;
-  --ws-navy-800:#102449;
-  --ws-navy-700:#16305c;
-  --ws-navy-600:#1d3c73;
+  --ws-navy-900:#0b3f91;
+  --ws-navy-800:#0f4fa8;
+  --ws-navy-700:#125dbb;
+  --ws-navy-600:#1265c3;
   --ws-navy-line:rgba(255,255,255,.14);
   --ws-navy-ink:#ffffff;
   --ws-navy-ink-dim:rgba(255,255,255,.76);
@@ -912,7 +907,7 @@ button { font-family:inherit; cursor:pointer; }
 .ws-public-nav .ws-nav-panel a,
 .ws-public-nav .ws-nav-panel button{ color:var(--ws-navy-ink); }
 .ws-public-nav .ws-nav-panel a:hover{ background:var(--ws-navy-700); }
-/* Ghost buttons sit on navy in the nav, so they need light ink. */
+/* Ghost buttons sit on blue in the nav, so they need light ink. */
 .ws-public-nav .btn-ghost,
 .ws-auth-header .btn-ghost{
   color:var(--ws-navy-ink);
@@ -961,9 +956,9 @@ button { font-family:inherit; cursor:pointer; }
 .ws-footer .muted,
 .ws-app-footer .muted{ color:var(--ws-navy-ink-dim); }
 .ws-footer-meta{ border-top-color:var(--ws-navy-line); color:var(--ws-navy-ink-dim); }
-/* Social buttons need no navy restatement: each mark carries its own original
+/* Social buttons need no blue restatement: each mark carries its own original
    brand colour on a white button, which is what keeps them visible (and
-   recognisable) on the navy footer. These two rules exist purely for
+   recognisable) on the blue footer. These two rules exist purely for
    specificity — `.ws-footer a` and `.ws-footer a:hover` would otherwise win
    (they are class+type) and underline the marks. */
 .ws-footer .ws-social-btn,
@@ -980,7 +975,7 @@ button { font-family:inherit; cursor:pointer; }
  * a flex column that centres the write-up — vertically in the panel and
  * horizontally on the page — over a gradient that guarantees contrast, and on
  * small screens the photo is dropped altogether in favour of a compact banner
- * above the form. The logo no longer lives in the panel at all: the navy
+ * above the form. The logo no longer lives in the panel at all: the blue
  * header above already carries the mark, so the photograph belongs to the
  * words alone.
  */
@@ -995,7 +990,7 @@ button { font-family:inherit; cursor:pointer; }
 .ws-auth-visual::after{
   content:"";
   position:absolute; inset:0;
-  background:linear-gradient(180deg,rgba(11,27,58,.35) 0%,rgba(11,27,58,.82) 62%,rgba(11,27,58,.95) 100%);
+  background:linear-gradient(180deg,rgba(11,63,145,.35) 0%,rgba(11,63,145,.82) 62%,rgba(11,63,145,.95) 100%);
   z-index:0;
 }
 .ws-auth-visual-inner{
@@ -1094,4 +1089,129 @@ button { font-family:inherit; cursor:pointer; }
   border-radius:50% 50% 50% 0; transform:rotate(-45deg);
   background:var(--brand-600); border:2px solid #fff;
   box-shadow:0 1px 4px rgba(15,23,42,.45);
+}
+
+/* =================== Polished depth across every area ===================
+ * Applied by the shared public/authenticated shells, so list, detail, form,
+ * and dashboard pages inherit one consistent elevated surface language.
+ * The depth is CSS-only: no WebGL, external assets, or script dependency.
+ */
+:root{
+  --depth-shadow:0 18px 42px -28px rgba(15,42,84,.34),0 4px 12px rgba(15,42,84,.06);
+  --depth-shadow-hover:0 28px 56px -30px rgba(24,119,242,.32),0 10px 22px rgba(15,42,84,.10);
+  --depth-edge:rgba(255,255,255,.82);
+}
+.dark{
+  --depth-shadow:0 18px 44px -28px rgba(0,0,0,.72),0 4px 14px rgba(0,0,0,.24);
+  --depth-shadow-hover:0 28px 58px -30px rgba(24,119,242,.34),0 12px 24px rgba(0,0,0,.32);
+  --depth-edge:rgba(148,163,184,.14);
+}
+
+/* Gentle atmosphere behind every signed-in page, with content remaining on a
+   clean readable surface. */
+.ws-app-main{
+  background:
+    radial-gradient(ellipse 34rem 24rem at 92% 0%,rgba(24,119,242,.055),transparent 72%),
+    var(--color-bg);
+}
+.dark .ws-app-main{
+  background:
+    radial-gradient(ellipse 34rem 24rem at 92% 0%,rgba(59,130,246,.105),transparent 72%),
+    var(--color-bg);
+}
+.ws-topbar{
+  backdrop-filter:blur(16px);
+  background:color-mix(in srgb,var(--color-surface) 90%,transparent);
+  box-shadow:0 8px 24px -22px rgba(15,23,42,.38);
+}
+
+/* A compact title-stage on every authenticated screen makes the page title,
+   breadcrumb and actions read as one deliberate, navigable unit. */
+.ws-page-head{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  padding:1.1rem 1.25rem;
+  border:1px solid color-mix(in srgb,var(--color-border) 78%,var(--brand-200));
+  border-radius:var(--radius-xl);
+  background:linear-gradient(115deg,var(--color-surface),color-mix(in srgb,var(--brand-50) 58%,var(--color-surface)) 100%);
+  box-shadow:var(--depth-shadow);
+}
+.dark .ws-page-head{
+  border-color:rgba(148,163,184,.16);
+  background:linear-gradient(115deg,var(--color-surface),rgba(24,54,94,.44));
+}
+.ws-page-head::after{
+  content:"";
+  position:absolute;
+  z-index:-1;
+  width:13rem;
+  aspect-ratio:1;
+  right:-4rem;
+  top:-7rem;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(24,119,242,.13),rgba(24,119,242,0) 68%);
+  pointer-events:none;
+}
+.ws-page-head-row,.ws-breadcrumb{position:relative;z-index:1}
+.ws-page-title{color:var(--text-primary)}
+
+/* Shared card treatment covers customer, staff, public and auth content,
+   keeping page-to-page quality consistent without changing markup. */
+.ws-app-content .card,
+.ws-public-shell main .card,
+.ws-auth-form-card{
+  border-color:color-mix(in srgb,var(--color-border) 88%,var(--brand-100));
+  box-shadow:var(--depth-shadow);
+  transform-style:preserve-3d;
+  transition:transform .22s cubic-bezier(.2,.7,.2,1),box-shadow .22s,border-color .22s;
+}
+.dark .ws-app-content .card,
+.dark .ws-public-shell main .card,
+.dark .ws-auth-form-card{border-color:rgba(148,163,184,.16)}
+.ws-app-content .card:hover,
+.ws-public-shell main .card:hover,
+.ws-auth-form-card:hover{
+  transform:perspective(1100px) translateY(-3px) rotateX(.55deg);
+  box-shadow:var(--depth-shadow-hover);
+  border-color:color-mix(in srgb,var(--brand-400) 44%,var(--color-border));
+}
+.ws-stat-grid > .card,
+.ws-action-grid > .card,
+.ws-action-grid > .ws-action-card{
+  position:relative;
+  overflow:hidden;
+  isolation:isolate;
+}
+.ws-stat-grid > .card::before,
+.ws-action-grid > .card::before,
+.ws-action-grid > .ws-action-card::before{
+  content:"";
+  position:absolute;
+  inset:0 0 auto;
+  height:3px;
+  background:linear-gradient(90deg,var(--brand-500),var(--accent-300),transparent 88%);
+  opacity:.82;
+  pointer-events:none;
+}
+.ws-stat-value{ text-shadow:0 8px 20px rgba(24,119,242,.12); }
+
+/* Auth marketing panel and the form are layered on the shared auth pages. */
+.ws-auth-visual{perspective:1200px}
+.ws-auth-visual-inner{transform:translateZ(18px)}
+.ws-auth-form-card{position:relative;transform:translateZ(8px)}
+
+@media (max-width:767px){
+  .ws-page-head{padding:1rem;border-radius:var(--radius-lg)}
+  .ws-app-content .card:hover,.ws-public-shell main .card:hover,.ws-auth-form-card:hover{
+    transform:translateY(-2px);
+  }
+}
+@media (prefers-reduced-motion:reduce){
+  .ws-app-content .card,.ws-public-shell main .card,.ws-auth-form-card{
+    transition:none;
+  }
+  .ws-app-content .card:hover,.ws-public-shell main .card:hover,.ws-auth-form-card:hover{
+    transform:none;
+  }
 }

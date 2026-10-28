@@ -79,7 +79,7 @@ class MessagingTest extends TestCase
         $kofi = $app->User_model->find_by_email('kofi@example.test');
 
         $app->inboxservice->deliver(
-            'USER', $ada->id, $ada->email, 'MarvySocials', 'support@panel.test',
+            'USER', $ada->id, $ada->email, 'Active Digital Hub', 'support@panel.test',
             'Re: Do you deliver to Nigeria?', 'Yes — all services work for Nigerian accounts.',
             'aireply:CMSG0000000000000000000001'
         );

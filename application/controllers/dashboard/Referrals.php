@@ -14,7 +14,7 @@ class Referrals extends Auth_Controller {
 
     public function __construct() {
         parent::__construct();
-        $this->load->library(array('DashboardStats', 'AffiliateService'));
+        $this->load->library(array('AffiliateService'));
         $this->load->model(array('Referral_model', 'Referral_commission_model'));
     }
 
@@ -27,7 +27,6 @@ class Referrals extends Auth_Controller {
             'content_view' => 'dashboard/referrals/index',
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
             'stats'        => $stats,
             'code'         => $stats['code'],
             'link'         => $stats['link'],
@@ -52,7 +51,6 @@ class Referrals extends Auth_Controller {
             'content_view' => 'dashboard/referrals/commissions',
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
             'commissions'  => $rows,
             'status'       => $status,
             'page'         => $page,

@@ -247,7 +247,7 @@ class PinService {
             $this->ci->load->library('MailService');
             $this->ci->mailservice->enqueue_raw(
                 $user->email,
-                'Your MarvySocials security PIN was refreshed',
+                'Your Active Digital Hub security PIN was refreshed',
                 '<p>Hi '.htmlspecialchars($user->username).',</p>'
                 .'<p>For your protection, your transaction PIN rotates automatically every '
                 .$this->rotation_hours().' hours.</p>'
@@ -305,7 +305,7 @@ class PinService {
             $this->ci->load->library('MailService');
             $this->ci->mailservice->enqueue_raw(
                 $user->email,
-                'Your MarvySocials security PIN',
+                'Your Active Digital Hub security PIN',
                 '<p>Hi '.htmlspecialchars($user->username).',</p>'
                 .'<p>Welcome aboard. Every account gets a 4-digit transaction PIN — it is asked for '
                 .'when money moves or security settings change, so a borrowed password alone is not '

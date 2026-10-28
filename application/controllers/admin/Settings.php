@@ -22,7 +22,7 @@ class Settings extends Admin_Controller {
     public function __construct() {
         parent::__construct();
         $this->require_perm('settings.manage');
-        $this->load->library(array('SettingsService', 'DashboardStats'));
+        $this->load->library(array('SettingsService'));
         $this->load->model(array('Setting_model', 'Audit_log_model'));
     }
 
@@ -33,7 +33,6 @@ class Settings extends Admin_Controller {
             'content_view' => 'admin/settings/index',
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
             'grouped'      => $this->settingsservice->grouped(),
             'values'       => $this->settingsservice->current(),
             'unwired'      => SettingsService::unwired(),
@@ -59,7 +58,6 @@ class Settings extends Admin_Controller {
             'content_view' => 'admin/settings/flags',
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
             'flags'        => $this->Feature_flag_model->all_rows(),
             'page_description' => 'Turn product modules on or off without a deploy.',
         ));

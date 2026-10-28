@@ -14,7 +14,7 @@ class Dashboard extends Auth_Controller {
     }
 
     public function index() {
-        $stats = $this->dashboardstats->overview($this->current_user->id);
+        $stats = $this->dashboardstats->overview($this->current_user->id, false);
 
         $this->load->library('PinService');
         $pin_set = $this->pinservice->is_set($this->current_user);
@@ -39,7 +39,6 @@ class Dashboard extends Auth_Controller {
             'content_view' => 'dashboard/index',
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => $stats['unread_notifications'],
             'wallet'       => $stats['wallet'],
             'totals'       => $stats['totals'],
             'orders'       => $stats['recent_orders'],

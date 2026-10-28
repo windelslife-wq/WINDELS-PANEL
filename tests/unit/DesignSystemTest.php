@@ -26,8 +26,8 @@ class DesignSystemTest extends TestCase
             $this->assertStringContainsString($token, $cfg, "missing token group: {$token}");
         }
         // Core brand colors used across views must be present.
-        $this->assertStringContainsString("#4f46e5", $cfg); // brand-600
-        $this->assertStringContainsString("#6366f1", $cfg); // brand-500
+        $this->assertStringContainsString("#1664cc", $cfg); // brand-600
+        $this->assertStringContainsString("#1877f2", $cfg); // brand-500
         // Inter + Fraunces are the design-system families.
         $this->assertStringContainsString('Inter', $cfg);
         $this->assertStringContainsString('Fraunces', $cfg);
@@ -53,7 +53,7 @@ class DesignSystemTest extends TestCase
         $cfg = $this->get('tailwind.config.js');
         $css = $this->get('assets/css/design-system.css');
         // The brand ramp values must not drift between the two sources.
-        foreach (array('6366f1', '4f46e5', '4338ca') as $hex) {
+        foreach (array('1877f2', '1664cc', '1453a8') as $hex) {
             $this->assertStringContainsString('#'.$hex, strtolower($cfg));
             $this->assertStringContainsString('#'.$hex, strtolower($css));
         }
@@ -66,7 +66,7 @@ class DesignSystemTest extends TestCase
         // authenticated shell (layouts/app.php) carries its own <head> for the
         // admin/customer chrome and repeats the same three links.
         $head = $this->get('application/views/partials/head.php');
-        foreach (array('assets/css/tailwind.css', 'assets/css/design-system.css', 'fonts.googleapis.com') as $needle) {
+        foreach (array('assets/css/tailwind.css', 'assets/css/design-system.css', 'partials/web_fonts') as $needle) {
             $this->assertStringContainsString($needle, $head, 'partials/head.php must link '.$needle);
         }
         foreach (array('main', 'auth') as $layout) {
@@ -74,9 +74,18 @@ class DesignSystemTest extends TestCase
             $this->assertStringContainsString('partials/head', $src, "{$layout} must render through partials/head.php");
         }
         $app = $this->get('application/views/layouts/app.php');
-        foreach (array('assets/css/tailwind.css', 'assets/css/design-system.css', 'fonts.googleapis.com') as $needle) {
+        foreach (array('assets/css/tailwind.css', 'assets/css/design-system.css', 'partials/web_fonts') as $needle) {
             $this->assertStringContainsString($needle, $app, 'layouts/app.php must link '.$needle);
         }
+        $appTheme = $this->get('application/views/layouts/app_theme.php');
+        $this->assertStringContainsString('partials/web_fonts', $appTheme);
+
+        $fonts = $this->get('application/views/partials/web_fonts.php');
+        $this->assertStringContainsString('document.createElement', $fonts);
+        $this->assertStringContainsString('csp_nonce_attr()', $fonts);
+        $this->assertStringNotContainsString('onload=', $fonts,
+            'inline HTML event handlers are blocked by the application CSP');
+        $this->assertStringContainsString("link.media = 'print'", $fonts);
     }
 
     public function testStyleguideIsRoutedAndRendered()
@@ -124,7 +133,7 @@ class DesignSystemTest extends TestCase
         $this->assertIsArray($pkg);
         $this->assertArrayHasKey('build:css', $pkg['scripts']);
         $this->assertArrayHasKey('watch:css', $pkg['scripts']);
-        $this->assertSame('tailwindcss -i ./assets/css/app.css -o ./assets/css/tailwind.css --minified', $pkg['scripts']['build:css']);
+        $this->assertSame('tailwindcss -i ./assets/css/app.css -o ./assets/css/tailwind.css --minify', $pkg['scripts']['build:css']);
         $this->assertArrayHasKey('tailwindcss', $pkg['devDependencies']);
     }
 
@@ -145,6 +154,25 @@ class DesignSystemTest extends TestCase
         $this->assertStringContainsString('22d3ee', $nexus);
         $this->assertStringContainsString('ws-pulse-search', $pulse);
         $this->assertStringContainsString('btn-danger', $pulse);
+    }
+
+    public function testSharedDepthAndThreeDimensionalSurfacesCoverEveryArea()
+    {
+        $css = $this->get('assets/css/design-system.css');
+        $marketing = $this->get('assets/css/marketing.css');
+        $auth = $this->get('application/views/layouts/auth.php');
+
+        // All authenticated pages use one shell; public and auth layouts also
+        // load the design system. The depth is CSS-native and degrades without JS.
+        foreach (array('.ws-app-content .card:hover', '.ws-public-shell main .card:hover',
+                       'perspective(1100px)', 'transform-style:preserve-3d') as $needle) {
+            $this->assertStringContainsString($needle, $css);
+        }
+        $this->assertStringContainsString('.ws-landing-hero-visual img', $marketing);
+        $this->assertStringContainsString('rotateY(-6deg)', $marketing);
+        $this->assertStringContainsString('ws-auth-form-card', $auth);
+        $this->assertStringContainsString('prefers-reduced-motion', $css);
+        $this->assertStringContainsString('prefers-reduced-motion', $marketing);
     }
 
     public function testReducedMotionIsRespected()

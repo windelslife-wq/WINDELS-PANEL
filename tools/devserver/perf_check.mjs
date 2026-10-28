@@ -93,8 +93,14 @@ await cust.get('/login');
 const clogin = await cust.postForm('/login',
   { identifier: 'demo@marvy.local', password: CUSTOMER_PASSWORD });
 check('customer signed in', /\/dashboard/.test(clogin.url), clogin.url);
+const pub = new Client(BASE);
 
 /* ------------------------------ the screens ------------------------------ */
+
+// Every ordinary request can elect the once-per-minute in-app cron heartbeat.
+// Warm the admin dashboard once before taking query deltas so an overdue
+// worker batch is not accidentally attributed to the dashboard widgets.
+await admin.get('/admin');
 
 // Query ceilings are deliberately generous: the point is to catch a cost that
 // scales with the rows on the page, not to shave a query off a fixed shell.
@@ -102,10 +108,12 @@ const pages = [
   // Ceilings are set just above what each page costs today, so a regression
   // that reintroduces a per-row query fails here instead of being discovered
   // by an operator whose panel got slower.
-  // Module 20 consolidated the widgets: 31 queries -> 20. The budget is set
-  // just above the measured cost so a regression that reintroduces a
-  // per-widget query is caught here rather than on a busy panel.
-  ['admin dashboard',        admin, '/admin',                      22],
+  // Module 20 consolidated the widgets (31 queries -> 20). Later command-center
+  // additions include cross-domain revenue/health, staff inbox/contact queues,
+  // and freshness. Their reads are fixed per widget, not row-proportional. The
+  // 26-query ceiling is the measured cost after removing the duplicate unread
+  // count, and remains tight enough to catch an accidental extra query.
+  ['admin dashboard',        admin, '/admin',                      26],
   ['admin orders (page 1)',  admin, '/admin/orders',               14],
   ['admin orders (page 20)', admin, '/admin/orders?page=20',       14],
   ['admin customers',        admin, '/admin/customers',            18],
@@ -121,6 +129,35 @@ const pages = [
   ['customer tickets',       cust,  '/dashboard/tickets',          14],
   ['customer history',       cust,  '/dashboard/history',          16],
   ['public services',        cust,  '/services',                   13],
+  // Broader storefront, customer/vendor, checkout and operator surfaces.
+  // The ceilings are a few queries over the 12k-order measured baseline.
+  ['public home',             pub,   '/',                            16],
+  ['public service search',   pub,   '/services?q=instagram',        12],
+  ['public shop',             pub,   '/shop',                        12],
+  ['shop search',             pub,   '/shop?q=gift',                 10],
+  ['gift cards catalogue',    pub,   '/shop/gift-cards',              7],
+  ['pricing page',            pub,   '/pricing',                      6],
+  ['customer order history',  cust,  '/dashboard/history',           13],
+  ['customer new order',      cust,  '/dashboard/new-order',         14],
+  ['customer service list',   cust,  '/dashboard/services',          14],
+  ['seller marketplace',      cust,  '/dashboard/marketplace',       15],
+  ['seller orders',           cust,  '/dashboard/marketplace/orders',10],
+  ['customer support tickets',cust,  '/dashboard/tickets',            11],
+  ['customer add funds',      cust,  '/dashboard/add-funds',         15],
+  ['cart',                    cust,  '/cart',                        14],
+  ['checkout',                cust,  '/checkout',                     16],
+  ['account security',        cust,  '/dashboard/security',           10],
+  ['admin SMM services',      admin, '/admin/services',               13],
+  ['admin service catalogue', admin, '/admin/catalogue',              16],
+  ['admin providers',         admin, '/admin/providers',              11],
+  ['admin payments',          admin, '/admin/payments',               12],
+  ['marketplace moderation',  admin, '/admin/marketplace',            10],
+  ['shop operations',         admin, '/admin/shop',                    9],
+  ['affiliate management',    admin, '/admin/affiliates',             14],
+  ['staff management',        admin, '/admin/staff',                  15],
+  ['admin settings',          admin, '/admin/settings',               10],
+  ['reseller API keys',       admin, '/admin/api-keys',               14],
+  ['staff inbox',             admin, '/admin/inbox',                  11],
 ];
 
 console.log('\n── Cost of each screen under load');
@@ -141,6 +178,14 @@ for (const m of measured) {
 for (const m of measured) {
   check(`${m.label} stays under ${m.ceiling} queries`, m.queries <= m.ceiling,
     `${m.queries} queries; heaviest: ${JSON.stringify(m.byTable)}`);
+}
+// A loose ceiling for the wasm/SQLite dev stack, not a production SLA. It is
+// high enough for the sandbox's translation overhead, but catches pages that
+// regress from sub-150ms to multi-second synchronous work.
+const RESPONSE_CEILING_MS = 1500;
+for (const m of measured) {
+  check(`${m.label} responds within ${RESPONSE_CEILING_MS} ms`, m.ms <= RESPONSE_CEILING_MS,
+    `${m.ms} ms`);
 }
 
 /* ------------------------- the N+1 shape, directly ----------------------- */

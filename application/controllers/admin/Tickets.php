@@ -20,7 +20,7 @@ class Tickets extends Admin_Controller {
     public function __construct() {
         parent::__construct();
         $this->require_perm('tickets.view');
-        $this->load->library(array('TicketService', 'DashboardStats'));
+        $this->load->library(array('TicketService'));
         $this->load->model(array(
             'Ticket_model', 'Ticket_message_model', 'User_model',
             'Order_model', 'Audit_log_model',
@@ -55,7 +55,6 @@ class Tickets extends Admin_Controller {
             'content_view' => 'admin/tickets/messages',
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
             'rows'         => $rows,
             'templates'    => $templates,
             'page_description' => 'Messages from the public contact form. Signed-in customers open tickets instead.',
@@ -116,7 +115,6 @@ class Tickets extends Admin_Controller {
             'content_view' => 'admin/tickets/index',
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
             'tickets'      => $this->Ticket_model->admin_search($filters, $limit, ($page - 1) * $limit),
             'counts'       => $this->Ticket_model->status_counts(),
             'filters'      => $filters,
@@ -137,7 +135,6 @@ class Tickets extends Admin_Controller {
             'content_view' => 'admin/tickets/detail',
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
             'ticket'       => $ticket,
             // Staff see everything, internal notes included.
             'messages'     => $this->Ticket_message_model->for_ticket($ticket->id, true),

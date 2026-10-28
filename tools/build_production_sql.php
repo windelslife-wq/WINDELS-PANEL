@@ -495,7 +495,7 @@ printf(
 function render_file(array $schema_sections, array $seed_statements, array $admin_statements, $schema_version, array $opts)
 {
     $lines = array();
-    $lines[] = '-- MarvySocials — complete production database';
+    $lines[] = '-- Active Digital Hub — complete production database';
     $lines[] = '--';
     $lines[] = '-- GENERATED FILE — do not edit by hand.';
     $lines[] = '-- Sources: application/migrations/*.php  +  application/seeds/Core_seeder.php';
@@ -729,7 +729,7 @@ function render_live_accounts_file(array $accounts, array $opts)
     $q = function ($v) { return Sql_capture_db::quote($v); };
     $now = $q(MARVY_SEED_NOW);
     $lines = array();
-    $lines[] = '-- MarvySocials — first-login accounts for an EXISTING database';
+    $lines[] = '-- Active Digital Hub — first-login accounts for an EXISTING database';
     $lines[] = '--';
     $lines[] = '-- GENERATED FILE — do not edit by hand.';
     $lines[] = '-- Regenerated with: php tools/build_production_sql.php';

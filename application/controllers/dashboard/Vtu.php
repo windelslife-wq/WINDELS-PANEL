@@ -28,7 +28,7 @@ class Vtu extends Auth_Controller {
             'Vtu_network_model', 'Vtu_product_model', 'Vtu_transaction_model',
             'Service_transaction_model', 'Wallet_model',
         ));
-        $this->load->library(array('VtuService', 'DashboardStats', 'form_validation'));
+        $this->load->library(array('VtuService', 'form_validation'));
     }
 
     public function index() { $this->airtime(); }
@@ -189,7 +189,6 @@ class Vtu extends Auth_Controller {
         $this->load->view('layouts/app', array_merge(array(
             'title'        => $title,
             'nav_active'   => 'dashboard/vtu',
-            'unread'       => $this->dashboardstats->unread_count($this->current_user->id),
             'content_view' => 'dashboard/vtu/'.$view,
             'current_user' => $this->current_user,
             'permissions'  => $this->auth->permissions(),

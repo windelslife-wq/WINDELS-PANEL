@@ -163,7 +163,7 @@ class MY_Security extends CI_Security {
         header('Cache-Control: no-store');
         echo '<!doctype html><meta charset="utf-8"><title>Session token expired</title>'
             .'<style>body{font:16px/1.6 system-ui,sans-serif;margin:8vh auto;max-width:34rem;padding:0 1.5rem;color:#0f172a}'
-            .'h1{font-size:1.35rem}a{display:inline-block;margin-top:1.25rem;background:#4f46e5;color:#fff;'
+            .'h1{font-size:1.35rem}a{display:inline-block;margin-top:1.25rem;background:#1877f2;color:#fff;'
             .'text-decoration:none;border-radius:8px;padding:.6rem 1.2rem;font-weight:600}</style>'
             .'<h1>Your security token expired</h1>'
             .'<p>This happens when a page has been open for a long time, or when the same form is '

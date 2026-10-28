@@ -74,7 +74,7 @@ $this->load->view('partials/navbar');
   <?php else: ?>
     <div class="container ws-section-sm">
       <div class="empty-state card text-center py-12">
-        <h2 class="text-2xl font-bold text-purple-400 mb-2">Nothing to show</h2>
+        <h2 class="text-2xl font-bold text-brand-400 mb-2">Nothing to show</h2>
         <p class="text-slate-400">This page has no content yet.</p>
       </div>
     </div>

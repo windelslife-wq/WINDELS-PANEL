@@ -47,7 +47,7 @@ class SettingsService {
     public static function schema() {
         return array(
             'site_name' => array('text', 'general', 'Site name',
-                'Shown in the browser title and in every email this panel sends.', 'MarvySocials'),
+                'Shown in the browser title and in every email this panel sends.', 'Active Digital Hub'),
             'support_email' => array('email', 'general', 'Support email',
                 'The reply-to address on outgoing mail.', 'support@marvy.local'),
             'site_tagline' => array('text', 'general', 'Site tagline',
@@ -73,9 +73,9 @@ class SettingsService {
             'homepage_cta_band_title' => array('text', 'homepage', 'Bottom CTA heading',
                 'Heading on the conversion band.', 'Ready to grow?'),
             'homepage_cta_band_body' => array('longtext', 'homepage', 'Bottom CTA text',
-                'Body copy on the conversion band.', 'Join MarvySocials and run social media and digital services from one prepaid platform.'),
+                'Body copy on the conversion band.', 'Join Active Digital Hub and run social media and digital services from one prepaid platform.'),
             'homepage_meta_description' => array('longtext', 'homepage', 'SEO meta description',
-                'Search engines and social previews.', 'MarvySocials is a prepaid panel for social media growth services, Nigerian VTU and bills, virtual numbers, identity checks and gift cards.'),
+                'Search engines and social previews.', 'Active Digital Hub is a prepaid panel for social media growth services, Nigerian VTU and bills, virtual numbers, identity checks and gift cards.'),
 
             // Social channels — the seven buttons in the site footer. The
             // shipped default for each is the platform's own home page, so
@@ -187,7 +187,7 @@ class SettingsService {
                 'How long an encrypted NIN/BVN result is kept before the purge worker deletes it. '
                 .'A legal answer, not an engineering one — check your jurisdiction.', 30),
             'giftcard_sender_name' => array('text', 'giftcards', 'Gift card sender name',
-                'The “from” name the recipient sees on a delivered card.', 'MarvySocials'),
+                'The “from” name the recipient sees on a delivered card.', 'Active Digital Hub'),
 
             // There is NO marketplace fee setting: with the platform as sole
             // seller the gross is the revenue — nothing is split or paid out.

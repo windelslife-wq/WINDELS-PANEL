@@ -33,7 +33,7 @@ class Home extends Public_Controller {
         $data = array(
             'active_homepage'=>$active,
             'title'=> $copy['homepage_hero_title'] ?: 'Grow and manage your social presence',
-            'meta_description'=> $copy['homepage_meta_description'] ?: 'MarvySocials is a prepaid panel for social media growth services, Nigerian VTU and bills, virtual numbers, identity checks and gift cards. Add funds, place an order, track it from one dashboard.',
+            'meta_description'=> $copy['homepage_meta_description'] ?: 'Active Digital Hub is a prepaid panel for social media growth services, Nigerian VTU and bills, virtual numbers, identity checks and gift cards. Add funds, place an order, track it from one dashboard.',
             'canonical' => '',
             'hero_kicker' => $copy['homepage_hero_kicker'] ?: null,
             'hero_title'  => $copy['homepage_hero_title'] ?: null,
@@ -95,7 +95,7 @@ class Home extends Public_Controller {
         if (!is_file(VIEWPATH.$view.'.php')) $view = 'homepages/aurora/index';
         $this->load->view('layouts/public_theme', array('content_view'=>$view,'data'=>$data,
             'title' => $copy['homepage_hero_title'] ?: 'Grow and manage your social presence',
-            'page_description' => $copy['homepage_meta_description'] ?: 'MarvySocials is a prepaid panel for social media growth services, Nigerian VTU and bills, virtual numbers, identity checks and gift cards. Add funds, place an order, track it from one dashboard.',
+            'page_description' => $copy['homepage_meta_description'] ?: 'Active Digital Hub is a prepaid panel for social media growth services, Nigerian VTU and bills, virtual numbers, identity checks and gift cards. Add funds, place an order, track it from one dashboard.',
         ));
     }
     private function active_homepage(){
@@ -114,12 +114,12 @@ class Home extends Public_Controller {
         $this->load->library('SiteOperatorKnowledge');
         $this->load->view('layouts/public_theme', array('content_view'=>'public/pricing','data'=>array(
             'title'=>'Pricing',
-            'meta_description'=>'Prepaid wallet pricing for MarvySocials. No invented monthly plans — you pay published service rates. Volume groups are assigned by staff.',
+            'meta_description'=>'Prepaid wallet pricing for Active Digital Hub. No invented monthly plans — you pay published service rates. Volume groups are assigned by staff.',
         )));
     }
     public function about(){
         $this->render_page('about', 'public/about', 'About',
-            'What MarvySocials is, who it is for, and what this site will not invent about the operator.');
+            'What Active Digital Hub is, who it is for, and what this site will not invent about the operator.');
     }
     public function faq(){
         $this->load->library('SiteOperatorKnowledge');
@@ -145,7 +145,7 @@ class Home extends Public_Controller {
         }
         $this->load->view('layouts/public_theme', array('content_view'=>'public/faq','data'=>array(
             'title'=>'FAQ',
-            'meta_description'=>'Answers about MarvySocials accounts, wallet billing, services, security, the reseller API and the on-site assistant.',
+            'meta_description'=>'Answers about Active Digital Hub accounts, wallet billing, services, security, the reseller API and the on-site assistant.',
             'faqs'=>$faqs,
             'categories'=>$categories,
         )));
@@ -163,7 +163,7 @@ class Home extends Public_Controller {
             'content_view' => 'public/contact',
             'data' => array_merge(array(
                 'title'           => 'Contact',
-                'meta_description'=> 'Contact MarvySocials support about an order, payment or the reseller API. Signed-in customers get a ticket.',
+                'meta_description'=> 'Contact Active Digital Hub support about an order, payment or the reseller API. Signed-in customers get a ticket.',
                 'support_email'   => $this->support_email(),
                 // Everything about the map and the printed contact details is
                 // operator-controlled (Admin → Settings → Contact page), so a
@@ -443,19 +443,19 @@ class Home extends Public_Controller {
     }
     public function terms(){
         $this->render_page('terms', 'public/terms', 'Terms of Service',
-            'Terms of Service for this MarvySocials instance, including accounts, wallet billing, acceptable use and the on-site assistant.');
+            'Terms of Service for this Active Digital Hub instance, including accounts, wallet billing, acceptable use and the on-site assistant.');
     }
     public function privacy(){
         $this->render_page('privacy', 'public/privacy', 'Privacy Policy',
-            'How MarvySocials handles account, order, payment, identity and assistant data — written from the actual application.');
+            'How Active Digital Hub handles account, order, payment, identity and assistant data — written from the actual application.');
     }
     public function refund_policy(){
         $this->render_page('refund-policy', 'public/refund_policy', 'Refund Policy',
-            'When MarvySocials credits a prepaid wallet for partial deliveries, failed purchases or staff decisions.');
+            'When Active Digital Hub credits a prepaid wallet for partial deliveries, failed purchases or staff decisions.');
     }
     public function acceptable_use(){
         $this->render_page('acceptable-use', 'public/acceptable_use', 'Acceptable Use',
-            'What you may and may not do with a MarvySocials account, wallet, API key and catalogue orders.');
+            'What you may and may not do with a Active Digital Hub account, wallet, API key and catalogue orders.');
     }
 
     /**
@@ -504,7 +504,7 @@ class Home extends Public_Controller {
             'content_view' => 'public/not_found',
             'data' => array(
                 'title' => 'Page not found',
-                'meta_description' => 'That address is not a page on MarvySocials.',
+                'meta_description' => 'That address is not a page on Active Digital Hub.',
                 'meta_robots' => 'noindex,follow',
             ),
         ));
@@ -523,7 +523,7 @@ class Home extends Public_Controller {
             'content_view' => 'public/styleguide',
             'data' => array(
                 'title' => 'Design System',
-                'meta_description' => 'MarvySocials design tokens and component inventory.',
+                'meta_description' => 'Active Digital Hub design tokens and component inventory.',
                 'meta_robots' => 'noindex,follow',
                 'active_homepage' => $this->active_homepage(),
             ),
