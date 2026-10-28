@@ -7,7 +7,7 @@ require __DIR__.'/_app_context.php';
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title><?=htmlspecialchars($title ?? 'MarvySocials')?></title>
+<title><?=htmlspecialchars($title ?? 'Active Digital Hub')?></title>
 <?php if (!empty($brand['brand_favicon_url'])): ?>
 <link rel="icon" href="<?=htmlspecialchars($brand['brand_favicon_url'])?>">
 <?php else: ?>

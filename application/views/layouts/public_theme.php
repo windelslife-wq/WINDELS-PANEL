@@ -1,6 +1,6 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
 /**
- * Public shell — MarvySocials theme.
+ * Public shell — Active Digital Hub theme.
  *
  * Same contract as layouts/main.php: controllers pass `content_view` and
  * `data`; only the header/footer chrome differs. `partials/head` owns the

@@ -20,13 +20,13 @@
   /* Container */
   --container:1200px;
   --container-max:var(--container);
-  /* Brand — indigo (mirrors tailwind.config.js -> colors.brand) */
-  --brand-50:#eef2ff; --brand-100:#e0e7ff; --brand-200:#c7d2fe; --brand-300:#a5b4fc;
-  --brand-400:#818cf8; --brand-500:#6366f1; --brand-600:#4f46e5; --brand-700:#4338ca;
-  --brand-800:#3730a3; --brand-900:#312e81; --brand-950:#1e1b4b;
-  /* Accent — fuchsia */
-  --accent-50:#fdf4ff; --accent-100:#fae8ff; --accent-200:#f5d0fe; --accent-300:#f0abfc;
-  --accent-400:#e879f9; --accent-500:#d946ef; --accent-600:#c026d3; --accent-700:#a21caf;
+  /* Brand — Facebook blue (mirrors tailwind.config.js -> colors.brand) */
+  --brand-50:#eff6ff; --brand-100:#dbeafe; --brand-200:#bfdbfe; --brand-300:#93c5fd;
+  --brand-400:#60a5fa; --brand-500:#1877f2; --brand-600:#1877f2; --brand-700:#1664cc;
+  --brand-800:#1453a8; --brand-900:#123f7a; --brand-950:#102c52;
+  /* Accent — blue */
+  --accent-50:#eff6ff; --accent-100:#dbeafe; --accent-200:#bfdbfe; --accent-300:#93c5fd;
+  --accent-400:#60a5fa; --accent-500:#4291f7; --accent-600:#1877f2; --accent-700:#1664cc;
   /* Semantic */
   --success-50:#ecfdf5; --success-500:#10b981; --success-600:#059669; --success-700:#047857;
   --warning-50:#fffbeb; --warning-500:#f59e0b; --warning-600:#d97706; --warning-700:#b45309;
@@ -59,8 +59,8 @@
   /* Radius / shadow */
   --radius:0.75rem; --radius-lg:1rem; --radius-xl:1.5rem;
   --shadow-card:0 1px 2px rgba(16,24,40,.05),0 1px 3px rgba(16,24,40,.08);
-  --shadow-card-hover:0 10px 30px -10px rgba(79,70,229,.35);
-  --shadow-glow:0 0 0 4px rgba(99,102,241,.15);
+  --shadow-card-hover:0 10px 30px -10px rgba(24,119,242,.35);
+  --shadow-glow:0 0 0 4px rgba(24,119,242,.15);
 }
 
 .theme-dark {
@@ -135,7 +135,7 @@ button { font-family:inherit; cursor:pointer; }
 #main{scroll-margin-top:6rem}
 
 /* Reusable section patterns */
-.ws-hero{background:radial-gradient(900px 280px at 12% -10%,var(--brand-100),transparent 60%),radial-gradient(700px 240px at 92% 0,var(--accent-100,#fae8ff),transparent 55%)}
+.ws-hero{background:radial-gradient(900px 280px at 12% -10%,var(--brand-100),transparent 60%),radial-gradient(700px 240px at 92% 0,var(--accent-100,#dbeafe),transparent 55%)}
 .ws-feature-section,.ws-testimonial-section,.ws-stats-section,.ws-contact-section{padding:var(--space-7) 0}
 .ws-feature-grid,.ws-testimonial-grid,.ws-stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:var(--space-4)}
 .ws-service-grid,.ws-pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:var(--space-4);align-items:stretch}
@@ -333,7 +333,7 @@ button { font-family:inherit; cursor:pointer; }
 .ws-section-sm{padding:3rem 0}
 .ws-page-hero{padding:3.5rem 0 2.5rem;background:
   radial-gradient(900px 280px at 12% -10%,var(--brand-100),transparent 60%),
-  radial-gradient(700px 240px at 92% 0,var(--accent-100,#fae8ff),transparent 55%)}
+  radial-gradient(700px 240px at 92% 0,var(--accent-100,#dbeafe),transparent 55%)}
 .ws-page-hero h1{margin-bottom:.4rem}
 /* FAQ intro: kicker, heading, lede and the search box are one centred column.
    It used to sit in a `.ws-hero-split` grid with nothing in the second cell,
@@ -392,7 +392,7 @@ button { font-family:inherit; cursor:pointer; }
 .ws-hero-media img{width:100%;height:clamp(240px,38vw,460px);object-fit:cover;border-radius:1.5rem;
   box-shadow:0 24px 60px -28px rgba(49,46,129,.55)}
 .ws-hero-media::after{content:"";position:absolute;inset:auto -12% -12% auto;width:42%;height:42%;
-  background:radial-gradient(circle,rgba(192,38,211,.28),transparent 70%);pointer-events:none}
+  background:radial-gradient(circle,rgba(24,119,242,.28),transparent 70%);pointer-events:none}
 .ws-page-hero.has-media{padding-bottom:0}
 .ws-auth-shell{display:grid;grid-template-columns:1.05fr .95fr;min-height:calc(100vh - 3rem)}
 .ws-auth-visual{position:relative;overflow:hidden;background:#0b1020;color:#e2e8f0;padding:2.5rem}
@@ -765,7 +765,7 @@ button { font-family:inherit; cursor:pointer; }
 }
 
 /* Dark mode nav/active */
-.dark .ws-nav-link.is-active { background: rgba(99,102,241,.18); color: var(--brand-300); }
+.dark .ws-nav-link.is-active { background: rgba(24,119,242,.18); color: var(--brand-300); }
 .dark .ws-topbar, .dark .ws-sidebar { background: var(--color-surface); }
 
 /* ===================== Public landing (Aurora) ===================== */

@@ -50,7 +50,7 @@ if (!function_exists('marvy_site_name')) {
     function marvy_site_name(){
         static $name = null;
         if ($name !== null) return $name;
-        $name = 'MarvySocials';
+        $name = 'Active Digital Hub';
         if (function_exists('get_instance')) {
             $ci = @get_instance();
             if ($ci && isset($ci->config)) {
@@ -102,7 +102,7 @@ if (!function_exists('marvy_brand_logo')) {
      * footer and auth shell from each hardcoding a different asset path.
      */
     function marvy_brand_logo($variant = 'horizontal', $height = 32){
-        // Canonical MarvySocials mark set. Variant-first, then a safe fallback
+        // Canonical Active Digital Hub mark set. Variant-first, then a safe fallback
         // to the primary horizontal logo so a missing asset can't white-screen.
         $map = array(
             'icon'       => 'logo-icon.svg',

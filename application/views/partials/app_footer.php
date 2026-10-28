@@ -7,7 +7,7 @@
  * inside the panel without going back to the marketing site. Same links, less
  * furniture.
  */
-$site_name = function_exists('marvy_site_name') ? marvy_site_name() : 'MarvySocials';
+$site_name = function_exists('marvy_site_name') ? marvy_site_name() : 'Active Digital Hub';
 // Feature flags gate the footer exactly as they gate the sidebar: a link to a
 // module an operator switched off would 404 the customer.
 $links = array(array('services', 'Services'));

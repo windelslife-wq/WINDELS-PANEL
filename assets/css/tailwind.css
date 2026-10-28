@@ -1267,7 +1267,7 @@ video {
 
 .text-brand-700 {
   --tw-text-opacity: 1;
-  color: rgb(67 56 202 / var(--tw-text-opacity, 1));
+  color: rgb(22 100 204 / var(--tw-text-opacity, 1));
 }
 
 .text-emerald-800 {
@@ -1451,7 +1451,7 @@ video {
 
 .hover\:text-brand-700:hover {
   --tw-text-opacity: 1;
-  color: rgb(67 56 202 / var(--tw-text-opacity, 1));
+  color: rgb(22 100 204 / var(--tw-text-opacity, 1));
 }
 
 .hover\:text-indigo-700:hover {

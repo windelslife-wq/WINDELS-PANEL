@@ -8,7 +8,7 @@ $selected_currency = strtoupper((string)$old('currency', marvy_base_currency()))
 ?>
 <div class="row justify-between mb-4">
   <div><h2 class="card-title mb-0"><?=$l ? 'Edit listing' : 'New listing'?></h2>
-  <p class="muted text-sm">Platform catalogue entry — you are selling on behalf of MARVYSOCIALS. Buyers always pay the server-side price saved here.</p></div>
+  <p class="muted text-sm">Platform catalogue entry — you are selling on behalf of Active Digital Hub. Buyers always pay the server-side price saved here.</p></div>
   <a class="btn btn-ghost btn-sm" href="<?=site_url('admin/marketplace?tab=listings')?>">← Listings</a>
 </div>
 <form class="card" style="max-width:46rem" method="post" enctype="multipart/form-data"

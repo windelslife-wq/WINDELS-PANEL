@@ -469,7 +469,7 @@ class MailService {
         $from_name  = class_exists('Env') ? (string) Env::get('MAIL_FROM_NAME', '') : '';
         $this->ci->email->from(
             $this->ci->Setting_model->get('mail_from_email', $from_email !== '' ? $from_email : 'no-reply@marvy.local'),
-            $this->ci->Setting_model->get('mail_from_name',  $from_name  !== '' ? $from_name  : 'MarvySocials')
+            $this->ci->Setting_model->get('mail_from_name',  $from_name  !== '' ? $from_name  : 'Active Digital Hub')
         );
         $this->ci->email->to($mail->to_email);
         $this->ci->email->subject($mail->subject);
@@ -794,7 +794,7 @@ class MailService {
      * they are trying to find out.
      */
     public function send_test($to) {
-        $site = $this->ci->Setting_model->get('site_name', 'MarvySocials');
+        $site = $this->ci->Setting_model->get('site_name', 'Active Digital Hub');
         $mail = (object)array(
             'to_email'  => strtolower(trim((string)$to)),
             'to_name'   => null,
@@ -814,7 +814,7 @@ class MailService {
 
     private function global_variables() {
         return array(
-            'site_name'     => $this->ci->Setting_model->get('site_name', 'MarvySocials'),
+            'site_name'     => $this->ci->Setting_model->get('site_name', 'Active Digital Hub'),
             'site_url'      => rtrim(base_url(), '/'),
             'support_email' => $this->ci->Setting_model->get('support_email', 'support@marvy.local'),
             'year'          => gmdate('Y'),

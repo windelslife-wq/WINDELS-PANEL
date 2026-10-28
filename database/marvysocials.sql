@@ -1,4 +1,4 @@
--- MarvySocials — complete production database
+-- Active Digital Hub — complete production database
 --
 -- GENERATED FILE — do not edit by hand.
 -- Sources: application/migrations/*.php  +  application/seeds/Core_seeder.php
@@ -2978,7 +2978,7 @@ VALUES ('BRL', 'R$', 'Brazilian Real', 2, '0.00348387', 0, 1);
 
 -- settings
 INSERT INTO `settings` (`setting_key`, `setting_value`, `category`, `is_public`)
-VALUES ('site_name', '{"value":"MarvySocials"}', 'general', 1);
+VALUES ('site_name', '{"value":"Active Digital Hub"}', 'general', 1);
 
 INSERT INTO `settings` (`setting_key`, `setting_value`, `category`, `is_public`)
 VALUES ('site_tagline', '{"value":"Enterprise SMM Reseller Platform"}', 'general', 1);
@@ -3092,7 +3092,7 @@ INSERT INTO `settings` (`setting_key`, `setting_value`, `category`, `is_public`)
 VALUES ('identity_retention_days', '{"value":30}', 'identity', 0);
 
 INSERT INTO `settings` (`setting_key`, `setting_value`, `category`, `is_public`)
-VALUES ('giftcard_sender_name', '{"value":"MarvySocials"}', 'giftcards', 0);
+VALUES ('giftcard_sender_name', '{"value":"Active Digital Hub"}', 'giftcards', 0);
 
 INSERT INTO `settings` (`setting_key`, `setting_value`, `category`, `is_public`)
 VALUES ('marketplace_auto_release_hours', '{"value":72}', 'marketplace', 0);
@@ -3201,7 +3201,7 @@ INSERT INTO `faqs` (`id`, `question`, `answer`, `category`, `sorting`, `is_activ
 VALUES (5, 'Can I get a refill?', 'Services marked "Refill" support refill requests from the order detail page within the refill window.', 'orders', 50, 1);
 
 INSERT INTO `faqs` (`id`, `question`, `answer`, `category`, `sorting`, `is_active`)
-VALUES (6, 'What is MarvySocials?', 'A prepaid reseller platform for SMM services, Nigerian VTU, virtual numbers, identity lookups, gift cards and a platform-owned marketplace.', 'general', 5, 1);
+VALUES (6, 'What is Active Digital Hub?', 'A prepaid reseller platform for SMM services, Nigerian VTU, virtual numbers, identity lookups, gift cards and a platform-owned marketplace.', 'general', 5, 1);
 
 INSERT INTO `faqs` (`id`, `question`, `answer`, `category`, `sorting`, `is_active`)
 VALUES (7, 'Can I withdraw wallet funds?', 'No. The wallet is a spending balance for purchases on this panel.', 'payments', 25, 1);

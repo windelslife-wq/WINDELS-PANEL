@@ -9,12 +9,12 @@ $current_user = $current_user ?? null;
   <a href="<?=site_url()?>" class="ws-brand">
     <?php if (!empty($brand['brand_logo_url'])): ?>
       <img src="<?=htmlspecialchars($brand['brand_logo_url'])?>"
-           alt="<?=htmlspecialchars(function_exists('marvy_site_name') ? marvy_site_name() : 'MarvySocials')?>"
+           alt="<?=htmlspecialchars(function_exists('marvy_site_name') ? marvy_site_name() : 'Active Digital Hub')?>"
            class="ws-logo">
     <?php else: ?>
       <?php $this->load->view('partials/brand_logo', array('variant'=>'icon','height'=>32,'force_legacy'=>true)); ?>
       <span class="font-bold tracking-tight ws-brand-word"><?=htmlspecialchars(
-          strtoupper(function_exists('marvy_site_name') ? marvy_site_name() : 'MarvySocials'))?></span>
+          strtoupper(function_exists('marvy_site_name') ? marvy_site_name() : 'Active Digital Hub'))?></span>
     <?php endif; ?>
   </a>
 </div>
