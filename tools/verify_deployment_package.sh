@@ -23,8 +23,7 @@
 #   · the runtime directories are created on first boot and are guarded
 #   · encryption and token signing work with the keys carried in .env, and
 #     ciphertext written on the "old server" still decrypts on the "new" one
-#   · the administrator hash in database/marvysocials.sql verifies with the
-#     documented password
+#   · the database import contains no default user accounts
 #   · marvysocials.sql is complete (delegates to validate_production_sql.py)
 #
 # What it cannot prove here: Apache rewriting and live MySQL queries. Those
@@ -223,13 +222,10 @@ $token = $signer->issue(1, 'password_reset');
 $claims = $signer->verify(is_array($token) ? $token['token'] : $token, 'password_reset');
 want('password-reset tokens sign and verify with VP_AUTH_SECRET', !empty($claims));
 
-// --- the administrator in marvysocials.sql can actually log in ----------------
+// Production imports must not ship user accounts or credentials.
 $sql = file_get_contents($site . '/database/marvysocials.sql');
-preg_match('/--\s+password:\s+(\S+)/', $sql, $pw);
-preg_match('/(\$2y\$\d\d\$[.\/A-Za-z0-9]{53})/', $sql, $hash);
-want('marvysocials.sql documents the first-login password', !empty($pw[1]), $pw[1] ?? '');
-want('that password verifies against the seeded bcrypt hash',
-     !empty($hash[1]) && password_verify($pw[1], $hash[1]));
+want('production SQL contains no default user accounts', stripos($sql, 'INSERT INTO `users`') === false);
+want('production SQL documents protected setup', strpos($sql, 'VP_SETUP_TOKEN') !== false);
 
 // --- nothing depends on an installer ----------------------------------------
 want('no install/ directory in the package', !is_dir($site . '/install'));

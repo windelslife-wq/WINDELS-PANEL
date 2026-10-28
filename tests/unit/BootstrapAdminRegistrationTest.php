@@ -2,10 +2,9 @@
 use PHPUnit\Framework\TestCase;
 
 /**
- * First-administrator bootstrap through the normal sign-up path.
+ * Protected first-administrator bootstrap.
  *
- * While no staff account exists at all, AuthService::register() makes the new
- * account the SUPER_ADMIN. These tests drive the real register() against an
+ * These tests drive the real service against an
  * in-memory database double, so the decision (count, lock, re-check, insert)
  * is exercised rather than just grepped for.
  */
@@ -31,6 +30,7 @@ class BootstrapAdminRegistrationTest extends TestCase
         require_once $root.'/application/libraries/SignedToken.php';
         require_once $root.'/application/libraries/Totp.php';
         require_once $root.'/application/libraries/EncryptionService.php';
+        require_once $root.'/application/core/Env.php';
         require_once $root.'/application/libraries/AuthService.php';
     }
 
@@ -38,6 +38,7 @@ class BootstrapAdminRegistrationTest extends TestCase
     {
         // Skip the config/database lookup inside marvy_base_currency().
         $GLOBALS['__marvy_base_currency'] = 'NGN';
+        putenv('VP_SETUP_TOKEN=0123456789abcdef0123456789abcdef');
         $this->db = new BootstrapRegDb();
         $this->ci = new BootstrapRegCI($this->db);
         $GLOBALS['__fake_ci'] = $this->ci;
@@ -46,6 +47,7 @@ class BootstrapAdminRegistrationTest extends TestCase
     protected function tearDown(): void
     {
         unset($GLOBALS['__marvy_base_currency']);
+        putenv('VP_SETUP_TOKEN');
     }
 
     private function service(array $settings = array())
@@ -72,178 +74,74 @@ class BootstrapAdminRegistrationTest extends TestCase
         $this->db->seed_user(array('role' => $role, 'status' => $status));
     }
 
-    public function testEmptyInstallMakesTheFirstRegistrantSuperAdmin()
-    {
-        $res = $this->service()->register($this->data());
+    private function claim($service, $data) {
+        return $service->register_first_admin($data, '0123456789abcdef0123456789abcdef');
+    }
 
+    public function testCustomerCannotPromoteEvenOnEmptyDatabase() {
+        $data = $this->data(); $data['role'] = 'SUPER_ADMIN';
+        $res = $this->service()->register($data);
+        $this->assertTrue($res['ok']);
+        $this->assertSame('CUSTOMER', $this->db->users[0]['role']);
+        $this->assertTrue($this->service()->bootstrap_admin_open());
+    }
+
+    public function testProtectedBootstrapIsAuditedAndClosesPermanently() {
+        $svc = $this->service(array('email_verification_required' => true));
+        $res = $this->claim($svc, $this->data());
         $this->assertTrue($res['ok']);
         $this->assertTrue($res['bootstrap']);
         $this->assertSame('SUPER_ADMIN', $this->db->users[0]['role']);
-        $this->assertCount(1, $this->db->wallets, 'the admin still gets a wallet, like every account');
-        $this->assertSame(1, $this->db->lock_taken, 'bootstrap takes the named lock');
-        $this->assertSame(1, $this->db->lock_released, 'and always releases it');
-    }
-
-    public function testBootstrapAdminIsVerifiedEvenWhenVerificationIsRequired()
-    {
-        // Claiming an empty panel must not depend on a mail server being set up.
-        $res = $this->service(array('email_verification_required' => true))->register($this->data());
-
-        $this->assertTrue($res['bootstrap']);
         $this->assertNotNull($this->db->users[0]['email_verified_at']);
-    }
-
-    public function testBootstrapIsAuditedAsItsOwnEvent()
-    {
-        $this->service()->register($this->data());
-
-        $actions = array_column($this->db->audit, 'action');
-        $this->assertContains('auth.bootstrap_admin', $actions);
-        $bootstrap = null;
-        foreach ($this->db->audit as $row) {
-            if ($row['action'] === 'auth.bootstrap_admin') $bootstrap = $row;
-        }
-        $this->assertSame(array('role' => 'SUPER_ADMIN'), $bootstrap['after']);
-        $this->assertArrayNotHasKey('password', (array)$bootstrap['after']);
-    }
-
-    public function testSecondRegistrantIsACustomerAndNeverTakesTheLock()
-    {
-        $svc = $this->service();
-        $svc->register($this->data('ada', 'ada@example.test'));
-        $this->db->lock_taken = 0;
-
-        $res = $svc->register($this->data('grace', 'grace@example.test'));
-
-        $this->assertTrue($res['ok']);
-        $this->assertFalse($res['bootstrap']);
-        $this->assertSame('CUSTOMER', $this->db->users[1]['role']);
-        $this->assertSame(0, $this->db->lock_taken, 'ordinary sign-ups never contend for the bootstrap lock');
-    }
-
-    public function testExistingAdministratorClosesTheBootstrap()
-    {
-        $this->seedUser('ADMIN');
-
-        $res = $this->service()->register($this->data());
-
-        $this->assertFalse($res['bootstrap']);
-        $this->assertSame('CUSTOMER', $this->db->users[1]['role']);
-        $this->assertSame(0, $this->db->lock_taken);
-    }
-
-    public function testSuspendedSuperAdminStillClosesTheBootstrap()
-    {
-        // Suspending the only owner must never let the next visitor take over.
-        $this->seedUser('SUPER_ADMIN', 'SUSPENDED');
-
-        $res = $this->service()->register($this->data());
-
-        $this->assertFalse($res['bootstrap']);
-        $this->assertSame('CUSTOMER', $this->db->users[1]['role']);
-    }
-
-    public function testStaffWithoutAnAdminStillClosesTheBootstrap()
-    {
-        $this->seedUser('STAFF');
-
-        $res = $this->service()->register($this->data());
-
-        $this->assertFalse($res['bootstrap']);
-    }
-
-    public function testBusyLockRefusesRegistrationWithoutCreatingAnAccount()
-    {
-        $this->db->lock_free = false; // another request is bootstrapping
-
-        $res = $this->service()->register($this->data());
-
-        $this->assertFalse($res['ok']);
-        $this->assertSame('REGISTRATION_BUSY', $res['error']);
-        $this->assertCount(0, $this->db->users);
-        $this->assertSame(0, $this->db->lock_released, 'a lock we never got is never released');
-    }
-
-    public function testAdminCreatedWhileWaitingForTheLockIsRespected()
-    {
-        // Two sign-ups on an empty install: the one that gets the lock second
-        // must see the admin the first one just made and become a customer.
-        $this->db->on_lock = function ($db) {
-            $db->seed_user(array('role' => 'SUPER_ADMIN', 'status' => 'ACTIVE'));
-        };
-
-        $res = $this->service()->register($this->data());
-
-        $this->assertTrue($res['ok']);
-        $this->assertFalse($res['bootstrap'], 'the re-check under the lock decides, not the first look');
-        $this->assertSame('CUSTOMER', $this->db->users[1]['role']);
+        $this->assertCount(1, $this->db->wallets);
+        $this->assertSame(1, $this->db->lock_taken);
         $this->assertSame(1, $this->db->lock_released);
-    }
-
-    public function testFailedInsertStillReleasesTheLock()
-    {
-        $this->db->fail_transaction = true;
-
-        $res = $this->service()->register($this->data());
-
-        $this->assertFalse($res['ok']);
-        $this->assertSame('REGISTRATION_FAILED', $res['error']);
-        $this->assertSame(1, $this->db->lock_released, 'a failed bootstrap must not wedge the lock');
-    }
-
-    public function testDuplicateEmailIsStillRejectedBeforeAnyLock()
-    {
-        $svc = $this->service();
-        $svc->register($this->data('ada', 'ada@example.test'));
-        $this->db->lock_taken = 0;
-
-        $res = $svc->register($this->data('other', 'ada@example.test'));
-
-        $this->assertFalse($res['ok']);
-        $this->assertSame('EMAIL_TAKEN', $res['error']);
-        $this->assertSame(0, $this->db->lock_taken);
-    }
-
-    public function testBootstrapOpenReflectsStaffRowsOfAnyStatus()
-    {
-        $svc = $this->service();
-        $this->assertTrue($svc->bootstrap_admin_open());
-
-        $this->seedUser('ADMIN', 'BANNED');
+        $this->assertContains('auth.bootstrap_admin', array_column($this->db->audit, 'action'));
+        $this->assertFalse($this->claim($svc, $this->data('grace', 'grace@example.test'))['ok']);
+        $this->db->users = array();
         $this->assertFalse($svc->bootstrap_admin_open());
     }
 
-    public function testLoginBootstrapUsesTheLockedRegistrationPath()
-    {
-        $root = dirname(dirname(__DIR__));
-        $src = file_get_contents($root.'/application/controllers/Auth.php');
-        $start = strpos($src, 'private function no_super_admin()');
-        $end = strpos($src, 'private function default_landing()', $start);
-        $this->assertStringContainsString('$this->auth->bootstrap_admin_open()', substr($src, $start, $end - $start));
-        $this->assertStringNotContainsString("redirect('setup')", $src);
-        $this->assertStringContainsString("return redirect('register');", $src);
-        $setup = file_get_contents($root.'/application/controllers/Setup.php');
-        $this->assertStringNotContainsString("->where('status', 'ACTIVE')->count_all_results('users')", $setup);
-        $view = file_get_contents($root.'/application/views/auth/admin_login.php');
-        $this->assertStringContainsString("'data-no-guard' => 'true'", $view);
-        $this->assertStringContainsString('type="submit"', $view);
+    public function testMissingOrWrongSecretRejected() {
+        $svc = $this->service();
+        $this->assertSame('BOOTSTRAP_DENIED', $svc->register_first_admin($this->data(), 'wrong')['error']);
+        putenv('VP_SETUP_TOKEN=short');
+        $this->assertSame('BOOTSTRAP_DENIED', $svc->register_first_admin($this->data(), 'short')['error']);
+        $this->assertCount(0, $this->db->users);
     }
 
-    public function testControllerKeepsRegistrationOpenWhileNoAdminExists()
-    {
-        // Source-level guard: closing sign-ups must not lock an empty panel out.
-        $src = file_get_contents(dirname(dirname(__DIR__)).'/application/controllers/Auth.php');
-        $this->assertStringContainsString(
-            "'registration_enabled', true)\n            && !\$this->auth->bootstrap_admin_open()",
-            $src
-        );
-        $start = strpos($src, 'private function register_post()');
-        $end   = strpos($src, 'Email verification', $start);
-        $body  = substr($src, $start, $end - $start);
-        $this->assertStringContainsString('redirect($this->default_landing());', $body,
-            'a successful sign-up must land staff in the admin area');
-        $this->assertStringNotContainsString("redirect('dashboard');", $body);
+    public function testStaffAnyStatusClosesSetup() {
+        foreach (array('ADMIN', 'STAFF', 'SUPER_ADMIN') as $role) {
+            $this->db->users = array(); $this->seedUser($role, 'SUSPENDED');
+            $res = $this->claim($this->service(), $this->data());
+            $this->assertSame('BOOTSTRAP_CLOSED', $res['error']);
+            $this->assertCount(1, $this->db->users);
+        }
     }
+
+    public function testConcurrentWinnerIsRespected() {
+        $this->db->on_lock = function ($db) { $db->seed_user(array('role' => 'SUPER_ADMIN', 'status' => 'ACTIVE')); };
+        $res = $this->claim($this->service(), $this->data());
+        $this->assertSame('BOOTSTRAP_CLOSED', $res['error']);
+        $this->assertCount(1, $this->db->users);
+        $this->assertSame(1, $this->db->lock_released);
+    }
+
+    public function testBusyAndFailedTransactionsReleaseLocksCorrectly() {
+        $this->db->lock_free = false;
+        $this->assertSame('REGISTRATION_BUSY', $this->claim($this->service(), $this->data())['error']);
+        $this->assertSame(0, $this->db->lock_released);
+        $this->db->lock_free = true; $this->db->fail_transaction = true;
+        $this->assertSame('REGISTRATION_FAILED', $this->claim($this->service(), $this->data())['error']);
+        $this->assertSame(1, $this->db->lock_released);
+    }
+
+    public function testDuplicateCustomerEmailRejected() {
+        $svc = $this->service(); $svc->register($this->data());
+        $res = $svc->register($this->data('other', 'ada@example.test'));
+        $this->assertSame('EMAIL_TAKEN', $res['error']);
+    }
+
 }
 
 /** Result set double: row() / result(). */
@@ -261,6 +159,7 @@ class BootstrapRegDb
     public $conn_id = 'fake';
     public $users = array();
     public $wallets = array();
+    public $settings_rows = array();
     public $audit = array();
     public $lock_free = true;
     public $lock_taken = 0;
@@ -307,6 +206,8 @@ class BootstrapRegDb
             $data['id'] = count($this->users) + 1;
             $this->users[] = $data;
             $this->last_id = $data['id'];
+        } elseif ($table === 'settings') {
+            $this->settings_rows[] = $data;
         } elseif ($table === 'wallets') {
             $this->wallets[] = $data;
         }
@@ -358,6 +259,7 @@ class BootstrapRegDb
     {
         if ($table === 'users') return $this->users;
         if ($table === 'wallets') return $this->wallets;
+        if ($table === 'settings') return $this->settings_rows;
         $none = array();
         return $none;
     }

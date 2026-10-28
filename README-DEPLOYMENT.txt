@@ -45,10 +45,10 @@ Six steps, no terminal, no Composer, no npm, no symlinks.
    https://yourdomain.com
 
 FIRST LOGIN
-   The credentials are printed at the top of database/marvysocials.sql.
-   Change the password immediately, or set your own before the first login by
-   putting VP_SETUP_TOKEN=<32 random characters> in .env and visiting
-   https://yourdomain.com/setup?token=<that value>. Remove the line afterwards.
+   Set a high-entropy VP_SETUP_TOKEN (at least 32 characters) in .env.
+   Visit https://yourdomain.com/setup, enter the token and create the first
+   administrator. Remove the token, then sign in at /admin/login.
+   Existing administrators are never replaced; use /forgot-password instead.
 
 FOLDER PERMISSIONS (only if something is not writable)
    Directories 755, files 644. These four must be writable by the web server:

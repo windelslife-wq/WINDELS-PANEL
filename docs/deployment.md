@@ -12,9 +12,9 @@ where a terminal exists and CI drives releases.
 
 Everything here is CLI-only by design — there are no web-triggered migrations,
 seeds or cron endpoints (§66). The one browser-facing exception is `/setup`,
-which is 404 unless `VP_SETUP_TOKEN` is set in `.env`: it reports deployment
-checks and sets the first administrator's credentials, and it never migrates or
-seeds anything.
+which creates a first administrator only when no staff exists and a valid
+`VP_SETUP_TOKEN` is submitted over HTTPS. It never replaces existing users,
+migrates, or seeds anything.
 
 > MarvySocials is a traditional PHP MVC application built on CodeIgniter 3.x
 > with MySQL/MariaDB, served through PHP-FPM and Nginx. Redis provides

@@ -14,27 +14,13 @@
 -- After the import the database is fully initialised: schema, indexes,
 -- foreign keys, migration bookkeeping (version 43), roles,
 -- permissions, settings, feature flags, payment methods, email templates,
--- FAQs, currencies, catalogues and the first-login accounts. No migration,
+-- FAQs, currencies and catalogues. No user accounts are included. No migration,
 -- seed or installer command has to run afterwards.
 --
 -- FIRST LOGIN
---   Staff admin (SUPER_ADMIN — full control of the site)
---     URL:      /admin/login
---     username: admin
---     email:    admin@example.com
---     password: ChangeMe!Admin2026
---   Customer dashboard
---     URL:      /login
---     username: demo
---     email:    demo@example.com
---     password: MarvyDemo#2026!
---   Support staff
---     URL:      /admin/login
---     username: staff
---     email:    staff@example.com
---     password: MarvyStaff#2026!
---   Change these immediately (Dashboard -> Account -> Password), or set
---   your own administrator before first login from /setup with VP_SETUP_TOKEN.
+--   Set a random VP_SETUP_TOKEN in .env, visit /setup over HTTPS,
+--   create the first administrator, then remove the token.
+--   Sign in at /admin/login. No default accounts are shipped.
 --
 -- Engine: InnoDB · Charset: utf8mb4_unicode_ci · Timestamps: UTC DATETIME
 -- Money:  DECIMAL(20,8) everywhere (bcmath in PHP, never floats)
@@ -3403,57 +3389,6 @@ VALUES (4, 'SOFTWARE_KEYS', '2558ZS4XH6J8JXA5GRXK83CEEK', 'Software & keys', 'AC
 -- FIRST ACCOUNTS
 -- ======================================================================
 
--- SUPER_ADMIN (full control of every admin screen), a CUSTOMER so the
--- dashboard has someone to sign in as, and a STAFF operator. No CLI
--- user-creation step, because a cPanel account has no CLI. Password hashes
--- are bcrypt; PHP rehashes them to whatever the host prefers on first login.
-
-INSERT INTO `users`
-  (`id`, `public_id`, `username`, `email`, `password_hash`, `first_name`, `last_name`,
-   `status`, `role`, `price_group_id`, `referral_code`, `timezone`, `locale`,
-   `email_verified_at`, `mfa_enabled`, `created_at`, `updated_at`)
-VALUES (1, 'D3S1VPTVKCTA5A65AGTZ39ZMRT', 'admin', 'admin@example.com', '$2y$12$cAi15LwaQtqC1UEXIYVgUe0sEWTJVST0L6v/I/m425ACk9ZUWiAui', 'Panel', 'Administrator',
-        'ACTIVE', 'SUPER_ADMIN', 1, 'ADMIN-0001', 'UTC', 'en',
-        '2026-01-01 00:00:00', 0, '2026-01-01 00:00:00', '2026-01-01 00:00:00');
-
-INSERT INTO `wallets`
-  (`public_id`, `user_id`, `balance`, `currency`, `created_at`, `updated_at`)
-VALUES ('8S14SFNTREEFFYJSGF922BG7CH', 1, '0.00000000', 'NGN', '2026-01-01 00:00:00', '2026-01-01 00:00:00');
-
-INSERT INTO `referral_accounts`
-  (`user_id`, `code`, `commission_percent`, `created_at`, `updated_at`)
-VALUES (1, 'ADMIN-0001', '5.0000', '2026-01-01 00:00:00', '2026-01-01 00:00:00');
-
-INSERT INTO `users`
-  (`id`, `public_id`, `username`, `email`, `password_hash`, `first_name`, `last_name`,
-   `status`, `role`, `price_group_id`, `referral_code`, `timezone`, `locale`,
-   `email_verified_at`, `mfa_enabled`, `created_at`, `updated_at`)
-VALUES (2, '7QZZPKA8NQ3KPTF4N5MXZG72KY', 'demo', 'demo@example.com', '$2y$12$fbOxiyXpn.PVqvjMM.eraOi.nASxI4c8NdaibH97F3SW8cSMqQpC2', 'Dana', 'Demo',
-        'ACTIVE', 'CUSTOMER', 1, 'DEMO-0001', 'UTC', 'en',
-        '2026-01-01 00:00:00', 0, '2026-01-01 00:00:00', '2026-01-01 00:00:00');
-
-INSERT INTO `wallets`
-  (`public_id`, `user_id`, `balance`, `currency`, `created_at`, `updated_at`)
-VALUES ('05RYXZNXEFHDC09ENVW1D637Q3', 2, '0.00000000', 'NGN', '2026-01-01 00:00:00', '2026-01-01 00:00:00');
-
-INSERT INTO `referral_accounts`
-  (`user_id`, `code`, `commission_percent`, `created_at`, `updated_at`)
-VALUES (2, 'DEMO-0001', '5.0000', '2026-01-01 00:00:00', '2026-01-01 00:00:00');
-
-INSERT INTO `users`
-  (`id`, `public_id`, `username`, `email`, `password_hash`, `first_name`, `last_name`,
-   `status`, `role`, `price_group_id`, `referral_code`, `timezone`, `locale`,
-   `email_verified_at`, `mfa_enabled`, `created_at`, `updated_at`)
-VALUES (3, '8YZ0VCQ6PMK1MJNK18HNJ463KV', 'staff', 'staff@example.com', '$2y$12$A/aOCScPf990eSu5yiKk1u6/VsNQConshkNA3afWcv.bvjbJ.9VPa', 'Sam', 'Support',
-        'ACTIVE', 'STAFF', 1, 'STAFF-0001', 'UTC', 'en',
-        '2026-01-01 00:00:00', 0, '2026-01-01 00:00:00', '2026-01-01 00:00:00');
-
-INSERT INTO `wallets`
-  (`public_id`, `user_id`, `balance`, `currency`, `created_at`, `updated_at`)
-VALUES ('YHJMA72PSKDZQ55RCXKX07Q3BC', 3, '0.00000000', 'NGN', '2026-01-01 00:00:00', '2026-01-01 00:00:00');
-
-INSERT INTO `referral_accounts`
-  (`user_id`, `code`, `commission_percent`, `created_at`, `updated_at`)
-VALUES (3, 'STAFF-0001', '5.0000', '2026-01-01 00:00:00', '2026-01-01 00:00:00');
+-- Set VP_SETUP_TOKEN in .env and create the first administrator at /setup.
 
 SET FOREIGN_KEY_CHECKS = 1;

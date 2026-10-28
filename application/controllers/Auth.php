@@ -23,6 +23,9 @@ class Auth extends MY_Controller {
         parent::__construct();
         $this->load->library(array('form_validation', 'AuthService', 'RateLimiter', 'MailService'));
         $this->load->model(array('Setting_model', 'Blacklist_model'));
+        if (!$this->db_ready || !$this->auth) {
+            show_error('Authentication is temporarily unavailable. Please try again later.', 503);
+        }
     }
 
     /* -------------------------------------------------------------- */
@@ -32,10 +35,6 @@ class Auth extends MY_Controller {
     public function login() {
         if ($this->auth->check()) {
             redirect($this->default_landing());
-        }
-        if ($this->no_super_admin()) {
-            $this->session->set_flashdata('warning', 'Create your account to become the first administrator.');
-            return redirect('register');
         }
 
         if ($this->input->method(true) === 'POST') {
@@ -62,10 +61,6 @@ class Auth extends MY_Controller {
      * invalid-credentials message so this page cannot be used to probe roles.
      */
     public function admin_login() {
-        if ($this->no_super_admin()) {
-            $this->session->set_flashdata('warning', 'Create your account to become the first administrator.');
-            return redirect('register');
-        }
         if ($this->auth->check()) {
             if ($this->auth->has_role(array('SUPER_ADMIN','ADMIN','STAFF'))) {
                 redirect('admin');
@@ -243,6 +238,10 @@ class Auth extends MY_Controller {
         $this->session->set_flashdata('success', 'Welcome back.');
         $dest = $this->session->userdata('redirect_after_login') ?: $this->default_landing();
         $this->session->unset_userdata('redirect_after_login');
+        if (!is_string($dest) || $dest === '' || $dest[0] !== '/'
+            || strpos($dest, '//') === 0 || !preg_match('#^/[a-zA-Z0-9/_\-.?&=]*$#', $dest)) {
+            $dest = $this->default_landing();
+        }
         redirect($dest);
     }
 
@@ -269,11 +268,7 @@ class Auth extends MY_Controller {
         if ($this->auth->check()) {
             redirect($this->default_landing());
         }
-        // Closing sign-ups must not lock an operator out of an empty panel:
-        // while no staff account exists, the first registration is the
-        // SUPER_ADMIN bootstrap and stays open.
-        if (!$this->Setting_model->get('registration_enabled', true)
-            && !$this->auth->bootstrap_admin_open()) {
+        if (!$this->Setting_model->get('registration_enabled', true)) {
             $this->session->set_flashdata('error', 'Registration is currently disabled.');
             return redirect('login');
         }
@@ -293,7 +288,6 @@ class Auth extends MY_Controller {
             // Prefer the session over the query string so the field stays
             // filled after a validation error redirects back here.
             'referral'       => $this->referralservice->pending_code() ?: $incoming,
-            'bootstrap_open' => $this->auth->bootstrap_admin_open(),
         ));
     }
 
@@ -306,6 +300,7 @@ class Auth extends MY_Controller {
             'required|min_length[8]|max_length[255]');
         $this->form_validation->set_rules('password_confirm', 'Confirm password',
             'required|matches[password]');
+        $this->form_validation->set_rules('terms', 'Terms of Service', 'required');
         $this->form_validation->set_rules('first_name', 'First name', 'trim|max_length[100]');
         $this->form_validation->set_rules('last_name', 'Last name', 'trim|max_length[100]');
 
@@ -313,7 +308,6 @@ class Auth extends MY_Controller {
             return $this->render_auth('auth/register', array(
                 'title' => 'Create your account',
                 'referral' => $this->input->post('ref', true),
-                'bootstrap_open' => $this->auth->bootstrap_admin_open(),
             ));
         }
 
@@ -367,16 +361,16 @@ class Auth extends MY_Controller {
             log_message('error', 'referral attribution failed at registration: '.$e->getMessage());
         }
 
-        // Auto-login the new customer (email verification gates sensitive
-        // actions, not the session itself).
-        $this->auth->attempt_login($data['email'], $data['password'], $ip, $this->input->user_agent());
+        $verification_required = $this->Setting_model->get('email_verification_required', false);
+        if ($verification_required) $this->send_verification_email($result['user']);
 
-        if (!empty($result['bootstrap'])) {
-            // First administrator: no email round-trip (it is marked verified in
-            // AuthService::register), and the next step is adding the other admins.
-            $this->session->set_flashdata('success', 'Welcome. You are the first administrator — add the other administrators from Admin → Administrators.');
-        } elseif ($this->Setting_model->get('email_verification_required', false)) {
-            $this->send_verification_email($result['user']);
+        // Auto-login the new customer. Do not claim a session if login failed.
+        $login = $this->auth->attempt_login($data['email'], $data['password'], $ip, $this->input->user_agent());
+        if (empty($login['ok']) || !empty($login['mfa_required'])) {
+            $this->session->set_flashdata('success', 'Account created. Please sign in.');
+            return redirect('login');
+        }
+        if ($verification_required) {
             $this->session->set_flashdata('success', 'Account created. Please verify your email — we sent a link.');
         } else {
             $this->session->set_flashdata('success', 'Welcome to Active Digital Hub.');
@@ -629,15 +623,6 @@ class Auth extends MY_Controller {
     /* Helpers                                                        */
     /* -------------------------------------------------------------- */
 
-    private function no_super_admin() {
-        try {
-            if (!$this->db_ready) return false;
-            return $this->auth && $this->auth->bootstrap_admin_open();
-        } catch (Throwable $e) {
-            return false;
-        }
-    }
-
     private function default_landing() {
         if (!$this->auth) return 'login';
         return $this->auth->has_role(array('SUPER_ADMIN','ADMIN','STAFF')) ? 'admin' : 'dashboard';
@@ -661,7 +646,8 @@ class Auth extends MY_Controller {
         if (!$wanted) return;
 
         $name = $this->config->item('sess_cookie_name') ?: session_name();
-        if ($name === '' || !isset($_COOKIE[$name])) return;
+        $current_id = session_id();
+        if ($name === '' || $current_id === '') return;
         $params = session_get_cookie_params();
         $options = array(
             'expires'  => time() + (30 * 86400),
@@ -671,7 +657,7 @@ class Auth extends MY_Controller {
             'httponly' => true,
             'samesite' => 'Lax',
         );
-        setcookie($name, $_COOKIE[$name], $options);
+        setcookie($name, $current_id, $options);
     }
 
     private function render_auth($view, $data = array()) {
@@ -698,6 +684,7 @@ class Auth extends MY_Controller {
         $map = array(
             'EMAIL_TAKEN'    => 'An account with that email already exists.',
             'USERNAME_TAKEN' => 'That username is already taken.',
+            'REGISTRATION_BUSY' => 'Registration is busy. Please try again.',
             'REGISTRATION_FAILED' => 'Registration could not be completed. Please try again.',
         );
         return $map[$code] ?? 'Unable to complete registration.';

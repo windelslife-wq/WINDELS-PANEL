@@ -17,8 +17,8 @@ Checks:
   5. every foreign-key *value* in the seed data resolves to a row that the file
      itself inserts
   6. the deployment invariants: migration bookkeeping present and matching the
-     migrations on disk, a SUPER_ADMIN user with a bcrypt hash, a wallet for
-     that user, roles/permissions/settings/feature flags non-empty
+     migrations on disk, no default user accounts, and
+     roles/permissions/settings/feature flags non-empty
   7. the whole file replays into SQLite (transpiled) and the expected rows come
      back out — a cheap end-to-end proof that the INSERTs actually load
 
@@ -36,7 +36,7 @@ except ImportError:  # pragma: no cover
     sys.exit("sqlglot is required: pip install sqlglot")
 
 ROOT = Path(__file__).resolve().parent.parent
-SQL_PATH = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "database" / "production.sql"
+SQL_PATH = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "database" / "marvysocials.sql"
 
 errors: list[str] = []
 notes: list[str] = []
@@ -156,7 +156,21 @@ def main() -> int:
                 if ref_table is not None:
                     foreign_keys.append((target, child_cols, ref_table.name,
                                          [c for c in ref_cols if c != ref_table.name]))
-            # ALTER ... MODIFY may retype a column; keep the column set intact.
+            # ADD COLUMN actions extend the table; MODIFY actions are nested
+            # in ModifyColumn and must not be mistaken for new columns.
+            for action in parsed.args.get("actions") or []:
+                if target in tables and isinstance(action, exp.ColumnDef):
+                    nullable = True
+                    has_default = False
+                    for constraint in action.args.get("constraints") or []:
+                        kind = constraint.args.get("kind")
+                        if isinstance(kind, exp.NotNullColumnConstraint):
+                            nullable = bool(kind.args.get("allow_null"))
+                        if isinstance(kind, (exp.DefaultColumnConstraint, exp.AutoIncrementColumnConstraint,
+                                             exp.GeneratedAsIdentityColumnConstraint,
+                                             exp.PrimaryKeyColumnConstraint)):
+                            has_default = True
+                    tables[target][action.name] = {"nullable": nullable, "has_default": has_default}
 
         elif isinstance(parsed, exp.Insert):
             insert_count += 1
@@ -230,21 +244,10 @@ def main() -> int:
     else:
         notes.append(f"migration bookkeeping pinned at version {expected_version}")
 
-    users = inserted.get("users", [])
-    admins = [u for u in users if u.get("role") == "SUPER_ADMIN"]
-    if not admins:
-        fail("no SUPER_ADMIN user — the panel could not be administered after import")
-    for admin in admins:
-        if not str(admin.get("password_hash", "")).startswith("$2"):
-            fail("the administrator password_hash is not a bcrypt hash")
-        if admin.get("status") != "ACTIVE":
-            fail("the administrator account is not ACTIVE")
-        if not admin.get("email_verified_at"):
-            fail("the administrator email is not marked verified — login would demand verification")
-    admin_ids = {str(a.get("id")) for a in admins}
-    wallet_users = {str(w.get("user_id")) for w in inserted.get("wallets", [])}
-    if admin_ids and not admin_ids <= wallet_users:
-        fail("the administrator has no wallet row")
+    if inserted.get("users", []):
+        fail("production seed must not ship user accounts or credentials")
+    else:
+        notes.append("no default user accounts; first admin uses protected setup")
 
     for table, minimum in (("roles", 4), ("permissions", 20), ("role_permissions", 40),
                            ("settings", 20), ("feature_flags", 5), ("payment_methods", 1),
@@ -324,8 +327,6 @@ def replay_sqlite(statements: list[str], tables: dict) -> list[str]:
             "roles": "SELECT COUNT(*) FROM roles",
             "permissions": "SELECT COUNT(*) FROM permissions",
             "settings": "SELECT COUNT(*) FROM settings",
-            "active admin": "SELECT COUNT(*) FROM users WHERE role = 'SUPER_ADMIN' AND status = 'ACTIVE'",
-            "admin wallet": "SELECT COUNT(*) FROM wallets w JOIN users u ON u.id = w.user_id",
             "super-admin grants": "SELECT COUNT(*) FROM role_permissions rp "
                                   "JOIN roles r ON r.id = rp.role_id JOIN permissions p ON p.id = rp.permission_id "
                                   "WHERE r.name = 'SUPER_ADMIN'",
