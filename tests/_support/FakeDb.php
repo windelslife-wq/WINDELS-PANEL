@@ -758,6 +758,14 @@ class FakeDb
             }
             return new FakeDbResult($out);
         }
+        // Named locks are single-process no-ops here: the lock is granted, and
+        // release is accepted. Registration takes one for the first-admin check.
+        if (preg_match('~^\s*SELECT\s+GET_LOCK\(~i', $sql)) {
+            return new FakeDbResult(array((object)array('got' => 1)));
+        }
+        if (preg_match('~^\s*SELECT\s+RELEASE_LOCK\(~i', $sql)) {
+            return new FakeDbResult(array((object)array('released' => 1)));
+        }
         throw new RuntimeException('FakeDb: unsupported raw query: '.trim($sql));
     }
 

@@ -303,7 +303,7 @@ class SiteOperatorKnowledge {
 
             // Admin
             array('category' => 'Administrators', 'q' => 'Where do staff sign in?', 'a' => 'Use /admin/login. After a valid password the account must have the SUPER_ADMIN, ADMIN or STAFF role. Ordinary customer credentials are rejected with the same invalid-credentials message used on failed logins.'),
-            array('category' => 'Administrators', 'q' => 'How is the first administrator created?', 'a' => 'On a production import, the first administrator is created by the official database package or by `php index.php seed core` in development. Do not commit a live password to the repository. Rotate the initial password immediately after first login.'),
+            array('category' => 'Administrators', 'q' => 'How is the first administrator created?', 'a' => 'On a production import, the first administrator is created by the official database package or by `php index.php seed core` in development. On an install with no staff account at all, the first account registered at /register becomes the SUPER_ADMIN; it then adds other administrators from Admin → Administrators. Do not commit a live password to the repository. Rotate the initial password immediately after first login.'),
             array('category' => 'Administrators', 'q' => 'Can staff impersonate a customer?', 'a' => 'Only if they have the impersonation permission. The session is read-only, time-boxed and audited. Operators must end it with the dedicated control before they can change anything again.'),
         );
     }

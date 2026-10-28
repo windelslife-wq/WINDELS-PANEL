@@ -38,13 +38,35 @@ class AuthService {
     /* Registration                                                   */
     /* -------------------------------------------------------------- */
 
+    /** Named MySQL lock that serialises first-administrator bootstrap. */
+    const BOOTSTRAP_LOCK = 'marvy_bootstrap_admin';
+
     /**
-     * Register a new CUSTOMER. Creates user + wallet in a transaction and
+     * True while no staff account of any kind exists — no SUPER_ADMIN, ADMIN
+     * or STAFF row, whatever its status. While this holds, the next
+     * registration is made SUPER_ADMIN so a fresh install can be claimed from
+     * the normal sign-up page.
+     *
+     * Any status counts, not just ACTIVE: suspending or banning an existing
+     * administrator must never reopen this door to whoever registers next.
+     */
+    public function bootstrap_admin_open() {
+        return (int)$this->ci->db->where_in('role', array('SUPER_ADMIN', 'ADMIN', 'STAFF'))
+            ->count_all_results('users') === 0;
+    }
+
+    /**
+     * Register a new account. Creates user + wallet in a transaction and
      * returns the user row. Caller is responsible for validation and the
      * registration_enabled / blacklist gates.
      *
+     * The account is a CUSTOMER, except when bootstrap_admin_open() holds at
+     * the moment of insert: then it is the first SUPER_ADMIN, its email is
+     * marked verified (no mail server is needed to claim the panel), and it
+     * can create further administrators from Admin → Administrators.
+     *
      * @param array $data username,email,password,first_name?,last_name?,referred_by_code?,ip?
-     * @return array{ok:bool,user?:object,error?:string}
+     * @return array{ok:bool,user?:object,bootstrap?:bool,error?:string}
      */
     public function register(array $data) {
         $email = strtolower(trim($data['email']));
@@ -57,58 +79,88 @@ class AuthService {
             return array('ok' => false, 'error' => 'USERNAME_TAKEN');
         }
 
-        $referred_by = null;
-        $ref = null;
-        if (!empty($data['referred_by_code'])) {
-            $ref = $this->ci->User_model->find_by_referral_code(trim($data['referred_by_code']));
-            if ($ref && $ref->status === 'ACTIVE') {
-                $referred_by = $ref->id;
+        // Only the bootstrap decision needs serialising. Check first without a
+        // lock so ordinary sign-ups never touch it, then take the lock and check
+        // again: two simultaneous sign-ups on an empty install must not both
+        // become SUPER_ADMIN.
+        $locked = false;
+        $bootstrap = $this->bootstrap_admin_open();
+        if ($bootstrap) {
+            $lock = $this->ci->db->query('SELECT GET_LOCK(?, 10) AS got', array(self::BOOTSTRAP_LOCK))->row();
+            if (!$lock || (int)$lock->got !== 1) {
+                return array('ok' => false, 'error' => 'REGISTRATION_BUSY');
             }
+            $locked = true;
+            $bootstrap = $this->bootstrap_admin_open();
         }
 
-        $require_verify = $this->setting('email_verification_required', false);
+        try {
+            $referred_by = null;
+            $ref = null;
+            if (!empty($data['referred_by_code'])) {
+                $ref = $this->ci->User_model->find_by_referral_code(trim($data['referred_by_code']));
+                if ($ref && $ref->status === 'ACTIVE') {
+                    $referred_by = $ref->id;
+                }
+            }
 
-        // New customers land in the operator's default price group, exactly
-        // like the setup-wizard's first admin account. Without this every
-        // registration threw (undefined $price_group_id) before this fix.
-        $default_group = $this->ci->db->where('is_default', 1)->limit(1)->get('price_groups')->row();
-        $price_group_id = $default_group ? $default_group->id : null;
+            $require_verify = $this->setting('email_verification_required', false) && !$bootstrap;
+            $now = gmdate('Y-m-d H:i:s');
 
-        $this->ci->db->trans_start();
-        $this->ci->db->insert('users', array(
-            'public_id'         => marvy_public_id(),
-            'username'          => $username,
-            'email'             => $email,
-            'password_hash'     => $this->hash_password($data['password']),
-            'first_name'        => $data['first_name'] ?? null,
-            'last_name'         => $data['last_name'] ?? null,
-            'status'            => 'ACTIVE',
-            'role'              => 'CUSTOMER',
-            'price_group_id'    => $price_group_id,
-            'referral_code'     => $this->generate_referral_code(),
-            'user_code'         => marvy_allocate_user_code($this->ci->db),
-            'referred_by_id'    => $referred_by,
-            'timezone'          => $data['timezone'] ?? 'UTC',
-            'locale'            => $data['locale'] ?? 'en',
-            'email_verified_at' => $require_verify ? null : gmdate('Y-m-d H:i:s'),
-            'mfa_enabled'       => 0,
-            'created_at'        => gmdate('Y-m-d H:i:s'),
-        ));
-        $user_id = $this->ci->db->insert_id();
+            // New customers land in the operator's default price group, exactly
+            // like the setup-wizard's first admin account. Without this every
+            // registration threw (undefined $price_group_id) before this fix.
+            $default_group = $this->ci->db->where('is_default', 1)->limit(1)->get('price_groups')->row();
+            $price_group_id = $default_group ? $default_group->id : null;
 
-        // Every customer has a wallet in the panel's base currency (§24).
-        $this->ci->db->insert('wallets', array(
-            'public_id'  => marvy_public_id(),
-            'user_id'    => $user_id,
-            'balance'    => '0.00000000',
-            'currency'   => marvy_base_currency(),
-            'created_at' => gmdate('Y-m-d H:i:s'),
-            'updated_at' => gmdate('Y-m-d H:i:s'),
-        ));
-        $this->ci->db->trans_complete();
+            $this->ci->db->trans_start();
+            $this->ci->db->insert('users', array(
+                'public_id'         => marvy_public_id(),
+                'username'          => $username,
+                'email'             => $email,
+                'password_hash'     => $this->hash_password($data['password']),
+                'first_name'        => $data['first_name'] ?? null,
+                'last_name'         => $data['last_name'] ?? null,
+                'status'            => 'ACTIVE',
+                'role'              => 'CUSTOMER',
+                'price_group_id'    => $price_group_id,
+                'referral_code'     => $this->generate_referral_code(),
+                'user_code'         => marvy_allocate_user_code($this->ci->db),
+                'referred_by_id'    => $referred_by,
+                'timezone'          => $data['timezone'] ?? 'UTC',
+                'locale'            => $data['locale'] ?? 'en',
+                'email_verified_at' => $require_verify ? null : $now,
+                'mfa_enabled'       => 0,
+                'created_at'        => $now,
+            ));
+            $user_id = $this->ci->db->insert_id();
 
-        if ($this->ci->db->trans_status() === false) {
-            return array('ok' => false, 'error' => 'REGISTRATION_FAILED');
+            // The insert above is always CUSTOMER and never reads a role from
+            // $data. The bootstrap promotion is server-side only: it happens
+            // here, inside this transaction, and only while the lock is held
+            // and the re-check above found no staff account.
+            if ($bootstrap) {
+                $this->ci->db->where('id', $user_id)->update('users', array('role' => 'SUPER_ADMIN'));
+            }
+
+            // Every customer has a wallet in the panel's base currency (§24).
+            $this->ci->db->insert('wallets', array(
+                'public_id'  => marvy_public_id(),
+                'user_id'    => $user_id,
+                'balance'    => '0.00000000',
+                'currency'   => marvy_base_currency(),
+                'created_at' => gmdate('Y-m-d H:i:s'),
+                'updated_at' => gmdate('Y-m-d H:i:s'),
+            ));
+            $this->ci->db->trans_complete();
+
+            if ($this->ci->db->trans_status() === false) {
+                return array('ok' => false, 'error' => 'REGISTRATION_FAILED');
+            }
+        } finally {
+            if ($locked) {
+                $this->ci->db->query('SELECT RELEASE_LOCK(?)', array(self::BOOTSTRAP_LOCK));
+            }
         }
 
         $user = $this->ci->User_model->find_by_id($user_id);
@@ -123,13 +175,20 @@ class AuthService {
         $this->audit($user_id, 'auth.register', 'users', $user->public_id,
             null, array('email' => $email), $data['ip'] ?? null);
 
+        if ($bootstrap) {
+            // Separate evidence row: this account claimed the whole panel, which
+            // is not the same event as an ordinary sign-up.
+            $this->audit($user_id, 'auth.bootstrap_admin', 'users', $user->public_id,
+                null, array('role' => 'SUPER_ADMIN'), $data['ip'] ?? null);
+        }
+
         // Every new account leaves registration with a transaction PIN
         // already working, instead of the customer discovering the PIN screen
         // only when their first wallet action is refused. Never fatal: a
         // broken PIN path must not cost anyone their account.
         $this->issue_signup_pin($user);
 
-        return array('ok' => true, 'user' => $user);
+        return array('ok' => true, 'user' => $user, 'bootstrap' => (bool)$bootstrap);
     }
 
     /**

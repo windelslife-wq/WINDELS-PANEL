@@ -269,7 +269,11 @@ class Auth extends MY_Controller {
         if ($this->auth->check()) {
             redirect($this->default_landing());
         }
-        if (!$this->Setting_model->get('registration_enabled', true)) {
+        // Closing sign-ups must not lock an operator out of an empty panel:
+        // while no staff account exists, the first registration is the
+        // SUPER_ADMIN bootstrap and stays open.
+        if (!$this->Setting_model->get('registration_enabled', true)
+            && !$this->auth->bootstrap_admin_open()) {
             $this->session->set_flashdata('error', 'Registration is currently disabled.');
             return redirect('login');
         }
@@ -285,10 +289,11 @@ class Auth extends MY_Controller {
         }
 
         $this->render_auth('auth/register', array(
-            'title'    => 'Create your account',
+            'title'          => 'Create your account',
             // Prefer the session over the query string so the field stays
             // filled after a validation error redirects back here.
-            'referral' => $this->referralservice->pending_code() ?: $incoming,
+            'referral'       => $this->referralservice->pending_code() ?: $incoming,
+            'bootstrap_open' => $this->auth->bootstrap_admin_open(),
         ));
     }
 
@@ -308,6 +313,7 @@ class Auth extends MY_Controller {
             return $this->render_auth('auth/register', array(
                 'title' => 'Create your account',
                 'referral' => $this->input->post('ref', true),
+                'bootstrap_open' => $this->auth->bootstrap_admin_open(),
             ));
         }
 
@@ -365,13 +371,17 @@ class Auth extends MY_Controller {
         // actions, not the session itself).
         $this->auth->attempt_login($data['email'], $data['password'], $ip, $this->input->user_agent());
 
-        if ($this->Setting_model->get('email_verification_required', false)) {
+        if (!empty($result['bootstrap'])) {
+            // First administrator: no email round-trip (it is marked verified in
+            // AuthService::register), and the next step is adding the other admins.
+            $this->session->set_flashdata('success', 'Welcome. You are the first administrator — add the other administrators from Admin → Administrators.');
+        } elseif ($this->Setting_model->get('email_verification_required', false)) {
             $this->send_verification_email($result['user']);
             $this->session->set_flashdata('success', 'Account created. Please verify your email — we sent a link.');
         } else {
             $this->session->set_flashdata('success', 'Welcome to Active Digital Hub.');
         }
-        redirect('dashboard');
+        redirect($this->default_landing());
     }
 
     /* -------------------------------------------------------------- */
