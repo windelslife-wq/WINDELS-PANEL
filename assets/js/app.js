@@ -261,22 +261,14 @@
       if (event.persisted) token(true);
     });
 
-    try {
-      initPasswordToggles();
-      initMobileNav();
-      initSkipLinks();
-      initAnnounce();
-      initFaqFilter();
-      initSiteOperator();
-      initMfa();
-      initFormSubmitGuard();
-      initThemeToggle();
-      initAppSidebar();
-    } catch (e) {
-      // A broken optional widget must never stop the other global behaviours
-      // (CSRF plumbing, mobile nav, FAQ filter, assistant) from running.
-      if (window.console && console.error) console.error('marvy init failed:', e);
-    }
+    [initPasswordToggles, initMobileNav, initSkipLinks, initAnnounce,
+      initFaqFilter, initSiteOperator, initMfa, initFormSubmitGuard,
+      initThemeToggle, initAppSidebar].forEach(function (init) {
+      try { init(); }
+      catch (e) {
+        if (window.console && console.error) console.error('marvy init failed:', e);
+      }
+    });
   }
 
   // scripts.php loads this at the end of <body>, but being defensive costs
@@ -381,7 +373,10 @@
         if (!input) return;
         var show = input.type === 'password';
         input.type = show ? 'text' : 'password';
-        this.textContent = show ? 'Hide' : 'Show';
+        var label = this.querySelector('.ws-password-label');
+        if (label) label.textContent = show ? 'Hide' : 'Show';
+        else this.textContent = show ? 'Hide' : 'Show';
+        this.setAttribute('aria-label', (show ? 'Hide ' : 'Show ') + (input.name === 'password_confirm' ? 'password confirmation' : 'password'));
         this.setAttribute('aria-pressed', show ? 'true' : 'false');
       });
     }
@@ -603,6 +598,7 @@
     function restore(btn) {
       if (!btn || !btn.classList.contains('ws-submitting')) return;
       btn.classList.remove('ws-submitting');
+      if (btn.form) btn.form.removeAttribute('data-ws-submitting');
       btn.disabled = false;
       var original = btn.getAttribute('data-original-text');
       if (original !== null) {
@@ -632,12 +628,14 @@
     document.addEventListener('submit', function (e) {
       var form = e.target;
       if (!form || form.tagName !== 'FORM') return;
-      if (form.hasAttribute('data-no-guard')) return;
+      if (form.hasAttribute('data-no-guard') || e.defaultPrevented) return;
+      if (form.hasAttribute('data-ws-submitting')) { e.preventDefault(); return; }
 
       var btn = form.querySelector('button[type="submit"], input[type="submit"]');
       if (!btn || btn.disabled) return;
       if (btn.classList.contains('ws-submitting')) return;
 
+      form.setAttribute('data-ws-submitting', 'true');
       btn.classList.add('ws-submitting');
       btn.disabled = true;
 
@@ -652,7 +650,7 @@
         spin.setAttribute('aria-hidden', 'true');
         btn.insertBefore(spin, btn.firstChild);
       }
-    }, true);
+    });
   }
 
   /* ----------------------------- MFA enrolment --------------------------- */

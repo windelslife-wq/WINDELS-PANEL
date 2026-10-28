@@ -41,60 +41,53 @@ class AuthService {
     /** Named MySQL lock that serialises first-administrator bootstrap. */
     const BOOTSTRAP_LOCK = 'marvy_bootstrap_admin';
 
-    /**
-     * True while no staff account of any kind exists — no SUPER_ADMIN, ADMIN
-     * or STAFF row, whatever its status. While this holds, the next
-     * registration is made SUPER_ADMIN so a fresh install can be claimed from
-     * the normal sign-up page.
-     *
-     * Any status counts, not just ACTIVE: suspending or banning an existing
-     * administrator must never reopen this door to whoever registers next.
-     */
+    /** A durable marker closes bootstrap even if the initial admin is deleted. */
     public function bootstrap_admin_open() {
-        return (int)$this->ci->db->where_in('role', array('SUPER_ADMIN', 'ADMIN', 'STAFF'))
-            ->count_all_results('users') === 0;
+        $staff = (int)$this->ci->db->where_in('role', array('SUPER_ADMIN', 'ADMIN', 'STAFF'))
+            ->count_all_results('users');
+        $claimed = (int)$this->ci->db->where('setting_key', 'first_admin_bootstrap_completed')
+            ->count_all_results('settings');
+        return $staff === 0 && $claimed === 0;
     }
 
-    /**
-     * Register a new account. Creates user + wallet in a transaction and
-     * returns the user row. Caller is responsible for validation and the
-     * registration_enabled / blacklist gates.
-     *
-     * The account is a CUSTOMER, except when bootstrap_admin_open() holds at
-     * the moment of insert: then it is the first SUPER_ADMIN, its email is
-     * marked verified (no mail server is needed to claim the panel), and it
-     * can create further administrators from Admin → Administrators.
-     *
-     * @param array $data username,email,password,first_name?,last_name?,referred_by_code?,ip?
-     * @return array{ok:bool,user?:object,bootstrap?:bool,error?:string}
-     */
+    /** Public registration always creates a customer, regardless of input. */
     public function register(array $data) {
+        return $this->register_account($data, false);
+    }
+
+    /** The secret is configured by the operator, never supplied by the client as a role. */
+    public function register_first_admin(array $data, $secret) {
+        $expected = (string)Env::get('SETUP_TOKEN', '');
+        if (strlen($expected) < 32 || !is_string($secret) || !hash_equals($expected, $secret)) {
+            return array('ok' => false, 'error' => 'BOOTSTRAP_DENIED');
+        }
+        return $this->register_account($data, true);
+    }
+
+    private function register_account(array $data, $bootstrap) {
         $email = strtolower(trim($data['email']));
         $username = trim($data['username']);
 
-        if ($this->ci->User_model->find_by_email($email)) {
-            return array('ok' => false, 'error' => 'EMAIL_TAKEN');
-        }
-        if ($this->ci->User_model->find_by_username($username)) {
-            return array('ok' => false, 'error' => 'USERNAME_TAKEN');
-        }
-
-        // Only the bootstrap decision needs serialising. Check first without a
-        // lock so ordinary sign-ups never touch it, then take the lock and check
-        // again: two simultaneous sign-ups on an empty install must not both
-        // become SUPER_ADMIN.
+        // Only the protected bootstrap takes this lock. Recheck after acquiring it.
         $locked = false;
-        $bootstrap = $this->bootstrap_admin_open();
         if ($bootstrap) {
             $lock = $this->ci->db->query('SELECT GET_LOCK(?, 10) AS got', array(self::BOOTSTRAP_LOCK))->row();
             if (!$lock || (int)$lock->got !== 1) {
                 return array('ok' => false, 'error' => 'REGISTRATION_BUSY');
             }
             $locked = true;
-            $bootstrap = $this->bootstrap_admin_open();
         }
 
         try {
+            if ($bootstrap && !$this->bootstrap_admin_open()) {
+                return array('ok' => false, 'error' => 'BOOTSTRAP_CLOSED');
+            }
+            if ($this->ci->User_model->find_by_email($email)) {
+                return array('ok' => false, 'error' => 'EMAIL_TAKEN');
+            }
+            if ($this->ci->User_model->find_by_username($username)) {
+                return array('ok' => false, 'error' => 'USERNAME_TAKEN');
+            }
             $referred_by = null;
             $ref = null;
             if (!empty($data['referred_by_code'])) {
@@ -141,6 +134,11 @@ class AuthService {
             // and the re-check above found no staff account.
             if ($bootstrap) {
                 $this->ci->db->where('id', $user_id)->update('users', array('role' => 'SUPER_ADMIN'));
+                $this->ci->db->insert('settings', array(
+                    'setting_key' => 'first_admin_bootstrap_completed',
+                    'setting_value' => json_encode(array('value' => gmdate('c'))),
+                    'category' => 'security', 'is_public' => 0,
+                ));
             }
 
             // Every customer has a wallet in the panel's base currency (§24).

@@ -495,7 +495,9 @@ button { font-family:inherit; cursor:pointer; }
 .ws-password{position:relative}
 .ws-password .input{padding-right:4.5rem}
 .ws-password-toggle{position:absolute;right:.4rem;top:50%;transform:translateY(-50%);border:0;background:transparent;
-  color:var(--brand-700);font-size:.8rem;font-weight:600;padding:.35rem .5rem;min-height:36px}
+  color:var(--brand-700);font-size:.8rem;font-weight:600;padding:.35rem .5rem;min-height:44px;display:inline-flex;align-items:center;gap:.25rem;cursor:pointer}
+.ws-password .input{padding-right:6rem}
+.ws-eye-slash{display:none}.ws-password-toggle[aria-pressed="true"] .ws-eye-slash{display:block}
 
 /* ------------------------------- Tabs / accordion / modal --------------- */
 .tabs{display:flex;gap:.25rem;border-bottom:1px solid var(--slate-200)}

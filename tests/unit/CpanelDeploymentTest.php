@@ -394,42 +394,11 @@ class CpanelDeploymentTest extends TestCase
         }
     }
 
-    public function testProductionSqlShipsAnAdministratorNobodyHasToCreateFromACommand()
+    public function testProductionSqlHasNoDefaultAccountsOrPasswords()
     {
-        $this->assertMatchesRegularExpression("/INSERT INTO `users`.*'SUPER_ADMIN'/s", self::$sql,
-            'the whole point: no `php install.php --users-only` step');
-        $this->assertMatchesRegularExpression('/\$2y\$\d\d\$[.\/A-Za-z0-9]{53}/', self::$sql,
-            'the seeded password must be a real bcrypt hash password_verify() accepts');
-        $this->assertStringContainsString('INSERT INTO `wallets`', self::$sql,
-            'the admin needs the wallet row the admin screens join against');
-        $this->assertMatchesRegularExpression('/--\s+password:\s+\S+/', self::$sql,
-            'the credentials must be documented in the file the operator imports');
-    }
-
-    public function testProductionSqlShipsACustomerAndStaffAccount()
-    {
-        $this->assertMatchesRegularExpression("/INSERT INTO `users`.*'demo'.*'CUSTOMER'/s", self::$sql,
-            'a CUSTOMER account must exist so /login can open the dashboard');
-        $this->assertMatchesRegularExpression("/INSERT INTO `users`.*'staff'.*'STAFF'/s", self::$sql,
-            'a STAFF account must exist so /admin/login has a non-owner operator');
-        $this->assertStringContainsString("'admin_mfa_required', '{\"value\":false}'", self::$sql,
-            'mandatory staff MFA would bounce first login to /dashboard/security');
-        $this->assertStringContainsString("'email_verification_required', '{\"value\":false}'", self::$sql,
-            'email verification would block a fresh import that has no mailer yet');
-    }
-
-    public function testFirstLoginPasswordsVerifyAgainstTheSeededHashes()
-    {
-        preg_match_all('/--\s+password:\s+(\S+)/', self::$sql, $pws);
-        preg_match_all('/(\$2y\$\d\d\$[.\/A-Za-z0-9]{53})/', self::$sql, $hashes);
-        $this->assertGreaterThanOrEqual(3, count($pws[1]), 'admin, demo and staff passwords must be documented');
-        $this->assertGreaterThanOrEqual(3, count($hashes[1]), 'admin, demo and staff hashes must be present');
-        $this->assertTrue(password_verify($pws[1][0], $hashes[1][0]),
-            'the first documented password must verify against the first bcrypt hash (SUPER_ADMIN)');
-        $this->assertTrue(password_verify($pws[1][1], $hashes[1][1]),
-            'the demo password must verify against its bcrypt hash');
-        $this->assertTrue(password_verify($pws[1][2], $hashes[1][2]),
-            'the staff password must verify against its bcrypt hash');
+        $this->assertStringNotContainsString('INSERT INTO `users`', self::$sql);
+        $this->assertStringNotContainsString('--     password:', self::$sql);
+        $this->assertStringContainsString('VP_SETUP_TOKEN', self::$sql);
     }
 
     public function testProductionSqlImportsIntoADatabaseTheOperatorAlreadyCreated()
@@ -787,20 +756,16 @@ class CpanelDeploymentTest extends TestCase
 
     /* ===================== the browser setup page ========================= */
 
-    public function testTheSetupPageIsClosedUnlessTheOperatorOpensIt()
+    public function testTheSetupPageUsesTheProtectedBootstrapService()
     {
         $src = file_get_contents(self::$root.'/application/controllers/Setup.php');
-        $this->assertStringContainsString("Env::get('SETUP_TOKEN'", $src);
-        $this->assertStringContainsString('hash_equals(', $src, 'constant-time token comparison');
-        $this->assertStringContainsString('show_404()', $src,
-            'no token means the route does not exist, not that it prompts');
-        $this->assertStringContainsString('too_many_failures', $src, 'rate limited like the login screen');
-        $this->assertStringContainsString('strlen($expected) < 16', $src,
-            'a short token is refused rather than silently trusted');
-
-        $routes = file_get_contents(self::$root.'/application/config/routes.php');
-        $this->assertStringContainsString("\$route['setup']", $routes);
-        $this->assertStringContainsString("\$route['setup/admin']", $routes);
+        $service = file_get_contents(self::$root.'/application/libraries/AuthService.php');
+        $this->assertStringContainsString('register_first_admin', $src);
+        $this->assertStringContainsString('too_many_failures', $src);
+        $this->assertStringContainsString("Env::get('SETUP_TOKEN'", $service);
+        $this->assertStringContainsString('hash_equals(', $service);
+        $this->assertStringContainsString('strlen($expected) < 32', $service);
+        $this->assertStringNotContainsString("update('users'", $src);
     }
 
     public function testNothingInTheRequestPathNeedsACliInstaller()

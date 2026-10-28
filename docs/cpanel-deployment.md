@@ -160,52 +160,24 @@ exits 0/1, so monitoring can gate on it.
 
 Visit `https://yourdomain.com`.
 
-The homepage should render. Sign in with the credentials printed in the header
-of `database/marvysocials.sql`:
+The homepage should render. For a **new empty database**, create the first
+administrator as follows:
 
-```
-Staff admin (full control of the site)
-  URL:      https://yourdomain.com/admin/login
-  username: admin
-  password: ChangeMe!Admin2026
+1. Generate a high-entropy secret (for example, 32 random bytes encoded as
+   hex) and set `VP_SETUP_TOKEN` in the server's `.env`. Keep it private.
+2. Visit `https://yourdomain.com/setup`. Enter the token in the form, together
+   with the new administrator's username, email and password (12 characters
+   minimum). Never put the token in a URL.
+3. Remove `VP_SETUP_TOKEN` from `.env` after successful setup and sign in at
+   `https://yourdomain.com/admin/login`.
 
-Customer dashboard
-  URL:      https://yourdomain.com/login
-  username: demo
-  password: MarvyDemo#2026!
-
-Support staff
-  URL:      https://yourdomain.com/admin/login
-  username: staff
-  password: MarvyStaff#2026!
-```
-
-The SUPER_ADMIN account (`admin`) bypasses every permission check, so the
-admin dashboard can manage users, services, orders, payments, settings and
-the rest of the site. Customer credentials are refused at `/admin/login`.
-
-**Change those passwords immediately** (Dashboard → Account → Password), or set
-your own administrator *before* the first login using the setup page below.
-
----
-
-## Optional: the browser setup page
-
-Instead of logging in with a documented password, you can set the
-administrator's own username, email and password from the browser.
-
-1. In `.env`, set `VP_SETUP_TOKEN` to 32 random characters.
-2. Visit `https://yourdomain.com/setup?token=THOSE-32-CHARACTERS`.
-3. The page lists every deployment check — PHP version and extensions, writable
-   directories, base URL, encryption key, database connection, whether the
-   import ran, whether an administrator exists — and offers a form to set the
-   administrator credentials.
-4. **Delete the `VP_SETUP_TOKEN` line from `.env` when you are done.** Without
-   it the route returns 404 to everyone.
-
-The same page is the fastest way to diagnose a panel that will not come up: it
-renders even when the database is unreachable, and tells you which value in
-`.env` is wrong.
+The setup form creates a Super Admin only when no staff account exists and
+setup has not already completed. It does not modify existing administrators.
+If one exists, use staff sign-in or `/forgot-password` instead. The database
+import contains no default accounts. **Older releases shipped publicly known
+passwords**: if you imported an older release, immediately rotate those
+credentials or disable the unused accounts; this update will not do so for you.
+Do not import a fresh database over existing production data.
 
 ---
 
@@ -213,7 +185,7 @@ renders even when the database is unreachable, and tells you which value in
 
 The application creates its own runtime directories on the first request, and
 the package already contains them. You only need this section if something is
-not writable — the setup page and the error log will say so.
+not writable — the deployment checks and the error log will say so.
 
 **cPanel → File Manager → select the folder → Permissions:**
 

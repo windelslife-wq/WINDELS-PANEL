@@ -147,47 +147,17 @@ the browser check.)*
 
 ## Step 6 — First login & secure the administrator
 
-The SQL seeds three first-login accounts (also printed at the top of
-`marvysocials.sql`):
+New imports contain no default accounts. Set a high-entropy `VP_SETUP_TOKEN`
+(at least 32 characters; use 32 random bytes encoded as hex) in `.env`.
+Visit `https://yourdomain.com/setup` over HTTPS, enter the token and the new
+administrator credentials, and remove the token from `.env` after setup.
+Sign in at `https://yourdomain.com/admin/login`.
 
-```
-Staff admin — full control of the site
-  URL:      https://yourdomain.com/admin/login
-  Username: admin
-  Password: ChangeMe!Admin2026
-
-Customer dashboard
-  URL:      https://yourdomain.com/login
-  Username: demo
-  Password: MarvyDemo#2026!
-
-Support staff
-  URL:      https://yourdomain.com/admin/login
-  Username: staff
-  Password: MarvyStaff#2026!
-```
-
-**Do one of the following immediately:**
-
-- **Simple:** log in at `https://yourdomain.com` and change the password
-  (Dashboard → **Security** → change password), and set your real email
-  address (Dashboard → **Profile**).
-- **Better (never expose the seeded password):** before first login, add a
-  line to `.env`:
-  ```ini
-  VP_SETUP_TOKEN=pick-a-long-random-string
-  ```
-  then open `https://yourdomain.com/setup?token=pick-a-long-random-string`.
-  The page only exists while the token is set (otherwise it is a plain 404).
-  It lets you set the administrator's **own** email + password directly
-  (minimum 12 chars), shows the same health checks, and writes the change to
-  `audit_logs`. **Delete the `VP_SETUP_TOKEN` line from `.env` when done.**
-- **No administrator at all** (an empty database with no staff account):
-  the first account you register at `https://yourdomain.com/register` becomes
-  the SUPER_ADMIN, even if sign-ups are switched off in Settings. It is marked
-  verified straight away. Then open **Admin → Administrators** to add the other
-  administrators. Register immediately after the database is created, because
-  whoever registers first on an empty install gets this role.
+If an administrator or staff account already exists, setup is closed and
+never changes that account. Use `/admin/login` or `/forgot-password` instead.
+Older releases shipped publicly known credentials; rotate them or disable
+unused accounts immediately. Do not re-import the fresh-install SQL over live
+data.
 
 ## Step 7 — Lock down the verification page
 

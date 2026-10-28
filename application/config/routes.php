@@ -5,8 +5,7 @@ $route['default_controller'] = 'home';
 $route['404_override'] = 'home/not_found';
 $route['translate_uri_dashes'] = FALSE;
 
-// First-run setup. Open without a token only while no SUPER_ADMIN exists;
-// afterwards VP_SETUP_TOKEN is required or the route 404s.
+// First-run setup: creation requires the operator secret and closes after bootstrap.
 $route['setup'] = 'setup/index';
 $route['setup/admin'] = 'setup/admin';
 
