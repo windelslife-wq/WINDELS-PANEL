@@ -14,7 +14,7 @@ $cta_secondary = $data['cta_secondary'] ?? 'View services';
 $services_title = $data['services_title'] ?: 'Everything you need to grow online';
 $services_lede = $data['services_lede'] ?: 'Social media services, VTU, numbers, identity checks and gift cards — published rates, prepaid wallet.';
 $cta_band_title = $data['cta_band_title'] ?: 'Ready to get started?';
-$cta_band_body = $data['cta_band_body'] ?: 'Join MarvySocials and run social media and digital services from one prepaid platform.';
+$cta_band_body = $data['cta_band_body'] ?: 'Join Active Digital Hub and run social media and digital services from one prepaid platform.';
 
 $steps = array(
   array('01', 'Create an account', 'Register in a minute and open your personal dashboard.'),
@@ -45,34 +45,30 @@ if (empty($faqs)) {
 ?>
 
 <style>
-/* AURORA identity: soft aurora gradient wash behind a light, editorial hero. */
+/* Active Digital Hub homepage: Facebook-blue hero and blue accents. */
 .ws-aurora .gradient-text{
-  background:linear-gradient(100deg,#4f46e5 0%,#7c3aed 45%,#c026d3 100%);
+  background:linear-gradient(100deg,#1877f2 0%,#1664cc 45%,#1453a8 100%);
   -webkit-background-clip:text;background-clip:text;color:transparent;
 }
-.ws-aurora .ms-hero{background:
-  radial-gradient(900px 320px at 8% -10%,rgba(99,102,241,.18),transparent 60%),
-  radial-gradient(700px 260px at 92% 0,rgba(192,38,211,.14),transparent 55%);}
-/* Hero write-up (eyebrow, headline, lede) reads solid on the light wash.
-   Overrides the white-on-gradient hero text from marketing.css and the purple
-   gradient-clipped headline above. The colour is the theme's primary text
-   token, NOT a hard-coded #000 — that is what left the write-up black-on-dark
-   in dark mode (the hero wash sits on the page background, which flips). */
+.ws-aurora .ws-landing-hero.ms-hero{
+  background:radial-gradient(900px 420px at 90% 0,rgba(96,165,250,.48),transparent 65%),
+    linear-gradient(135deg,#1877f2 0%,#1664cc 60%,#1453a8 100%);
+}
 .ws-aurora .ws-landing-hero.ms-hero .ws-kicker,
 .ws-aurora .ws-landing-hero.ms-hero h1,
-.ws-aurora .ws-landing-hero.ms-hero .lede{color:var(--color-text);}
+.ws-aurora .ws-landing-hero.ms-hero .lede{color:#fff;}
 .ws-aurora .ws-landing-hero.ms-hero h1.gradient-text{
   background:none;-webkit-background-clip:border-box;background-clip:border-box;
-  color:var(--color-text);-webkit-text-fill-color:var(--color-text);}
-/* "View services" is a white-on-gradient button in marketing.css — on this
-   light hero that left white type on a near-white wash. Solid black label on a
-   white face, with a visible border instead of a white one. */
+  color:#fff;-webkit-text-fill-color:#fff;
+}
+.ws-aurora .ws-landing-hero.ms-hero .btn-primary{
+  background:#fff;border-color:#fff;color:#1453a8;
+}
+.ws-aurora .ws-landing-hero.ms-hero .btn-primary:hover{background:#eff6ff;border-color:#eff6ff;}
 .ws-aurora .ws-landing-hero.ms-hero .btn-secondary{
-  background:#fff;border:1px solid rgba(15,23,42,.22);
-  color:#000;-webkit-text-fill-color:#000;}
-.ws-aurora .ws-landing-hero.ms-hero .btn-secondary:hover{
-  background:var(--surface-muted,#f1f5f9);border-color:rgba(15,23,42,.35);
-  color:#000;-webkit-text-fill-color:#000;}
+  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.7);color:#fff;
+}
+.ws-aurora .ws-landing-hero.ms-hero .btn-secondary:hover{background:rgba(255,255,255,.23);color:#fff;}
 /* The snapshot strip used to be pulled up 1rem so it grazed the hero. It now
    clears the hero and sits as its own band. */
 .ws-aurora .ws-landing-stats{margin-top:0;padding:3.25rem 0 3rem;}
@@ -98,7 +94,7 @@ if (empty($faqs)) {
       </div>
     </div>
     <div class="ws-landing-hero-visual">
-      <img src="<?=base_url('assets/images/home/dashboard-mockup.png')?>" width="1280" height="800" alt="MarvySocials customer dashboard showing wallet, orders and quick actions." fetchpriority="high">
+      <img src="<?=base_url('assets/images/home/dashboard-mockup.png')?>" width="1280" height="800" alt="Active Digital Hub customer dashboard showing wallet, orders and quick actions." fetchpriority="high">
     </div>
   </div>
 </section>
@@ -195,7 +191,7 @@ if (empty($faqs)) {
 <section class="ws-section" id="features">
   <div class="container">
     <div class="text-center" style="max-width:40rem;margin:0 auto 2rem">
-      <span class="ms-eyebrow">Why choose MarvySocials</span>
+      <span class="ms-eyebrow">Why choose Active Digital Hub</span>
       <h2 class="ws-section-title">Built for growth, not guesswork</h2>
       <p class="ws-section-lead">What the platform actually does — not invented testimonials.</p>
     </div>
@@ -227,7 +223,7 @@ if (empty($faqs)) {
   <div class="container ws-landing-api">
     <div>
       <span class="ms-eyebrow">Developer</span>
-      <h2 class="ws-section-title">Build with MarvySocials</h2>
+      <h2 class="ws-section-title">Build with Active Digital Hub</h2>
       <p class="lede">Integrate the same catalogue into your own app with reseller API keys, scopes and documented endpoints.</p>
       <div class="ws-page-actions">
         <a class="btn btn-primary" href="<?=site_url('api/docs')?>">View API documentation</a>

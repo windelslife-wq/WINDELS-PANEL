@@ -1,11 +1,11 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
 // One logo partial used by the public shell, auth shell and authenticated app
-// shell. Every variant resolves to the MarvySocials mark by default, but an
+// shell. Every variant resolves to the Active Digital Hub mark by default, but an
 // administrator can override the horizontal/wordmark logo via Admin →
 // Appearance (brand_logo_url). The icon mark stays bundled so the favicon and
 // compact logo never lose their shape.
 $variant = isset($variant) ? $variant : 'horizontal';
-$site = function_exists('marvy_site_name') ? marvy_site_name() : 'MarvySocials';
+$site = function_exists('marvy_site_name') ? marvy_site_name() : 'Active Digital Hub';
 // Raster first, vector as the fallback: the brand ships real PNG artwork so
 // the logo is an image everywhere (including mail clients and hosts that
 // refuse image/svg+xml), and the SVGs stay as a fallback for any install that

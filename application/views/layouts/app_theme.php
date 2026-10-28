@@ -1,6 +1,6 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
 /**
- * Authenticated shell — MarvySocials theme.
+ * Authenticated shell — Active Digital Hub theme.
  *
  * Same contract as layouts/app.php (a controller passes `content_view`,
  * `title`, `current_user`, …); only the chrome differs. Everything the shell
@@ -15,7 +15,7 @@ require __DIR__.'/_app_context.php';
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title><?=htmlspecialchars($title ?? 'MarvySocials')?></title>
+<title><?=htmlspecialchars($title ?? 'Active Digital Hub')?></title>
 <?php if (!empty($brand['brand_favicon_url'])): ?>
 <link rel="icon" href="<?=htmlspecialchars($brand['brand_favicon_url'])?>">
 <?php else: ?>

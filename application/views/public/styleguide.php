@@ -2,7 +2,7 @@
 <section class="ws-page-hero">
   <div class="container" style="max-width:1080px">
     <p class="ws-kicker">Product UI</p>
-    <h1><?=htmlspecialchars(function_exists('marvy_site_name') ? marvy_site_name() : 'MarvySocials')?> <span class="gradient-text">Design System</span></h1>
+    <h1><?=htmlspecialchars(function_exists('marvy_site_name') ? marvy_site_name() : 'Active Digital Hub')?> <span class="gradient-text">Design System</span></h1>
     <p class="ws-lede">The tokens and component classes the live site uses. Source of truth: <code>assets/css/design-system.css</code>, mirrored in <code>tailwind.config.js</code>. This page is a reference, not a separate visual language.</p>
   </div>
 </section>
@@ -12,7 +12,7 @@
 
   <section class="card" id="logo">
     <h2 class="card-title">Logo</h2>
-    <p class="muted">The mark is a near-black rounded panel carrying the indigo→fuchsia <strong>M</strong> monogram, set beside the MarvySocials wordmark in Inter ExtraBold. The public header, footer, auth shell and assistant all load the same assets through <code>partials/brand_logo.php</code>. Do not recolour the gradient, add drop shadows, or place the mark on a busy photograph. File-by-file detail and the replacement procedure live in <code>docs/brand.md</code>.</p>
+    <p class="muted">The mark pairs a white A on Facebook blue with the Active Digital Hub wordmark. The public header, footer, auth shell and assistant load the same assets through <code>partials/brand_logo.php</code>.</p>
     <div class="grid grid-3 mt-4">
       <div class="card" style="background:#fff">
         <?php $this->load->view('partials/brand_logo', array('variant'=>'horizontal','height'=>48,'class'=>'ws-logo-lg')); ?>

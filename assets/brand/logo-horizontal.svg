@@ -1,10 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 486 96" role="img" aria-label="MarvySocials">
-  <defs>
-    <linearGradient id="mv" x1="16" y1="20" x2="64" y2="76" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#6366F1"/><stop offset="1" stop-color="#C026D3"/>
-    </linearGradient>
-  </defs>
-  <rect x="0" y="8" width="80" height="80" rx="20" fill="#0A0A0F"/>
-  <path d="M18 74V30h12l10 25 10-25h12v44H51V47l-8 20h-6l-8-20v27H18z" fill="url(#mv)"/>
-  <text x="100" y="66" font-family="Inter,Segoe UI,Helvetica,Arial,sans-serif" font-size="46" font-weight="800" letter-spacing="-1" fill="#0F172A">MarvySocials</text>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="972" height="192" viewBox="0 0 486 96" role="img" aria-label="Active Digital Hub"><rect x="0" y="8" width="80" height="80" rx="20" fill="#1877f2"/><text x="40" y="65" text-anchor="middle" font-family="DejaVu Sans" font-size="58" font-weight="bold" fill="white">A</text><text x="99" y="60" font-family="DejaVu Sans" font-size="31" font-weight="bold" fill="#0f172a">Active Digital Hub</text></svg>

@@ -1,5 +1,5 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
-$auth_site = function_exists('marvy_site_name') ? marvy_site_name() : 'MarvySocials';
+$auth_site = function_exists('marvy_site_name') ? marvy_site_name() : 'Active Digital Hub';
 ?>
 <!doctype html>
 <html lang="en">

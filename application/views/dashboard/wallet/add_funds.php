@@ -94,7 +94,7 @@ if ($wallet_rate <= 0) $wallet_rate = 1.0;
       <?php if ($wallet_cur !== strtoupper((string)$base)): ?>
         <p class="muted text-sm mt-2">Your <?=html_escape($wallet_cur)?> wallet is credited with the <?=html_escape($base)?> value of the deposit at the current exchange rate, and every purchase is charged in <?=html_escape($base)?> converted at the rate pinned at that moment.</p>
       <?php else: ?>
-        <p class="muted text-sm mt-2">Your MARVYSOCIALS wallet is a platform spending balance: it pays for services, orders and other supported purchases inside MarvySocials. Wallet funds are for spending within the platform and stay inside it.</p>
+        <p class="muted text-sm mt-2">Your Active Digital Hub wallet is a platform spending balance: it pays for services, orders and other supported purchases inside Active Digital Hub. Wallet funds are for spending within the platform and stay inside it.</p>
       <?php endif; ?>
 
       <?=form_open('dashboard/wallet/deposit', array('class'=>'mt-4 stack'))?>

@@ -6,15 +6,15 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 require_once APPPATH.'helpers/marvy_helper.php';
 
 /*
- * MarvySocials — Application config
+ * Active Digital Hub — Application config
  * No license keys (§81). Homepage switcher (§60).
  */
 $config['marvy'] = array(
-    'name' => 'MarvySocials',
+    'name' => 'Active Digital Hub',
     // Public-facing brand used by the marketing site, the shared header/footer
     // and the on-site assistant. Single source of truth for every rendered
     // brand string via marvy_site_name().
-    'public_name' => 'MarvySocials',
+    'public_name' => 'Active Digital Hub',
     'tagline' => 'Grow and manage your social presence',
     'public_tagline' => 'Social media growth services, VTU, virtual numbers, identity checks and gift cards from one prepaid dashboard',
     'support_email' => getenv('MAIL_FROM_ADDRESS') ?: 'support@marvysocials.com',

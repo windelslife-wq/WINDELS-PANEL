@@ -6,7 +6,7 @@
  * chrome as every other public page; the styles below are the ones that are
  * genuinely specific to reading a reference (method pills, code blocks).
  */
-$site_name = function_exists('marvy_site_name') ? marvy_site_name() : 'MarvySocials';
+$site_name = function_exists('marvy_site_name') ? marvy_site_name() : 'Active Digital Hub';
 ?>
 <!doctype html>
 <html lang="en">

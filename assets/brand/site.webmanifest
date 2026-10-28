@@ -1,11 +1,11 @@
 {
-  "name": "MarvySocials",
-  "short_name": "MARVYSOCIALS",
+  "name": "Active Digital Hub",
+  "short_name": "Active Hub",
   "description": "Prepaid commerce platform for SMM, VTU and digital goods.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0B1020",
-  "theme_color": "#4F46E5",
+  "theme_color": "#1877F2",
   "icons": [
     {
       "src": "../brand/logo-icon.svg",

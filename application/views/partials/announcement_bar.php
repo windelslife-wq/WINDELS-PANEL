@@ -21,7 +21,7 @@
  * an operator type raw HTML into the one strip on every page of a site holding
  * wallet balances is how a banner becomes stored XSS.
  */
-$site_name = function_exists('marvy_site_name') ? marvy_site_name() : 'MarvySocials';
+$site_name = function_exists('marvy_site_name') ? marvy_site_name() : 'Active Digital Hub';
 if (!class_exists('AnnouncementText', false)) {
     require_once APPPATH.'libraries/AnnouncementText.php';
 }

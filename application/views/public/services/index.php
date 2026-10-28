@@ -19,7 +19,7 @@ $show_marketing = !empty($show_marketing);
   <div class="container" style="max-width:800px">
     <p class="ws-kicker">What you can buy</p>
     <h1>One wallet for SMM, bills and digital goods</h1>
-    <p class="ws-lede">MarvySocials is for creators, agencies and resellers who want prepaid checkout, a live catalogue and a staff-run back office. It solves scattered provider logins and untracked wallet movement — not by promising fake volume numbers.</p>
+    <p class="ws-lede">Active Digital Hub is for creators, agencies and resellers who want prepaid checkout, a live catalogue and a staff-run back office. It solves scattered provider logins and untracked wallet movement — not by promising fake volume numbers.</p>
     <div class="row" style="margin-top:1.25rem">
       <a class="btn btn-primary" href="<?=site_url('register')?>">Create an account</a>
       <a class="btn btn-secondary" href="#catalogue">Jump to catalogue</a>

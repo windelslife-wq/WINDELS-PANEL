@@ -12,7 +12,7 @@ $type_labels = array('' => 'All', 'DIGITAL' => 'Digital Products', 'PHYSICAL' =>
   <div class="container" style="max-width:900px">
     <p class="ws-kicker">Shop</p>
     <h1>Digital products, physical goods and gift cards</h1>
-    <p class="ws-lede">One prepaid wallet, one checkout. Every listing is sold and fulfilled directly by MarvySocials.</p>
+    <p class="ws-lede">One prepaid wallet, one checkout. Every listing is sold and fulfilled directly by Active Digital Hub.</p>
     <form method="get" action="<?=site_url('shop')?>" class="row mt-4" style="gap:.5rem;max-width:32rem">
       <div class="ws-searchwrap">
         <?php $this->load->view('partials/icon', array('name'=>'search','class'=>'w-5 h-5')); ?>

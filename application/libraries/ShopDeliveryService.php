@@ -179,7 +179,7 @@ class ShopDeliveryService {
 
             $title    = (string) $listing->title;
             $order_no = (string) $order->public_id;
-            $site     = function_exists('marvy_site_name') ? marvy_site_name() : 'MarvySocials';
+            $site     = function_exists('marvy_site_name') ? marvy_site_name() : 'Active Digital Hub';
             $downloads = site_url('dashboard/downloads');
 
             $this->ci->load->library('InboxService');

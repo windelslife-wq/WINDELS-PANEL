@@ -4,7 +4,7 @@
 // header, nav, container, footer and assistant are byte-for-byte identical.
 $content = $content_view ?? '';
 $page_data = $data ?? array();
-$layout_site = function_exists('marvy_site_name') ? marvy_site_name() : 'MarvySocials';
+$layout_site = function_exists('marvy_site_name') ? marvy_site_name() : 'Active Digital Hub';
 $page_title = !empty($page_title) ? $page_title : (!empty($page_data['title']) ? $page_data['title'] : $layout_site);
 $page_desc = !empty($page_desc) ? $page_desc : (!empty($page_data['meta_description']) ? $page_data['meta_description'] : (function_exists('marvy_site_tagline') ? marvy_site_tagline() : $layout_site));
 $page_robots = !empty($page_robots) ? $page_robots : (!empty($page_data['meta_robots']) ? $page_data['meta_robots'] : 'index,follow');

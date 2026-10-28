@@ -2,7 +2,7 @@
 // Global <head> for the public shell. The layout passes $page_* values; this
 // partial owns metadata, CSRF tags and the two stylesheets so no page can
 // accidentally load a third CSS file or a different font stack.
-$site_name  = function_exists('marvy_site_name') ? marvy_site_name() : 'MarvySocials';
+$site_name  = function_exists('marvy_site_name') ? marvy_site_name() : 'Active Digital Hub';
 $site_tag   = function_exists('marvy_site_tagline') ? marvy_site_tagline() : 'Prepaid commerce for digital goods';
 $title      = !empty($page_title) ? $page_title : (!empty($title) ? $title : $site_name);
 $desc       = !empty($page_desc) ? $page_desc : (!empty($meta_description) ? $meta_description : $site_tag);

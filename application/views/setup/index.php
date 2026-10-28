@@ -21,7 +21,7 @@ foreach ($checks as $c) { if ($c['status'] === 'fail') $failed++; }
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>MarvySocials — deployment setup</title>
+<title>Active Digital Hub — deployment setup</title>
 <style>
   :root { color-scheme: light dark; }
   body { font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; margin: 0;
@@ -58,9 +58,9 @@ foreach ($checks as $c) { if ($c['status'] === 'fail') $failed++; }
 <body>
 <div class="ws-announce" role="region" aria-label="Announcements">
   <div class="ws-announce-track">
-    <span class="ws-announce-item">MarvySocials setup — import database/marvysocials.sql, then create the first SUPER_ADMIN.</span>
+    <span class="ws-announce-item">Active Digital Hub setup — import database/marvysocials.sql, then create the first SUPER_ADMIN.</span>
     <span class="ws-announce-item">Set VP_DB_HOST, VP_DB_NAME, VP_DB_USER and VP_DB_PASS in .env to the database you imported.</span>
-    <span class="ws-announce-item">MarvySocials setup — import database/marvysocials.sql, then create the first SUPER_ADMIN.</span>
+    <span class="ws-announce-item">Active Digital Hub setup — import database/marvysocials.sql, then create the first SUPER_ADMIN.</span>
     <span class="ws-announce-item">Set VP_DB_HOST, VP_DB_NAME, VP_DB_USER and VP_DB_PASS in .env to the database you imported.</span>
   </div>
 </div>

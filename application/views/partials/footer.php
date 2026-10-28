@@ -1,5 +1,5 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
-$site_name = function_exists('marvy_site_name') ? marvy_site_name() : 'MarvySocials';
+$site_name = function_exists('marvy_site_name') ? marvy_site_name() : 'Active Digital Hub';
 $year = date('Y');
 // Who is legally behind the brand. Empty until the operator publishes it, and
 // an empty line is simply not rendered — a footer must never show a stray

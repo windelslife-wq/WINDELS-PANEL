@@ -190,7 +190,7 @@ $default_descriptions = array(
     'admin' => 'Monitor revenue, queues, provider health, and work that needs attention.',
 );
 if (empty($page_description)) {
-    $page_description = $default_descriptions[$active] ?? 'Manage this area of your MarvySocials account.';
+    $page_description = $default_descriptions[$active] ?? 'Manage this area of your Active Digital Hub account.';
 }
 if (empty($page_actions) && !$is_admin && ($active === 'dashboard' || $active === '')) {
     $page_actions = array(

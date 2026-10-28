@@ -4,7 +4,7 @@
 $cu = $current_user ?? null;
 $is_staff = $cu && in_array($cu->role, array('SUPER_ADMIN','ADMIN','STAFF'), true);
 $path = isset($this->uri) ? trim((string)$this->uri->uri_string(), '/') : '';
-$site = function_exists('marvy_site_name') ? marvy_site_name() : 'MarvySocials';
+$site = function_exists('marvy_site_name') ? marvy_site_name() : 'Active Digital Hub';
 $links = array(
     array('', 'Home'),
     array('services', 'Services'),
