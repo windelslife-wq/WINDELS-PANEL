@@ -167,6 +167,10 @@ class Setup extends CI_Controller {
      * After that the page is token-gated (or 404).
      */
     private function gate() {
+        if ($this->needs_first_admin() && $this->database_ready() && $this->db->table_exists('users')) {
+            redirect('register');
+            exit;
+        }
         if ($this->needs_first_admin()) {
             return '';
         }
@@ -188,7 +192,7 @@ class Setup extends CI_Controller {
         return $expected;
     }
 
-    /** True when the database is reachable but has no active SUPER_ADMIN. */
+    /** True when the database is reachable but has no staff account of any status. */
     private function needs_first_admin() {
         if (!$this->database_ready()) {
             return true;
@@ -197,7 +201,7 @@ class Setup extends CI_Controller {
             if (!$this->db->table_exists('users')) {
                 return true;
             }
-            $n = (int)$this->db->where('role', 'SUPER_ADMIN')->where('status', 'ACTIVE')->count_all_results('users');
+            $n = (int)$this->db->where_in('role', array('SUPER_ADMIN', 'ADMIN', 'STAFF'))->count_all_results('users');
             return $n === 0;
         } catch (Exception $e) {
             return true;
@@ -280,7 +284,7 @@ class Setup extends CI_Controller {
                 'cPanel → phpMyAdmin → select the database → Import → database/marvysocials.sql.'
             );
 
-            $admins = $version > 0 ? (int)$this->db->where('role', 'SUPER_ADMIN')->where('status', 'ACTIVE')->count_all_results('users') : 0;
+            $admins = $version > 0 ? (int)$this->db->where_in('role', array('SUPER_ADMIN', 'ADMIN', 'STAFF'))->count_all_results('users') : 0;
             $out[] = $this->check(
                 $admins > 0 ? 'ok' : 'warn',
                 'Administrator', $admins > 0 ? $admins.' active' : 'none — create one below',
