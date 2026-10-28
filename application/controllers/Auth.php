@@ -34,8 +34,8 @@ class Auth extends MY_Controller {
             redirect($this->default_landing());
         }
         if ($this->no_super_admin()) {
-            $this->session->set_flashdata('warning', 'No administrator exists yet. Complete first-time setup.');
-            return redirect('setup');
+            $this->session->set_flashdata('warning', 'Create your account to become the first administrator.');
+            return redirect('register');
         }
 
         if ($this->input->method(true) === 'POST') {
@@ -63,8 +63,8 @@ class Auth extends MY_Controller {
      */
     public function admin_login() {
         if ($this->no_super_admin()) {
-            $this->session->set_flashdata('warning', 'No administrator exists yet. Complete first-time setup.');
-            return redirect('setup');
+            $this->session->set_flashdata('warning', 'Create your account to become the first administrator.');
+            return redirect('register');
         }
         if ($this->auth->check()) {
             if ($this->auth->has_role(array('SUPER_ADMIN','ADMIN','STAFF'))) {
@@ -632,7 +632,7 @@ class Auth extends MY_Controller {
     private function no_super_admin() {
         try {
             if (!$this->db_ready) return false;
-            return (int)$this->db->where('role', 'SUPER_ADMIN')->where('status', 'ACTIVE')->count_all_results('users') === 0;
+            return $this->auth && $this->auth->bootstrap_admin_open();
         } catch (Throwable $e) {
             return false;
         }

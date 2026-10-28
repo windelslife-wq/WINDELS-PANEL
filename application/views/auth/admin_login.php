@@ -3,7 +3,7 @@
 <h1 class="text-2xl font-bold tracking-tight mt-2">Administrator sign-in</h1>
 <p class="mt-1 text-sm text-slate-500">This form authenticates against the same user table as customer login, then refuses any account that is not SUPER_ADMIN, ADMIN or STAFF. A customer password will not open the back office.</p>
 
-<?=form_open('admin/login', array('class' => 'mt-6 space-y-4', 'autocomplete' => 'on'))?>
+<?=form_open('admin/login', array('class' => 'mt-6 space-y-4', 'autocomplete' => 'on', 'data-no-guard' => 'true'))?>
   <div>
     <label for="identifier" class="label">Staff email or username</label>
     <input id="identifier" name="identifier" type="text" class="input" autocomplete="username" required autofocus

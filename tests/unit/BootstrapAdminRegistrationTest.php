@@ -213,6 +213,22 @@ class BootstrapAdminRegistrationTest extends TestCase
         $this->assertFalse($svc->bootstrap_admin_open());
     }
 
+    public function testLoginBootstrapUsesTheLockedRegistrationPath()
+    {
+        $root = dirname(dirname(__DIR__));
+        $src = file_get_contents($root.'/application/controllers/Auth.php');
+        $start = strpos($src, 'private function no_super_admin()');
+        $end = strpos($src, 'private function default_landing()', $start);
+        $this->assertStringContainsString('$this->auth->bootstrap_admin_open()', substr($src, $start, $end - $start));
+        $this->assertStringNotContainsString("redirect('setup')", $src);
+        $this->assertStringContainsString("return redirect('register');", $src);
+        $setup = file_get_contents($root.'/application/controllers/Setup.php');
+        $this->assertStringNotContainsString("->where('status', 'ACTIVE')->count_all_results('users')", $setup);
+        $view = file_get_contents($root.'/application/views/auth/admin_login.php');
+        $this->assertStringContainsString("'data-no-guard' => 'true'", $view);
+        $this->assertStringContainsString('type="submit"', $view);
+    }
+
     public function testControllerKeepsRegistrationOpenWhileNoAdminExists()
     {
         // Source-level guard: closing sign-ups must not lock an empty panel out.
