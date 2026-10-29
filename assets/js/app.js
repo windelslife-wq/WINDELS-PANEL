@@ -262,7 +262,7 @@
     });
 
     [initPasswordToggles, initMobileNav, initSkipLinks, initAnnounce,
-      initFaqFilter, initSiteOperator, initMfa, initFormSubmitGuard,
+      initFaqFilter, initSiteOperator, initMfa, initAuthValidation, initFormSubmitGuard,
       initThemeToggle, initAppSidebar].forEach(function (init) {
       try { init(); }
       catch (e) {
@@ -590,6 +590,45 @@
     }
   }
 
+  /* Make browser validation visible next to the auth submit button. Native
+   * validation still owns submission and focus; this only explains why a
+   * submit event did not fire, including an unchecked terms box. */
+  function initAuthValidation() {
+    var forms = document.querySelectorAll('form[data-auth-form]');
+    for (var i = 0; i < forms.length; i++) {
+      (function (form) {
+        var message = form.querySelector('[data-auth-validation]');
+        if (!message) return;
+        function update() {
+          var field = null;
+          for (var j = 0; j < form.elements.length; j++) {
+            var candidate = form.elements[j];
+            if (candidate.willValidate && candidate.validity && !candidate.validity.valid) {
+              field = candidate;
+              break;
+            }
+          }
+          if (!field) {
+            message.hidden = true;
+            message.textContent = '';
+            return;
+          }
+          var label = field.getAttribute('data-validation-label');
+          if (!label && field.labels && field.labels.length) label = field.labels[0].textContent.trim();
+          label = label || field.name || 'This field';
+          var detail = field.validity.patternMismatch && field.name === 'username'
+            ? 'Use letters and numbers only.' : field.validationMessage;
+          message.textContent = label + ': ' + (detail || 'Please check this field.');
+          message.hidden = false;
+        }
+        form.addEventListener('invalid', update, true);
+        form.addEventListener('input', function () { if (!message.hidden) update(); });
+        form.addEventListener('change', function () { if (!message.hidden) update(); });
+        form.addEventListener('submit', function () { message.hidden = true; });
+      })(forms[i]);
+    }
+  }
+
   /* -------------------------- form submit guard -------------------------- */
   // Disables a form's submit button the moment a real (navigation) submit
   // fires, so a double-click can never double-place an order or double-fund a
@@ -650,6 +689,11 @@
         spin.setAttribute('aria-hidden', 'true');
         btn.insertBefore(spin, btn.firstChild);
       }
+      // A later submit listener can still cancel the event. In that case no
+      // navigation occurs, so give the visitor a working button to retry.
+      Promise.resolve().then(function () {
+        if (e.defaultPrevented) restore(btn);
+      });
     });
   }
 
