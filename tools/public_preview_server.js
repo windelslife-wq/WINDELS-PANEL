@@ -516,6 +516,15 @@ const server = http.createServer((req, res) => {
   let p = decodeURIComponent(parsed.pathname || '/');
   if (p.length > 1 && p.endsWith('/')) p = p.slice(0, -1);
 
+  // This server has no authentication backend. Never pretend to accept a
+  // sign-in or registration POST, or display a form that cannot work.
+  if (['/login', '/register', '/admin/login', '/setup', '/setup/admin', '/forgot-password'].includes(p)) {
+    res.writeHead(503, {'Content-Type':'text/html; charset=utf-8', 'Cache-Control':'no-store'});
+    res.end(layout('Authentication unavailable in visual preview', 'Visual preview only',
+      `<section class="ws-section"><div class="container"><h1>Authentication is unavailable in this visual preview</h1><p>Run the PHP application with its configured database to register, sign in, or set up an administrator.</p></div></section>`));
+    return;
+  }
+
   if (p === '/csrf') {
     res.writeHead(200, {'Content-Type':'application/json'});
     res.end(JSON.stringify({success:true,data:{name:'csrf_marvy',hash:'preview',header:'X-CSRF-TOKEN',expiresIn:7200}}));

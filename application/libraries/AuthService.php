@@ -83,36 +83,26 @@ class AuthService {
         // Only the protected bootstrap takes this lock. Recheck after acquiring it.
         $locked = false;
         if ($bootstrap) {
-            // GET_LOCK is MySQL-only. On a backend that does not provide it
-            // (SQLite-backed hosts, some MySQL proxies) CI returns FALSE for
-            // the query — and calling ->row() on that boolean was a fatal
-            // error, so the "Create first administrator" submit died on a
-            // database error page / white screen with no feedback at all.
-            // A failed lock *query* is not the same as a held lock: fall
-            // back to proceeding without the named lock. The
-            // bootstrap_admin_open() re-check below still runs, and the
-            // users table's unique email/username constraints still stop a
-            // duplicate account; only the cross-request serialisation of
-            // two simultaneous first-admin claims is degraded on such
-            // backends. A lock that was queried successfully but is held
-            // by someone else (got = 0) still refuses, as before.
-            // db_debug is re-enabled after connect in development, and with
-            // it on CI *renders a database error page and exits* on a failed
-            // query instead of returning FALSE — so silence it just for this
-            // probe, or the fallback below would never be reached there.
+            // A first-admin claim must never proceed without serialization.
+            // CI can return FALSE (or throw) when the database lacks GET_LOCK.
             $prev_debug = $this->ci->db->db_debug ?? false;
             $this->ci->db->db_debug = false;
-            $lock_query = $this->ci->db->query('SELECT GET_LOCK(?, 10) AS got', array(self::BOOTSTRAP_LOCK));
-            $this->ci->db->db_debug = $prev_debug;
-            $lock = $lock_query ? $lock_query->row() : null;
-            if ($lock) {
-                if ((int)$lock->got !== 1) {
-                    return array('ok' => false, 'error' => 'REGISTRATION_BUSY');
-                }
-                $locked = true;
-            } else {
-                log_message('error', 'AuthService: GET_LOCK unavailable on this database backend; first-admin bootstrap proceeding without the named lock.');
+            try {
+                $lock_query = $this->ci->db->query('SELECT GET_LOCK(?, 10) AS got', array(self::BOOTSTRAP_LOCK));
+            } catch (Throwable $e) {
+                $lock_query = false;
+            } finally {
+                $this->ci->db->db_debug = $prev_debug;
             }
+            $lock = $lock_query ? $lock_query->row() : null;
+            if (!$lock || $lock->got === null) {
+                log_message('error', 'AuthService: first-admin setup unavailable: database lock could not be acquired.');
+                return array('ok' => false, 'error' => 'BOOTSTRAP_LOCK_UNAVAILABLE');
+            }
+            if ((int)$lock->got !== 1) {
+                return array('ok' => false, 'error' => 'REGISTRATION_BUSY');
+            }
+            $locked = true;
         }
 
         try {

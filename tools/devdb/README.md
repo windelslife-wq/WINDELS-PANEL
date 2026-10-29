@@ -50,6 +50,37 @@ sign in as username `admin`) need one first. With `VP_SETUP_TOKEN` set in
 with **username `admin`** and the password you intend to pass as
 `--admin-password` / `DEMO_PASSWORD`.
 
+## Browser authentication regression
+
+With a **disposable empty imported database** and a configured `VP_SETUP_TOKEN`,
+run the real application server and use an installed Chromium executable:
+
+```bash
+BASE_URL=http://127.0.0.1:8081 VP_SETUP_TOKEN='your-disposable-setup-token' \
+  CHROMIUM_PATH=/path/to/chromium node tools/devserver/auth_browser_check.mjs
+```
+
+This creates test accounts and the first admin; never run it against a live
+installation. It checks actual mouse/touch-sized browser hit targets as well as
+HTTP, sessions and role restrictions. The SQLite-backed devdb does not model
+MySQL named locks, so production locking and concurrent claims must also be
+verified against a real MySQL/MariaDB server.
+
+For a real MySQL race test, import the production SQL into an empty local
+`auth_race_*` database and run two independent PHP application workers pointing
+to that same database with the same setup token. Then run:
+
+```bash
+AUTH_RACE_DISPOSABLE=1 AUTH_RACE_DB=auth_race_test AUTH_RACE_USER=panel \
+  AUTH_RACE_PASSWORD='local-test-password' AUTH_RACE_DB_PORT=3306 \
+  VP_SETUP_TOKEN='your-disposable-setup-token' \
+  AUTH_RACE_WORKER_A=http://127.0.0.1:8086 AUTH_RACE_WORKER_B=http://127.0.0.1:8087 \
+  node tools/devserver/bootstrap_race_check.mjs
+```
+
+This creates an administrator and must only be used with a disposable database.
+The database user must be able to see its own connections in `SHOW PROCESSLIST`.
+
 ## Editing PHP while the dev server runs
 
 The wasm runtime keeps compiled PHP per worker, so **restart

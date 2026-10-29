@@ -49,6 +49,7 @@ class Setup extends MY_Controller {
                 'BOOTSTRAP_DENIED' => 'Setup token is invalid or not configured.',
                 'BOOTSTRAP_CLOSED' => 'Setup is closed because a staff account already exists. Sign in at /admin/login or use password recovery.',
                 'REGISTRATION_BUSY' => 'Setup is busy. Please try again.',
+                'BOOTSTRAP_LOCK_UNAVAILABLE' => 'Setup is unavailable because the database cannot provide the required lock. Contact the server operator.',
                 'EMAIL_TAKEN' => 'An account with that email already exists.',
                 'USERNAME_TAKEN' => 'That username is already taken.',
             );

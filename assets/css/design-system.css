@@ -494,7 +494,7 @@ button { font-family:inherit; cursor:pointer; }
 .radio{display:inline-flex;align-items:center;gap:.5rem;font-size:.9rem}
 .ws-password{position:relative}
 .ws-password .input{padding-right:4.5rem}
-.ws-password-toggle{position:absolute;right:.4rem;top:50%;transform:translateY(-50%);border:0;background:transparent;
+.ws-password-toggle{position:absolute;z-index:1;right:.4rem;top:50%;transform:translateY(-50%);border:0;background:transparent;
   color:var(--brand-700);font-size:.8rem;font-weight:600;padding:.35rem .5rem;min-height:44px;display:inline-flex;align-items:center;gap:.25rem;cursor:pointer}
 .ws-password .input{padding-right:6rem}
 .ws-eye-slash{display:none}.ws-password-toggle[aria-pressed="true"] .ws-eye-slash{display:block}
@@ -1216,4 +1216,12 @@ button { font-family:inherit; cursor:pointer; }
   .ws-app-content .card:hover,.ws-public-shell main .card:hover,.ws-auth-form-card:hover{
     transform:none;
   }
+}
+
+/* Authentication forms must not move or participate in a 3D scene while the
+   pointer enters them: preserve-3d/hover rotation changes Chromium hit testing
+   and sends clicks on controls to the form or the password input instead. */
+.ws-auth-form-card, .ws-auth-form-card:hover {
+  transform: none;
+  transform-style: flat;
 }
