@@ -67,6 +67,13 @@ db.function('FIND_IN_SET', (needle, hay) => {
   return idx + 1;
 });
 db.function('LAST_INSERT_ID', () => 0);
+// Named locks (first-admin bootstrap in AuthService): devdb serves a single
+// shared SQLite handle to one application, so the lock is always granted and
+// release always succeeds — the same contract FakeDb gives the unit suite.
+// Without these, `SELECT GET_LOCK(...)` died with "no such function" and the
+// setup form's submit returned a database error page.
+db.function('GET_LOCK', { varargs: true }, () => 1);
+db.function('RELEASE_LOCK', { varargs: true }, () => 1);
 // FIELD(needle, a, b, c) → 1-based position of needle, 0 when absent. Used for
 // "ORDER BY FIELD(status, 'OPEN', 'PENDING', ...)" custom sort orders.
 db.function('FIELD', { varargs: true }, (needle, ...list) => {
