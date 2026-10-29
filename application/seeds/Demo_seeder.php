@@ -2,11 +2,19 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /**
- * Demo seed — categories, services, a MOCK provider, demo users, wallets and orders.
+ * Demo seed — categories, services, a MOCK provider, demo customers, wallets and
+ * orders.
  *
  * NEVER runs in production: Seed.php refuses unless APP_ENV is development/testing/demo
  * or --force is passed explicitly. Demo passwords are generated, printed once, and
  * can be pinned with DEMO_PASSWORD for local development.
+ *
+ * This seeder deliberately creates NO staff account — not a SUPER_ADMIN and not a
+ * STAFF. A seeded administrator whose password is printed to the console is
+ * exactly the account that ends up live on a public installation, and it also
+ * hides the real first-administrator flow from anyone testing it. Staff accounts
+ * come from /setup (VP_SETUP_TOKEN) and from the admin staff screen, never from a
+ * seed. Every account below is a customer.
  */
 class Demo_seeder extends Seeder {
 
@@ -30,11 +38,12 @@ class Demo_seeder extends Seeder {
         $this->seed_referral_commissions($user_ids);
         $this->seed_content($user_ids);
 
-        $this->out('demo seed complete — login with any demo account:');
-        $this->out('  admin@marvy.local / '.$this->password.'   (SUPER_ADMIN)');
-        $this->out('  staff@marvy.local / '.$this->password.'   (STAFF)');
-        $this->out('  demo@marvy.local  / '.$this->password.'   (CUSTOMER)');
+        $this->out('demo seed complete — customer logins only:');
+        $this->out('  demo@marvy.local     / '.$this->password.'   (CUSTOMER)');
+        $this->out('  reseller@marvy.local / '.$this->password.'   (CUSTOMER)');
         $this->out('Set DEMO_PASSWORD in .env to pin this value.');
+        $this->out('No staff account is seeded. Create the first administrator at /setup,');
+        $this->out('or add staff from the admin panel once you are signed in.');
     }
 
     /* ------------------------------------------------------------------ */
@@ -368,9 +377,9 @@ class Demo_seeder extends Seeder {
     }
 
     private function seed_users() {
+        // Customers only. Nothing in this repository creates a staff account, so
+        // a demo SUPER_ADMIN/STAFF cannot reappear on a deployment.
         $accounts = array(
-            array('admin','admin@marvy.local','SUPER_ADMIN','Ada','Marvy'),
-            array('staff','staff@marvy.local','STAFF','Sam','Support'),
             array('demo','demo@marvy.local','CUSTOMER','Dana','Demo'),
             array('reseller','reseller@marvy.local','CUSTOMER','Rio','Reseller'),
         );
@@ -593,7 +602,9 @@ class Demo_seeder extends Seeder {
     }
 
     private function seed_content($user_ids) {
-        $author = $user_ids['admin'] ?? NULL;
+        // Blog authorship used to come from the seeded admin. With no staff
+        // account seeded, the demo customer owns the demo posts instead.
+        $author = $user_ids['demo'] ?? NULL;
 
         $cat_id = $this->upsert('blog_categories', array('slug'=>'growth-guides'), array(
             'name' => 'Growth Guides',
@@ -645,13 +656,9 @@ class Demo_seeder extends Seeder {
                     'author_id' => $user_ids['demo'],
                     'message'   => 'Hi, my Telegram views order has been pending for a while. Can you check?',
                 ));
-                if (!empty($user_ids['staff'])) {
-                    $this->insert_once('ticket_messages', array('ticket_id'=>$ticket_id,'is_staff'=>1), array(
-                        'public_id' => $this->pid(),
-                        'author_id' => $user_ids['staff'],
-                        'message'   => 'Thanks for reaching out — the provider queue was backed up and your order is now processing.',
-                    ));
-                }
+                // No seeded staff reply: with no staff account in the seed there
+                // is nobody honest to attribute it to. The demo ticket stays
+                // ANSWERED with the customer message only.
             }
         }
     }

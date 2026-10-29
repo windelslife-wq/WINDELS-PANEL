@@ -200,7 +200,7 @@ class SeedRunTest extends TestCase
 
     public function testDemoUsersHaveHashedPasswords()
     {
-        $this->assertCount(4, $this->rows('users'));
+        $this->assertCount(2, $this->rows('users'));
         foreach ($this->rows('users') as $u) {
             $this->assertNotEmpty($u['password_hash']);
             $this->assertMatchesRegularExpression('/^\$(argon2id|2y)\$/', $u['password_hash'], 'passwords must be hashed with argon2id/bcrypt');
@@ -209,11 +209,17 @@ class SeedRunTest extends TestCase
         }
     }
 
-    public function testExactlyOneSuperAdminIsSeeded()
+    /**
+     * No seed may create a staff account. A demo administrator whose password is
+     * printed to the console is how a publicly known credential ends up live on
+     * an installation; staff accounts come from /setup only.
+     */
+    public function testNoSeedCreatesAStaffAccount()
     {
-        $supers = 0;
-        foreach ($this->rows('users') as $u) { if ($u['role'] === 'SUPER_ADMIN') $supers++; }
-        $this->assertSame(1, $supers);
+        foreach ($this->rows('users') as $u) {
+            $this->assertSame('CUSTOMER', $u['role'], 'seeded accounts must all be customers');
+        }
+        $this->assertCount(2, $this->rows('users'));
     }
 
     public function testEveryUserHasAWallet()
@@ -364,7 +370,9 @@ class SeedRunTest extends TestCase
         $this->assertGreaterThanOrEqual(3, count($this->rows('blog_posts')));
         $this->assertNotEmpty($this->rows('announcements'));
         $this->assertNotEmpty($this->rows('tickets'));
-        $this->assertGreaterThanOrEqual(2, count($this->rows('ticket_messages')));
+        // One customer message. No seeded staff reply exists any more, because
+        // no seed creates a staff account to attribute it to.
+        $this->assertCount(1, $this->rows('ticket_messages'));
     }
 
     public function testPublicIdsAreUniqueAcrossSeededRows()
@@ -384,8 +392,8 @@ class SeedRunTest extends TestCase
     public function testRunningBothSeedsTwiceCreatedNoDuplicates()
     {
         // setUpBeforeClass ran core+demo twice; counts below prove the second pass was a no-op.
-        $this->assertCount(4, $this->rows('users'));
-        $this->assertCount(4, $this->rows('wallets'));
+        $this->assertCount(2, $this->rows('users'));
+        $this->assertCount(2, $this->rows('wallets'));
         $this->assertCount(count(Demo_seeder::service_catalog()), $this->rows('services'));
         $this->assertCount(5, $this->rows('orders'));
         $this->assertCount(count(Core_seeder::default_settings()), $this->rows('settings'));

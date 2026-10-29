@@ -144,7 +144,7 @@ docker compose up -d mysql redis
 # correctly refuses to serve an unmigrated database, so migrate/seed first.
 docker compose run --rm app php index.php deploy storage
 docker compose run --rm app php index.php migrate       # database schema (19 migrations)
-docker compose run --rm app php index.php seed core     # admin user, roles, settings
+docker compose run --rm app php index.php seed core     # roles, permissions, settings (no accounts)
 docker compose run --rm app php index.php seed demo     # demo tenancy (dev only)
 docker compose up -d        # app + cron + nginx + mailhog + minio join
 docker compose ps           # every health-checked service must reach 'healthy'
@@ -161,6 +161,13 @@ deployment is unsafe. The separate `cron` container installs
 > **Demo data never runs in production.** `seed demo` aborts when
 > `APP_ENV=production` (override only with `--force`). The demo password comes
 > from `DEMO_PASSWORD`, never a hardcoded default.
+>
+> **No seed creates a staff account.** Both `seed core` and `seed demo` create
+> customers only; there is no seeded administrator and no seeded STAFF login.
+> Create the first administrator through `/setup` with `VP_SETUP_TOKEN` (see
+> `docs/cpanel-deployment.md`), then add staff from the admin panel.
+> The `tools/devserver/*_check.mjs` scripts sign in as username `admin` with
+> `--admin-password`, so use that username when creating it locally.
 
 ### Local development (no Docker)
 

@@ -291,8 +291,9 @@ console.log('\n── Refund · a commission accrued before the refund landed');
 // platform had already given back — on every affected order, invisibly.
 const affiliate = withDb((db) => {
   const buyer = db.prepare(`SELECT id FROM users WHERE email = 'demo@marvy.local'`).get();
-  const referrer = db.prepare(`SELECT id FROM users WHERE email = 'staff@marvy.local'`).get()
-    || db.prepare(`SELECT id FROM users WHERE role != 'CUSTOMER' LIMIT 1`).get();
+  // No seed creates a staff account, so the referrer is whichever staff account
+  // the operator created (at /setup) rather than a named demo address.
+  const referrer = db.prepare(`SELECT id FROM users WHERE role != 'CUSTOMER' LIMIT 1`).get();
   if (!referrer || !buyer) return null;
 
   db.prepare(`INSERT OR IGNORE INTO referral_accounts (user_id, code, commission_percent, created_at, updated_at)

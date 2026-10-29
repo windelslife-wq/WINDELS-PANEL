@@ -92,7 +92,7 @@ await crawl('customer', c, CUSTOMER_ROUTES);
 
 const a = new Client(base);
 await a.get('/admin/login');
-const alog = await a.postForm('/admin/login', { identifier: 'admin@marvy.local', password: adminPassword });
+const alog = await a.postForm('/admin/login', { identifier: 'admin', password: adminPassword });
 if (/login/.test(alog.url)) {
   console.log('\nadmin login FAILED', alog.status, alog.url);
   process.exit(2);
