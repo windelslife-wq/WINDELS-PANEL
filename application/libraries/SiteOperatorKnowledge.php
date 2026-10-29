@@ -303,7 +303,7 @@ class SiteOperatorKnowledge {
 
             // Admin
             array('category' => 'Administrators', 'q' => 'Where do staff sign in?', 'a' => 'Use /admin/login. After a valid password the account must have the SUPER_ADMIN, ADMIN or STAFF role. Ordinary customer credentials are rejected with the same invalid-credentials message used on failed logins.'),
-            array('category' => 'Administrators', 'q' => 'How is the first administrator created?', 'a' => 'Set a high-entropy VP_SETUP_TOKEN in .env and visit /setup over HTTPS to create the first Super Admin. Remove the token after setup. Existing administrators are never replaced. Sign in at /admin/login, or use /forgot-password for recovery.'),
+            array('category' => 'Administrators', 'q' => 'How is the first administrator created?', 'a' => 'Set a high-entropy VP_SETUP_TOKEN in .env and visit /setup over HTTPS to create the first Super Admin. Remove the token after setup. Existing administrators are never replaced. The form is available only while no staff account exists, so it reopens by itself if every staff account is removed. Sign in at /admin/login, or use /forgot-password for recovery.'),
             array('category' => 'Administrators', 'q' => 'Can staff impersonate a customer?', 'a' => 'Only if they have the impersonation permission. The session is read-only, time-boxed and audited. Operators must end it with the dedicated control before they can change anything again.'),
         );
     }

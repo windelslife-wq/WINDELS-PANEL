@@ -26,7 +26,7 @@ class Setup extends MY_Controller {
             return $this->render_setup('Too many setup attempts. Please try again later.');
         }
         if (!$this->auth->bootstrap_admin_open()) {
-            return $this->render_setup('First administrator setup is closed. Sign in or use password recovery.');
+            return $this->render_setup('Setup is closed because a staff account already exists. Sign in at /admin/login or use password recovery.');
         }
         $this->form_validation->set_rules('username', 'Username', 'required|trim|alpha_numeric|min_length[3]|max_length[64]');
         $this->form_validation->set_rules('email', 'Email', 'required|trim|valid_email|max_length[255]');
@@ -47,7 +47,7 @@ class Setup extends MY_Controller {
             $this->ratelimiter->record($bucket, $ip, false, 'SETUP_FAILED', $this->input->user_agent());
             $messages = array(
                 'BOOTSTRAP_DENIED' => 'Setup token is invalid or not configured.',
-                'BOOTSTRAP_CLOSED' => 'First administrator setup is closed. Sign in or use password recovery.',
+                'BOOTSTRAP_CLOSED' => 'Setup is closed because a staff account already exists. Sign in at /admin/login or use password recovery.',
                 'REGISTRATION_BUSY' => 'Setup is busy. Please try again.',
                 'EMAIL_TAKEN' => 'An account with that email already exists.',
                 'USERNAME_TAKEN' => 'That username is already taken.',
