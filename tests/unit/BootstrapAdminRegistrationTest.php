@@ -172,6 +172,16 @@ class BootstrapAdminRegistrationTest extends TestCase
         $this->assertSame(1, $this->db->lock_released);
     }
 
+    public function testUnavailableLockFailsClosed() {
+        $this->db->lock_unavailable = true;
+        $this->db->db_debug = true;
+        $result = $this->claim($this->service(), $this->data());
+        $this->assertSame('BOOTSTRAP_LOCK_UNAVAILABLE', $result['error']);
+        $this->assertCount(0, $this->db->users);
+        $this->assertSame(0, $this->db->lock_released);
+        $this->assertTrue($this->db->db_debug);
+    }
+
     public function testDuplicateCustomerEmailRejected() {
         $svc = $this->service(); $svc->register($this->data());
         $res = $svc->register($this->data('other', 'ada@example.test'));
@@ -198,6 +208,8 @@ class BootstrapRegDb
     public $settings_rows = array();
     public $audit = array();
     public $lock_free = true;
+    public $lock_unavailable = false;
+    public $db_debug = false;
     public $lock_taken = 0;
     public $lock_released = 0;
     public $fail_transaction = false;
@@ -284,6 +296,7 @@ class BootstrapRegDb
     public function query($sql, $binds = array())
     {
         if (strpos($sql, 'GET_LOCK') !== false) {
+            if ($this->lock_unavailable) return false;
             if (!$this->lock_free) return new BootstrapRegResult(array((object)array('got' => 0)));
             $this->lock_free = false;
             $this->lock_taken++;

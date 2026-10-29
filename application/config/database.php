@@ -31,19 +31,35 @@ if (!function_exists('marvy_db_stricton')) {
     }
 }
 
+/** CI uses $database for schema introspection even when PDO uses a DSN.
+ * Populate it from a MySQL DSN when no separate DB_NAME was supplied. */
+if (!function_exists('marvy_db_database')) {
+    function marvy_db_database($database, $dsn, $driver) {
+        if ($database !== '' || strtolower((string)$driver) !== 'pdo') return $database;
+        if (preg_match('/(?:^mysql:|;)\s*dbname\s*=\s*([^;]+)/i', (string)$dsn, $match)) {
+            return trim($match[1]);
+        }
+        return $database;
+    }
+}
+
+$db_dsn = Env::get('DB_DSN', '');
+$db_driver = Env::get('DB_DRIVER', 'mysqli');
+$db_database = marvy_db_database(Env::get('DB_NAME', ''), $db_dsn, $db_driver);
+
 $active_group = 'default';
 $query_builder = TRUE;
 
 $db['default'] = array(
-    'dsn'      => Env::get('DB_DSN', ''),
+    'dsn'      => $db_dsn,
     // localhost, not a container hostname: on shared hosting MySQL is always
     // local, and a default of "mysql" makes the first page load a DNS failure.
     'hostname' => Env::get('DB_HOST', 'localhost'),
     'port'     => Env::get_int('DB_PORT', 3306),
     'username' => Env::get('DB_USER', ''),
     'password' => Env::get('DB_PASSWORD', ''),
-    'database' => Env::get('DB_NAME', ''),
-    'dbdriver' => Env::get('DB_DRIVER', 'mysqli'),
+    'database' => $db_database,
+    'dbdriver' => $db_driver,
     'dbprefix' => '',
     'pconnect' => FALSE,
     // Stay silent on connect failure so /setup and /health/live can report
