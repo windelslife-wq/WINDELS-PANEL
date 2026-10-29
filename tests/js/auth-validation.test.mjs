@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { JSDOM } from 'jsdom';
 
 const app = readFileSync('assets/js/app.js', 'utf8');
-for (const name of ['login', 'register', 'first_admin']) {
+for (const name of ['login', 'register', 'first_admin', 'admin_login']) {
   const source = readFileSync(`application/views/auth/${name}.php`, 'utf8');
   assert.match(source, /'data-auth-form'\s*=>/);
   assert.match(source, /data-auth-validation[^>]*role="alert"[^>]*hidden/);
