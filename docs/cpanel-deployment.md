@@ -171,8 +171,10 @@ administrator as follows:
 3. Remove `VP_SETUP_TOKEN` from `.env` after successful setup and sign in at
    `https://yourdomain.com/admin/login`.
 
-The setup form creates a Super Admin only when no staff account exists and
-setup has not already completed. It does not modify existing administrators.
+The setup form creates a Super Admin only when no staff account exists. It
+does not modify existing administrators. The staff count is the only gate, so
+if every staff account is ever removed the form reopens for the operator who
+holds `VP_SETUP_TOKEN`; a previously completed setup does not lock you out.
 If one exists, use staff sign-in or `/forgot-password` instead. The database
 import contains no default accounts. **Older releases shipped publicly known
 passwords**: if you imported an older release, immediately rotate those

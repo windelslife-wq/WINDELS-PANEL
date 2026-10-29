@@ -41,13 +41,25 @@ class AuthService {
     /** Named MySQL lock that serialises first-administrator bootstrap. */
     const BOOTSTRAP_LOCK = 'marvy_bootstrap_admin';
 
-    /** A durable marker closes bootstrap even if the initial admin is deleted. */
+    /**
+     * Bootstrap is open exactly when the panel holds no staff account at all.
+     *
+     * This used to also consult a durable `first_admin_bootstrap_completed`
+     * marker, which nothing could clear again. A panel whose first (or only)
+     * administrator was later deleted — or a database that arrived with the
+     * marker already set but whose users were never imported — then had zero
+     * staff accounts *and* a permanently closed setup form: no way in except
+     * phpMyAdmin, even though the operator still held VP_SETUP_TOKEN.
+     *
+     * The token is what authorises this path (a >=32 character secret that
+     * only someone with .env access can read), so the staff count alone
+     * decides. The marker row is still written below, as a record of when the
+     * claim last happened, but it no longer gates anything.
+     */
     public function bootstrap_admin_open() {
         $staff = (int)$this->ci->db->where_in('role', array('SUPER_ADMIN', 'ADMIN', 'STAFF'))
             ->count_all_results('users');
-        $claimed = (int)$this->ci->db->where('setting_key', 'first_admin_bootstrap_completed')
-            ->count_all_results('settings');
-        return $staff === 0 && $claimed === 0;
+        return $staff === 0;
     }
 
     /** Public registration always creates a customer, regardless of input. */
@@ -134,7 +146,11 @@ class AuthService {
             // and the re-check above found no staff account.
             if ($bootstrap) {
                 $this->ci->db->where('id', $user_id)->update('users', array('role' => 'SUPER_ADMIN'));
-                $this->ci->db->insert('settings', array(
+                // replace(), not insert(): the marker can legitimately be
+                // written twice when a panel whose administrator was deleted
+                // bootstraps again, and a duplicate primary key inside this
+                // transaction would fail the whole registration.
+                $this->ci->db->replace('settings', array(
                     'setting_key' => 'first_admin_bootstrap_completed',
                     'setting_value' => json_encode(array('value' => gmdate('c'))),
                     'category' => 'security', 'is_public' => 0,

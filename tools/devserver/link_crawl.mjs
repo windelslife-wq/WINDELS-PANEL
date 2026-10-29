@@ -35,7 +35,7 @@ function linksIn(html) {
 const c = new Client(base);
 await c.get(asAdmin ? '/admin/login' : '/login');
 const login = await c.postForm(asAdmin ? '/admin/login' : '/login', {
-  identifier: asAdmin ? 'admin@marvy.local' : 'demo@marvy.local',
+  identifier: asAdmin ? 'admin' : 'demo@marvy.local',
   password,
 });
 if (/login/.test(login.url)) {

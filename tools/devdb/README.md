@@ -44,6 +44,12 @@ php index.php seed core
 php index.php seed demo
 ```
 
+Neither seed creates a staff account, so the end-to-end check scripts (which
+sign in as username `admin`) need one first. With `VP_SETUP_TOKEN` set in
+`.env`, open `http://127.0.0.1:8080/setup` and create the first administrator
+with **username `admin`** and the password you intend to pass as
+`--admin-password` / `DEMO_PASSWORD`.
+
 ## Editing PHP while the dev server runs
 
 The wasm runtime keeps compiled PHP per worker, so **restart

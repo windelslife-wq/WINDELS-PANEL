@@ -115,7 +115,7 @@ without a database connection — the migrations stay the single source of truth
 
 * 1 MOCK provider (encrypted key, no real network calls), 8 categories, 20 services
   with tiered group pricing, mirrored into `provider_services`.
-* 4 users (`admin`, `staff`, `demo`, `reseller`) — password from `DEMO_PASSWORD` or randomly
+* 2 users (`demo`, `reseller`), both customers — password from `DEMO_PASSWORD` or randomly
   generated and printed once, hashed with Argon2id.
 * Wallets funded through **real `wallet_transactions` + balanced `ledger_entries`**, never a
   bare `UPDATE wallets SET balance`.

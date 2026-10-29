@@ -155,6 +155,9 @@ Sign in at `https://yourdomain.com/admin/login`.
 
 If an administrator or staff account already exists, setup is closed and
 never changes that account. Use `/admin/login` or `/forgot-password` instead.
+The form reopens by itself if the panel holds no staff account at all — for
+example after the only administrator row was removed — and still requires
+`VP_SETUP_TOKEN`. Nothing else reopens it.
 Older releases shipped publicly known credentials; rotate them or disable
 unused accounts immediately. Do not re-import the fresh-install SQL over live
 data.

@@ -61,7 +61,7 @@ await check(cust, CUSTOMER_PAGES, 'customer');
 
 const admin = new Client(base);
 await admin.get('/admin/login');
-await admin.postForm('/admin/login', { identifier: 'admin@marvy.local', password });
+await admin.postForm('/admin/login', { identifier: 'admin', password });
 await check(admin, ADMIN_PAGES, 'admin');
 
 const broken = [...seen.entries()].filter(([, status]) => status !== 'external' && status !== 200);

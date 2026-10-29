@@ -86,7 +86,7 @@ class BootstrapAdminRegistrationTest extends TestCase
         $this->assertTrue($this->service()->bootstrap_admin_open());
     }
 
-    public function testProtectedBootstrapIsAuditedAndClosesPermanently() {
+    public function testProtectedBootstrapIsAuditedAndClosesWhileStaffExist() {
         $svc = $this->service(array('email_verification_required' => true));
         $res = $this->claim($svc, $this->data());
         $this->assertTrue($res['ok']);
@@ -98,8 +98,44 @@ class BootstrapAdminRegistrationTest extends TestCase
         $this->assertSame(1, $this->db->lock_released);
         $this->assertContains('auth.bootstrap_admin', array_column($this->db->audit, 'action'));
         $this->assertFalse($this->claim($svc, $this->data('grace', 'grace@example.test'))['ok']);
-        $this->db->users = array();
+        // Still closed only because a staff account exists.
         $this->assertFalse($svc->bootstrap_admin_open());
+    }
+
+    /**
+     * The reported production bug: a panel with the completion marker already
+     * set but no staff account anywhere was told "setup is closed" forever,
+     * leaving no way in short of phpMyAdmin.
+     */
+    public function testMarkerWithoutStaffDoesNotCloseSetup() {
+        $this->db->settings_rows[] = array(
+            'setting_key' => 'first_admin_bootstrap_completed',
+            'setting_value' => json_encode(array('value' => '2026-01-01T00:00:00+00:00')),
+            'category' => 'security', 'is_public' => 0,
+        );
+        $svc = $this->service();
+        $this->assertTrue($svc->bootstrap_admin_open());
+
+        $res = $this->claim($svc, $this->data());
+        $this->assertTrue($res['ok']);
+        $this->assertSame('SUPER_ADMIN', $this->db->users[0]['role']);
+        $this->assertCount(1, $this->db->settings_rows, 'marker is replaced, never duplicated');
+        $this->assertFalse($svc->bootstrap_admin_open());
+    }
+
+    /** Deleting the only administrator reopens setup for the token holder. */
+    public function testDeletingTheOnlyAdminReopensSetup() {
+        $svc = $this->service();
+        $this->assertTrue($this->claim($svc, $this->data())['ok']);
+        $this->assertFalse($svc->bootstrap_admin_open());
+
+        $this->db->users = array();
+        $this->assertTrue($svc->bootstrap_admin_open());
+
+        $again = $this->claim($svc, $this->data('grace', 'grace@example.test'));
+        $this->assertTrue($again['ok']);
+        $this->assertSame('SUPER_ADMIN', $this->db->users[0]['role']);
+        $this->assertCount(1, $this->db->settings_rows, 're-bootstrap must not hit a duplicate marker key');
     }
 
     public function testMissingOrWrongSecretRejected() {
@@ -212,6 +248,20 @@ class BootstrapRegDb
             $this->wallets[] = $data;
         }
         return true;
+    }
+
+    /** CI's Query Builder replace(): upsert on the primary key. */
+    public function replace($table, $data)
+    {
+        if ($table === 'settings') {
+            foreach ($this->settings_rows as $i => $row) {
+                if (($row['setting_key'] ?? null) === ($data['setting_key'] ?? null)) {
+                    $this->settings_rows[$i] = $data;
+                    return true;
+                }
+            }
+        }
+        return $this->insert($table, $data);
     }
 
     public function update($table, $data)

@@ -2,7 +2,8 @@
 <h1 class="text-2xl font-bold tracking-tight">First administrator setup</h1>
 <?php if (!empty($setup_error)): ?><p class="flash error" role="alert"><?=html_escape($setup_error)?></p><?php endif; ?>
 <?php if (!$bootstrap_open): ?>
-<p class="mt-4">Setup is closed because a staff account already exists or setup has already been completed. Existing accounts are never changed here.</p>
+<p class="mt-4">Setup is closed because a staff account already exists on this panel. This page never changes an existing account.</p>
+<p class="mt-2 text-sm">Sign in with that account, or recover its password by email. If the panel ever holds no staff account at all, this form reopens on its own for a server operator holding <code>VP_SETUP_TOKEN</code>.</p>
 <p class="ws-auth-aside"><a href="<?=site_url('admin/login')?>">Staff sign-in</a> · <a href="<?=site_url('forgot-password')?>">Password recovery</a></p>
 <?php else: ?>
 <p class="mt-4">This creates the first Super Admin. Set a random <code>VP_SETUP_TOKEN</code> of at least 32 characters in the server's .env file first. Enter it below over HTTPS; remove it from .env after setup.</p>
