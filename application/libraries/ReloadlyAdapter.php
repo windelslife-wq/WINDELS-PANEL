@@ -101,6 +101,8 @@ class ReloadlyAdapter implements GiftcardProviderInterface {
     private $base;
     private $credentials = null;
     private $token = null;
+    /** Why the last token mint failed, surfaced instead of a bare "authenticate". */
+    private $auth_error = null;
 
     public function __construct($provider_row, $http = null) {
         $this->provider = $provider_row;
@@ -535,7 +537,8 @@ class ReloadlyAdapter implements GiftcardProviderInterface {
     private function request($method, $path, ?array $body = null, $retrying = false) {
         $token = $this->token();
         if ($token === null) {
-            return array('transport_error' => 'Could not authenticate with the gift card vendor');
+            return array('transport_error' => $this->auth_error
+                ?: 'Could not authenticate with the gift card vendor');
         }
 
         $url = $this->base.$path;
@@ -577,7 +580,16 @@ class ReloadlyAdapter implements GiftcardProviderInterface {
         if ($cached !== null) return $this->token = $cached;
 
         $creds = $this->credentials();
-        if ($creds['client_id'] === '' || $creds['client_secret'] === '') return null;
+        if ($creds['client_id'] === '' || $creds['client_secret'] === '') {
+            // Both halves arrive together in the provider form, so an empty
+            // half means the row was saved as plain text, seeded without a
+            // secret, or edited in the database — say which, because "no
+            // credentials" and "wrong credentials" are fixed in different
+            // places.
+            $this->auth_error = 'Could not authenticate with the gift card vendor: '
+                .'no Reloadly client id/secret is configured on this provider';
+            return null;
+        }
 
         $res = $this->http->post(self::AUTH_URL, json_encode(array(
             'client_id'     => $creds['client_id'],
@@ -588,10 +600,34 @@ class ReloadlyAdapter implements GiftcardProviderInterface {
         )), array('Accept: application/json', 'Content-Type: application/json'));
 
         $code = (int)($res['http_code'] ?? 0);
-        if ($code < 200 || $code >= 300) return null;
+        if (!empty($res['error']) && $code === 0) {
+            $this->auth_error = 'Could not authenticate with the gift card vendor: '
+                .'the auth server is unreachable ('.$res['error'].')';
+            return null;
+        }
+        if ($code < 200 || $code >= 300) {
+            // 401 here is invalid_client: the pair itself is wrong, which is
+            // a dashboard problem, not a code problem. Surface the vendor's
+            // own message alongside the status so "wrong secret" is told
+            // apart from "account suspended" without reading the docs.
+            $body = json_decode((string)($res['body'] ?? ''), true);
+            $detail = '';
+            if (is_array($body)) {
+                if (!empty($body['error_description'])) $detail = (string)$body['error_description'];
+                elseif (!empty($body['error']))          $detail = (string)$body['error'];
+                elseif (!empty($body['message']))        $detail = (string)$body['message'];
+            }
+            $this->auth_error = 'Could not authenticate with the gift card vendor (HTTP '.$code
+                .($detail !== '' ? ': '.$detail : '').')';
+            return null;
+        }
 
         $body = json_decode((string)($res['body'] ?? ''), true);
-        if (!is_array($body) || empty($body['access_token'])) return null;
+        if (!is_array($body) || empty($body['access_token'])) {
+            $this->auth_error = 'Could not authenticate with the gift card vendor: '
+                .'the auth server answered without a token';
+            return null;
+        }
 
         $token = (string)$body['access_token'];
         $ttl   = isset($body['expires_in']) && is_numeric($body['expires_in'])
