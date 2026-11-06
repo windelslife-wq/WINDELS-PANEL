@@ -43,7 +43,7 @@ $outstanding = bcsub((string)$tx->amount, (string)$tx->refunded_amount, 8);
         <tr><th>Product code</th><td class="mono text-xs"><?=htmlspecialchars((string)$detail->variation_code)?></td></tr>
         <?php endif; ?>
         <?php if ($detail->face_value !== null): ?>
-        <tr><th>Face value</th><td class="mono"><?=marvy_money($detail->face_value, $tx->currency)?></td></tr>
+        <tr><th>Face value</th><td class="mono"><?=marvy_naira($detail->face_value)?></td></tr>
         <?php endif; ?>
         <?php if ($detail->token): ?>
         <tr><th>Token / PIN</th><td class="mono"><?=htmlspecialchars((string)$detail->token)?>
@@ -52,8 +52,10 @@ $outstanding = bcsub((string)$tx->amount, (string)$tx->refunded_amount, 8);
         <?php endif; ?>
         <tr><th>Charged</th><td class="mono"><?=marvy_money($tx->amount, $tx->currency)?></td></tr>
         <?php if ($tx->provider_cost !== null): ?>
-        <tr><th>Provider cost</th><td class="mono"><?=marvy_money($tx->provider_cost, $tx->currency)?>
-            <span class="muted text-xs">margin <?=marvy_money(bcsub((string)$tx->amount, (string)$tx->provider_cost, 8), $tx->currency)?></span></td></tr>
+        <tr><th>Provider cost</th><td class="mono"><?=marvy_naira($tx->provider_cost)?>
+            <?php if (strtoupper((string)$tx->currency) === 'NGN'): ?>
+              <span class="muted text-xs">margin <?=marvy_naira(bcsub((string)$tx->amount, (string)$tx->provider_cost, 8))?></span>
+            <?php endif; ?></td></tr>
         <?php endif; ?>
         <?php if (bccomp((string)$tx->refunded_amount, '0', 8) > 0): ?>
         <tr><th>Refunded</th><td class="mono"><?=marvy_money($tx->refunded_amount, $tx->currency)?></td></tr>

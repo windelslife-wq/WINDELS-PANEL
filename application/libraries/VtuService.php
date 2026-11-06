@@ -251,7 +251,22 @@ class VtuService {
         $call    = $s['call'];
         $payload = $s['payload'];
 
-        // Frozen provider cost, for margin reporting (§15).
+        // VTU products and variable airtime/electricity amounts are always
+        // denominated in NGN (₦). Convert into the panel's base accounting
+        // currency before handing off to TransactionEngine when the panel's
+        // base currency is not NGN (e.g. USD).
+        $charge_amount = $s['amount'];
+        if (marvy_base_currency() !== 'NGN') {
+            $charge_amount = marvy_to_base_money($s['amount'], 'NGN');
+            if ($charge_amount === null) {
+                return $this->err(
+                    'NGN exchange rate is not configured — enable NGN with a valid rate in Admin > Currencies before selling VTU',
+                    'CURRENCY_UNAVAILABLE'
+                );
+            }
+        }
+
+        // Frozen provider cost (in NGN), for margin reporting (§15).
         $provider_cost = null;
         if (isset($product->provider_cost) && $product->provider_cost !== null) {
             $provider_cost = $this->money($product->provider_cost);
@@ -269,7 +284,7 @@ class VtuService {
             'service_type'    => $s['service_type'],
             'service_id'      => $product->id,
             'provider_id'     => $provider->id,
-            'amount'          => $s['amount'],
+            'amount'          => $charge_amount,
             'provider_cost'   => $provider_cost,
             'idempotency_key' => $s['input']['idempotency_key'] ?? null,
             'source'          => $s['input']['source'] ?? 'WEB',
@@ -372,11 +387,11 @@ class VtuService {
         if (bccomp($amount, '0', 8) <= 0) return 'Enter an amount greater than zero';
         if ($product->min_amount !== null
             && bccomp($amount, $this->money($product->min_amount), 8) < 0) {
-            return 'Minimum is '.marvy_money($product->min_amount);
+            return 'Minimum is '.marvy_naira($product->min_amount);
         }
         if ($product->max_amount !== null
             && bccomp($amount, $this->money($product->max_amount), 8) > 0) {
-            return 'Maximum is '.marvy_money($product->max_amount);
+            return 'Maximum is '.marvy_naira($product->max_amount);
         }
         return null;
     }

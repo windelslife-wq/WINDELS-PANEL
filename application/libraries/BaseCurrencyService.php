@@ -82,8 +82,9 @@ class BaseCurrencyService {
             'referral_commissions'  => array('cols' => array('amount'), 'currency' => 'currency'),
             'referral_campaigns'    => array('cols' => array('reward_amount', 'budget', 'spent', 'cost')),
             'service_transactions'  => array('cols' => array('amount', 'refunded_amount'), 'currency' => 'currency'),
-            'vtu_products'          => array('cols' => array('face_value', 'price', 'min_amount', 'max_amount')),
-            'vtu_transactions'      => array('cols' => array('face_value')),
+            // VTU products and transaction face values are Nigerian carrier /
+            // utility tariffs always denominated and displayed in Naira (NGN),
+            // never scaled when the panel's accounting currency changes.
             'number_products'       => array('cols' => array('price')),
             'identity_products'     => array('cols' => array('price')),
             'giftcard_products'     => array('cols' => array('price')),
