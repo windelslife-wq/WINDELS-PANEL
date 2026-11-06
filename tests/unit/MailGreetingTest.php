@@ -352,7 +352,11 @@ class MailGreetingTest extends TestCase
             'to_name'   => 'Customer',
             'subject'   => 'delivery test '.gmdate('His'),
             'body_text' => "Body line one.\nBody line two.",
-            'body_html' => null,
+            // The real mail_queue.body_html column is MEDIUMTEXT NOT NULL; a
+            // null here would make CI_Email::message() call str_replace() on
+            // null (a PHP 8.1+ deprecation) without changing the delivered
+            // body. Keep the fixture faithful to the schema.
+            'body_html' => '',
         );
         $service = new MailService();
         $res = $service->deliver($mail);

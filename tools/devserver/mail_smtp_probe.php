@@ -17,7 +17,15 @@
  */
 
 $root = dirname(dirname(__DIR__));
-define('BASEPATH', $root.'/system/');
+// A fresh clone has no vendor/ or ./system symlink. The mail tests and this
+// probe both load the real CI3 Email library, so use the same MIT-licensed
+// copy from the tracked deployment package when the framework is missing.
+$framework = $root.'/system/';
+if (!is_file($framework.'libraries/Email.php')) {
+    $fixture = $root.'/tests/fixtures/ci3/';
+    if (is_file($fixture.'libraries/Email.php')) $framework = $fixture;
+}
+define('BASEPATH', $framework);
 define('APPPATH', $root.'/application/');
 define('FCPATH', $root.'/');
 define('ENVIRONMENT', getenv('CI_ENV') ?: 'development');
@@ -47,11 +55,16 @@ if (!function_exists('base_url')) {
     function base_url($uri = '') { return site_url($uri); }
 }
 if (!function_exists('config_item')) {
-    function config_item($item) { return null; }
+    // Match application/config/config.php: CI_Email::initialize() runs
+    // strtoupper() on this value, so a null shim emits PHP 8.1+ deprecations.
+    function config_item($item) { return $item === 'charset' ? 'UTF-8' : null; }
 }
 if (!function_exists('is_php')) {
     function is_php($v) { return version_compare(PHP_VERSION, $v, '>='); }
 }
+// system/core/CodeIgniter.php normally defines these before libraries load.
+if (!defined('MB_ENABLED'))    define('MB_ENABLED', extension_loaded('mbstring'));
+if (!defined('ICONV_ENABLED')) define('ICONV_ENABLED', extension_loaded('iconv'));
 
 // The real chain, exactly as MailService loads it.
 require_once BASEPATH.'libraries/Email.php';
@@ -123,7 +136,9 @@ $mail = (object)array(
     'to_name'    => 'Customer',
     'subject'    => 'Sending test '.gmdate('His'),
     'body_text'  => "Body line one.\nBody line two.",
-    'body_html'  => null,
+    // mail_queue.body_html is NOT NULL; keep this probe row faithful so
+    // CI_Email::message() never receives null (PHP 8.1+ deprecation).
+    'body_html'  => '',
 );
 
 $service = new MailService();

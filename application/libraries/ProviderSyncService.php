@@ -431,15 +431,39 @@ class ProviderSyncService {
             $this->ci->Provider_model->record_sync($provider->id, 'services', 'FAILED', $e->getMessage(), 0, $latency);
             return array('ok' => false, 'error' => $e->getMessage(), 'latency_ms' => $latency);
         }
-        if (!method_exists($adapter, 'variations')) {
+        // Every adapter in the VTU registry answers variations() (see
+        // VtuProviderInterface). Keep a guard for a third-party adapter built
+        // against the old eight-method contract, but tell the operator what
+        // is actually wrong instead of a dead-end "cannot list products".
+        if (!is_callable(array($adapter, 'variations'))) {
             $latency = (int)round((microtime(true) - $start) * 1000);
-            $err = 'This VTU adapter cannot list products.';
+            $type = strtoupper((string)($provider->api_type ?? 'VTU'));
+            $err = 'The '.$type.' adapter has no product list: it does not implement '
+                  .'variations(). Manage this provider\'s catalogue by hand in '
+                  .'Admin > Catalogue, or register an adapter that implements '
+                  .'the VTU catalogue contract.';
             $this->ci->Provider_model->record_sync($provider->id, 'services', 'FAILED', $err, 0, $latency);
             return array('ok' => false, 'error' => $err, 'latency_ms' => $latency);
         }
 
-        $types = method_exists($adapter, 'catalogue_types')
-            ? $adapter::catalogue_types() : array('DATA', 'CABLE', 'EXAM_PIN');
+        // An adapter may declare which of our service types it can list.
+        // Call it through the instance so both static and instance methods
+        // work, and never let a broken declaration abort the whole sync.
+        $default_types = array('DATA', 'CABLE', 'EXAM_PIN');
+        $types = $default_types;
+        if (is_callable(array($adapter, 'catalogue_types'))) {
+            try {
+                $declared = $adapter->catalogue_types();
+                if (is_array($declared)) {
+                    $known = array('AIRTIME', 'DATA', 'CABLE', 'ELECTRICITY', 'EXAM_PIN');
+                    $clean = array_values(array_intersect(
+                        array_filter($declared, 'is_string'), $known));
+                    if ($clean) $types = $clean;
+                }
+            } catch (Exception $e) {
+                $types = $default_types;
+            }
+        }
 
         $inserted = 0; $updated = 0; $skipped = 0; $errors = array();
         foreach ($types as $type) {
@@ -451,12 +475,16 @@ class ProviderSyncService {
                     $errors[] = $network->code.': '.$e->getMessage();
                     continue;
                 }
-                if (empty($res['ok']) || empty($res['variations'])) {
+                if (!is_array($res) || empty($res['ok'])
+                    || empty($res['variations']) || !is_array($res['variations'])) {
                     $skipped++;
-                    if (!empty($res['error'])) $errors[] = $network->code.': '.$res['error'];
+                    if (is_array($res) && !empty($res['error'])) {
+                        $errors[] = $network->code.': '.$res['error'];
+                    }
                     continue;
                 }
                 foreach ($res['variations'] as $i => $v) {
+                    if (!is_array($v)) { $skipped++; continue; }
                     $outcome = $this->ci->Vtu_product_model->upsert_from_provider(
                         $provider->id, (int)$network->id, $type, $v, $i);
                     if ($outcome === 'inserted') $inserted++;

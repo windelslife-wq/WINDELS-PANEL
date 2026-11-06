@@ -27,6 +27,15 @@ $has = function ($permission) use ($permissions) {
         ?>
         <span class="badge <?=$hcls?> badge-dot" style="align-self:flex-start"><?=htmlspecialchars($h ?: 'UNKNOWN')?></span>
       </div>
+      <?php if (stripos((string)$p->api_url, 'app.bestdatanig.com.ng') !== false): ?>
+      <p class="hint text-xs muted mt-3 mb-0">
+        This is the Bestdatanig <strong>website</strong>, not its API. The BESTDATA
+        adapter automatically calls <span class="mono">https://bestdatanig.com.ng/api/…</span>
+        instead; set the API URL to <span class="mono">https://bestdatanig.com.ng</span>
+        and choose type <span class="mono">BESTDATA</span> so the row matches what
+        it actually talks to.
+      </p>
+      <?php endif; ?>
 
       <dl class="grid grid-4 mt-4" style="gap:1rem">
         <div><dt class="muted text-xs">Status</dt><dd class="font-medium"><?=htmlspecialchars($p->status)?></dd></div>
@@ -57,6 +66,14 @@ $has = function ($permission) use ($permissions) {
         <button class="btn btn-secondary" type="button" data-dialog-open="ws-import-services">⇥ Import all services…</button>
         <?php endif; ?>
       </div>
+      <?php if ($is_vtu): ?>
+      <p class="hint text-xs muted mt-2 mb-0">
+        Sync services reads this vendor's fixed-price DATA, CABLE and EXAM_PIN
+        product list (variations) into the VTU catalogue. New products arrive
+        inactive and priced at cost; airtime and electricity are variable-amount
+        and stay hand-configured in Admin &gt; Catalogue.
+      </p>
+      <?php endif; ?>
       <?php endif; ?>
       <?php if ($has('providers.manage')): ?>
       <div class="row mt-3" style="justify-content:flex-end;gap:.5rem">

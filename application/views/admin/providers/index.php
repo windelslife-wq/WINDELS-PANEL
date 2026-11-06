@@ -142,6 +142,29 @@ $search = $search ?? '';
       </div>
     </details>
     <details class="text-sm muted">
+      <summary>Bestdatanig / AdaData API (BESTDATA only)</summary>
+      <p class="text-xs muted" style="margin-top:.5rem">
+        Choose type <span class="mono">BESTDATA</span> and set the API URL to
+        <span class="mono">https://bestdatanig.com.ng</span> — the Django REST
+        API lives on that origin at <span class="mono">/api/…</span>.
+        <strong>Do not use <span class="mono">https://app.bestdatanig.com.ng</span></strong>:
+        that is the marketing website and answers HTTP 404 to every API path.
+        Paste the token from your dashboard into the API key field; it is sent as
+        <span class="mono">Authorization: Token …</span> (the adapter falls back to
+        <span class="mono">Bearer</span> if the vendor asks for it).
+      </p>
+      <p class="text-xs muted">
+        Test connection reads <span class="mono">GET /api/user/</span>, Sync services
+        reads the data plans from <span class="mono">GET /api/network/</span> and the
+        cable packages from <span class="mono">GET /api/cable/</span>. Data purchases
+        go to <span class="mono">POST /api/data/</span> with
+        <span class="mono">{network, mobile_number, plan, Ported_number}</span>.
+        See <span class="mono">docs/module-bestdata-provider.md</span> for the full
+        endpoint list and the optional <span class="mono">retry_policy.bestdata</span>
+        overrides.
+      </p>
+    </details>
+    <details class="text-sm muted">
       <summary>Dojah AppId (DOJAH only)</summary>
       <p class="text-xs muted" style="margin-top:.5rem">
         Dojah sends the secret key in <span class="mono">Authorization</span> with no

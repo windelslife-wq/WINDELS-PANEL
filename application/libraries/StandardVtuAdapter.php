@@ -16,6 +16,13 @@ require_once __DIR__.'/VtuProviderInterface.php';
  * hardcoded. A provider whose API differs structurally gets its own adapter
  * class registered in Provider_manager; this one covers the common case.
  *
+ * The same blob configures the catalogue/product-list call used by the admin
+ * "Sync services" action: `variations` (path), `variations_param` (query or
+ * POST field, default `serviceID`), `variations_method` (`GET`, the default,
+ * or `POST`) and `service_ids` (our network code → vendor serviceID). Every
+ * registered VTU adapter answers `variations()`/`catalogue_types()`, so a
+ * STANDARD_VTU provider can sync its catalogue like VTPASS does.
+ *
  * All traffic goes through SecureHttpClient, which enforces the SSRF and
  * protocol restrictions from Session 17. The API key is decrypted per call and
  * never logged.
@@ -25,9 +32,15 @@ class StandardVtuAdapter implements VtuProviderInterface {
     /** Provider result codes that mean "accepted, still settling". */
     private static $pending_codes = array('099', 'pending', 'PENDING', 'processing');
 
+    /** Service types this adapter can pull a price list for. */
+    private static $catalogue_types = array('DATA', 'CABLE', 'EXAM_PIN');
+
     private $provider;
     private $http;
     private $paths;
+    private $service_map;
+    private $variations_param;
+    private $variations_method;
 
     public function __construct($provider_row, $http = null) {
         $this->provider = $provider_row;
@@ -37,6 +50,9 @@ class StandardVtuAdapter implements VtuProviderInterface {
         $cfg = array();
         if (!empty($provider_row->retry_policy)) {
             $decoded = json_decode($provider_row->retry_policy, true);
+            // Only the `vtu` block is ours. Other retry settings (maxRetries,
+            // backoffMs) belong to SecureHttpClient and must never be mistaken
+            // for endpoint paths.
             if (is_array($decoded) && isset($decoded['vtu']) && is_array($decoded['vtu'])) {
                 $cfg = $decoded['vtu'];
             }
@@ -50,7 +66,23 @@ class StandardVtuAdapter implements VtuProviderInterface {
             'verify'      => '/merchant-verify',
             'status'      => '/requery',
             'balance'     => '/balance',
+            // The common VTpass-style product list. Override per vendor with
+            // retry_policy -> vtu -> variations.
+            'variations'  => '/service-variations',
         ), $cfg);
+
+        // Purchases pass our network code straight through as serviceID; a
+        // vendor with its own ids can map them here without a code change.
+        $this->service_map = array();
+        if (isset($cfg['service_ids']) && is_array($cfg['service_ids'])) {
+            foreach ($cfg['service_ids'] as $code => $id) {
+                $this->service_map[strtoupper((string)$code)] = (string)$id;
+            }
+        }
+        $param = isset($cfg['variations_param']) ? trim((string)$cfg['variations_param']) : '';
+        $this->variations_param = $param !== '' ? $param : 'serviceID';
+        $method = strtoupper(trim((string)($cfg['variations_method'] ?? 'GET')));
+        $this->variations_method = $method === 'POST' ? 'POST' : 'GET';
     }
 
     /* ----------------------------- purchases ---------------------------- */
@@ -151,6 +183,139 @@ class StandardVtuAdapter implements VtuProviderInterface {
         );
     }
 
+    /* ---------------------------- catalogue ------------------------------ */
+
+    /** Service types this adapter can mirror into vtu_products. */
+    public static function catalogue_types() { return self::$catalogue_types; }
+
+    /**
+     * Variations (data bundles, cable packages, exam PIN types) for one of our
+     * network codes. The admin catalogue sync calls this once per active
+     * network; a vendor that does not carry a network answers ok:false and the
+     * sync skips it rather than aborting the other twenty.
+     *
+     * Response shapes vary, so the row list is found in any of the places the
+     * common Nigerian VTU APIs put it (content.variations, the VTpass
+     * `varations` typo, data.variations, a bare list, ...) and normalised into
+     * the one shape Vtu_product_model::upsert_from_provider() reads.
+     *
+     * @return array{ok:bool,variations?:array,service_id?:string,error?:string}
+     */
+    public function variations($network_code) {
+        $service_id = $this->catalogue_service_id($network_code);
+        $param = $this->variations_param;
+        $path  = isset($this->paths['variations']) && is_scalar($this->paths['variations'])
+            ? (string)$this->paths['variations'] : '/service-variations';
+
+        if ($this->variations_method === 'POST') {
+            $res = $this->call($path, array($param => $service_id), 'POST');
+        } else {
+            // GET carries no body in SecureHttpClient, so the id goes on the
+            // query string. Respect a configured path that already has one.
+            $join = strpos($path, '?') === false ? '?' : '&';
+            $res = $this->call(
+                $path.$join.rawurlencode($param).'='.rawurlencode($service_id),
+                array(), 'GET'
+            );
+        }
+        if (empty($res['ok'])) {
+            return array('ok' => false, 'error' => $res['error'] ?? 'Could not list products');
+        }
+
+        $rows = $this->variation_rows($res['data']);
+        if ($rows === null) {
+            $data = $res['data'];
+            $message = null;
+            foreach (array('response_description', 'message', 'error', 'detail') as $key) {
+                if (isset($data[$key]) && is_scalar($data[$key]) && trim((string)$data[$key]) !== '') {
+                    $message = (string)$data[$key];
+                    break;
+                }
+            }
+            $code = isset($data['code']) && is_scalar($data['code']) ? (string)$data['code'] : '';
+            // A numeric-only description (VTpass puts "000" there) is a code,
+            // not an explanation; don't surface it as an error message.
+            if ($message !== null && preg_match('/^\d{3}$/', trim($message))) $message = null;
+            if ($message === null) {
+                $message = in_array(strtolower(trim($code)), array('', '000', '0', '1', '200'), true)
+                    ? 'The provider returned no variations for '.$service_id
+                    : 'Provider code '.$code;
+            }
+            return array('ok' => false, 'error' => $message);
+        }
+
+        $out = array();
+        foreach ($rows as $row) {
+            $normalized = $this->normalize_variation($row);
+            if ($normalized) $out[] = $normalized;
+        }
+        return array('ok' => true, 'service_id' => $service_id, 'variations' => $out);
+    }
+
+    /** Our network code translated into the vendor's serviceID. */
+    private function catalogue_service_id($network_code) {
+        $code = (string)$network_code;
+        $key = strtoupper($code);
+        return isset($this->service_map[$key]) ? $this->service_map[$key] : $code;
+    }
+
+    /** @return array|null the variation rows, or null when the reply has none. */
+    private function variation_rows(array $data) {
+        // Named lists: an empty one is a real (empty) answer, not an error.
+        $named = array(
+            $data['content']['variations'] ?? null,
+            $data['content']['varations'] ?? null,   // VTpass ships this typo
+            $data['contents']['variations'] ?? null,
+            $data['data']['variations'] ?? null,
+            $data['variations'] ?? null,
+            $data['products'] ?? null,
+        );
+        foreach ($named as $rows) {
+            if (is_array($rows) && $this->is_row_list($rows)) return array_values($rows);
+        }
+        // Some vendors omit the wrapper and return the rows as `content` or
+        // `data` directly. An *empty* wrapper here means a rejected request
+        // ({"code":"012","content":{}}), not an empty price list.
+        foreach (array($data['content'] ?? null, $data['data'] ?? null) as $rows) {
+            if (is_array($rows) && $rows && $this->is_row_list($rows)) return array_values($rows);
+        }
+        return null;
+    }
+
+    /** A variation list is a list of arrays, not a keyed object like `content`. */
+    private function is_row_list(array $rows) {
+        if (!$rows) return true;                 // an empty list is still a list
+        foreach ($rows as $row) {
+            if (!is_array($row)) return false;
+        }
+        return true;
+    }
+
+    /** One vendor row → the shape ProviderSyncService writes to vtu_products. */
+    private function normalize_variation($row) {
+        if (!is_array($row)) return null;
+        $code = $row['variation_code'] ?? ($row['code'] ?? ($row['product_code'] ?? ($row['id'] ?? null)));
+        if (!is_scalar($code) || trim((string)$code) === '') return null;
+
+        $name = $row['name'] ?? ($row['variation_name'] ?? ($row['title'] ?? null));
+        if (!is_scalar($name)) $name = null;
+        $amount = $row['variation_amount'] ?? ($row['amount'] ?? ($row['price'] ?? ($row['cost'] ?? null)));
+        $out = array(
+            'variation_code' => (string)$code,
+            'name'           => (string)($name ?? $code),
+            'amount'         => $amount !== null && is_numeric($amount)
+                ? number_format((float)$amount, 8, '.', '') : null,
+            'fixed_price'    => !isset($row['fixedPrice']) || !$this->is_false($row['fixedPrice']),
+        );
+        return $out;
+    }
+
+    private function is_false($value) {
+        if (is_bool($value)) return !$value;
+        if (is_numeric($value)) return (float)$value === 0.0;
+        return in_array(strtolower(trim((string)$value)), array('no', 'false', 'off', '0', ''), true);
+    }
+
     /* ------------------------------ internals ---------------------------- */
 
     /**
@@ -243,12 +408,27 @@ class StandardVtuAdapter implements VtuProviderInterface {
         }
 
         $code = isset($res['http_code']) ? (int)$res['http_code'] : 0;
-        if ($code !== 200) {
+        if ($code === 0) {
             return array(
                 'ok' => false,
-                'error' => $res['error'] ?? ('HTTP '.$code),
+                'error' => $res['error'] ?? 'Provider unreachable',
                 'http_code' => $code,
             );
+        }
+        if ($code < 200 || $code >= 300) {
+            // A bare "HTTP 404" left operators staring at the wrong problem.
+            // In practice it means the base URL is a dashboard/marketing site
+            // rather than the API, or the path belongs to another vendor.
+            if ($code === 404) {
+                $error = 'HTTP 404 at '.$path.' — the API URL is a website or the '
+                        .'wrong path. Check the provider dashboard for its API base '
+                        .'(Bestdatanig: https://bestdatanig.com.ng with type BESTDATA).';
+            } elseif ($code === 401 || $code === 403) {
+                $error = 'HTTP '.$code.' — the provider rejected the API key.';
+            } else {
+                $error = $res['error'] ?? ('HTTP '.$code);
+            }
+            return array('ok' => false, 'error' => $error, 'http_code' => $code);
         }
         $data = json_decode(isset($res['body']) ? $res['body'] : '', true);
         if (!is_array($data)) {

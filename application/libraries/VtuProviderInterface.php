@@ -11,6 +11,30 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * Every method returns an array with at least ok:bool, and on failure an
  * error:string. Implementations must never throw for a provider-side rejection
  * — a rejection is a normal result the engine refunds.
+ *
+ * Catalogue capability. ProviderSyncService::sync_vtu_catalogue() mirrors the
+ * vendor's price list into vtu_products, so every VTU adapter registered in
+ * Provider_manager also answers:
+ *
+ * The capability contract, in signature form:
+ *
+ *     public static function catalogue_types();
+ *     public function variations($network_code);
+ *
+ * `catalogue_types()` returns the service types it can list (DATA, CABLE and
+ * EXAM_PIN for fixed-price products; AIRTIME and ELECTRICITY are
+ * variable-amount and stay hand-configured). `variations($network_code)`
+ * returns `{ok:true, service_id, variations:[{variation_code, name, amount,
+ * fixed_price}]}`, or `{ok:false, error}` when the vendor does not carry that
+ * network. The sync skips those, but the method must exist: an adapter with no
+ * variations() makes "Sync services" fail before it can do any work. All
+ * built-in VTU adapters (MOCK, STANDARD_VTU, VTPASS, BESTDATA) implement it;
+ * new ones must too. BESTDATA declares DATA and CABLE — the two price lists
+ * its vendor actually publishes.
+ *
+ * These two are documented here rather than added to the interface method list
+ * so a third-party adapter written against the original eight purchase/lookup
+ * methods still loads; the sync checks the capability at runtime.
  */
 interface VtuProviderInterface {
 
