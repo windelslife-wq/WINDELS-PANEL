@@ -92,9 +92,7 @@ class VtuCatalogueSyncTest extends TestCase
             $types = $class::catalogue_types();
             $this->assertContains('DATA', $types);
             $this->assertContains('CABLE', $types);
-            // Bestdatanig publishes no exam-PIN price list, so it honestly
-            // declares only the two fixed-price lists it can mirror.
-            if ($class !== 'BestdataAdapter') $this->assertContains('EXAM_PIN', $types);
+            $this->assertContains('EXAM_PIN', $types);
             $this->assertTrue(is_subclass_of($class, 'VtuProviderInterface'));
         }
     }

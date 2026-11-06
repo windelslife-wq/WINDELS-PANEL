@@ -154,9 +154,11 @@ $search = $search ?? '';
         <span class="mono">Bearer</span> if the vendor asks for it).
       </p>
       <p class="text-xs muted">
-        Test connection reads <span class="mono">GET /api/user/</span>, Sync services
-        reads the data plans from <span class="mono">GET /api/network/</span> and the
-        cable packages from <span class="mono">GET /api/cable/</span>. Data purchases
+        Test connection reads <span class="mono">GET /api/user/</span>; Sync services
+        reads fixed-price DATA (<span class="mono">GET /api/network/</span>), CABLE
+        (<span class="mono">GET /api/cable/</span>) and EXAM_PIN
+        (<span class="mono">GET /api/epin/</span> / <span class="mono">/api/user/</span>)
+        variations into the VTU catalogue (inactive, priced at cost). Data purchases
         go to <span class="mono">POST /api/data/</span> with
         <span class="mono">{network, mobile_number, plan, Ported_number}</span>.
         See <span class="mono">docs/module-bestdata-provider.md</span> for the full

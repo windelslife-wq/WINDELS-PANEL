@@ -36,14 +36,22 @@ class Providers extends Admin_Controller {
         $providers = $this->Provider_model->paginated($limit, ($page-1)*$limit, $status ?: null, $search ?: null);
         $total     = $this->Provider_model->count_all($status ?: null, $search ?: null);
 
-        // Attach service counts without an N+1 query.
+        // Attach service counts without an N+1 query (SMM in provider_services,
+        // VTU in vtu_products).
         $counts = array();
         if ($providers) {
-            $rows = $this->db
-                ->select('provider_id, COUNT(*) AS c', false)
-                ->where_in('provider_id', array_map(function($p){ return $p->id; }, $providers))
-                ->group_by('provider_id')->get('provider_services')->result();
-            foreach ($rows as $r) $counts[(int)$r->provider_id] = (int)$r->c;
+            $ids = array_map(function($p){ return $p->id; }, $providers);
+            foreach (array('provider_services', 'vtu_products') as $table) {
+                if (!$this->db->table_exists($table)) continue;
+                $rows = $this->db
+                    ->select('provider_id, COUNT(*) AS c', false)
+                    ->where_in('provider_id', $ids)
+                    ->group_by('provider_id')->get($table)->result();
+                foreach ($rows as $r) {
+                    $pid = (int)$r->provider_id;
+                    $counts[$pid] = ($counts[$pid] ?? 0) + (int)$r->c;
+                }
+            }
         }
 
         $this->load->view('layouts/app', array(

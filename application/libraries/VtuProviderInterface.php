@@ -28,9 +28,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * fixed_price}]}`, or `{ok:false, error}` when the vendor does not carry that
  * network. The sync skips those, but the method must exist: an adapter with no
  * variations() makes "Sync services" fail before it can do any work. All
- * built-in VTU adapters (MOCK, STANDARD_VTU, VTPASS, BESTDATA) implement it;
- * new ones must too. BESTDATA declares DATA and CABLE — the two price lists
- * its vendor actually publishes.
+ * built-in VTU adapters (MOCK, STANDARD_VTU, VTPASS, BESTDATA) implement it,
+ * declaring DATA, CABLE and EXAM_PIN; new ones must too.
  *
  * These two are documented here rather than added to the interface method list
  * so a third-party adapter written against the original eight purchase/lookup
