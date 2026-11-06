@@ -66,18 +66,33 @@ list in `content`/`data`. Each row accepts `variation_code|code|product_code|id`
 non-success `code`/`response_description` with no variation list) comes back as
 `ok:false, error`, which the sync treats as a per-network skip.
 
-`catalogue_types()` returns `DATA`, `CABLE` and `EXAM_PIN` for the three
-original adapters; the later `BESTDATA` adapter declares `DATA` and `CABLE`
-only, because its vendor publishes no exam-PIN price list. Airtime and
-electricity remain variable-amount products configured by the panel, not by a
-vendor price list.
+`catalogue_types()` returns `DATA`, `CABLE` and `EXAM_PIN` for all four built-in
+VTU adapters (`MOCK`, `STANDARD_VTU`, `VTPASS` and `BESTDATA`). Airtime and
+electricity remain variable-amount products configured by the panel in
+**Admin → Catalogue**, not by a vendor price list.
 
-## Safety rules (unchanged)
+## Safety rules — inactive at cost, safe re-syncs
 
-- The vendor owns `provider_cost`; the panel owns `price`. A sync only fills a
-  `price` that is still NULL, and new rows arrive `is_active = 0`.
-- One unsupported network is a skip; a sync that returns nothing at all *and*
-  collected errors is recorded FAILED.
+- **Inactive at cost on import:** new rows land with `is_active = 0` and
+  `price = face_value = provider_cost = vendor cost`, so nothing becomes
+  buyable until an admin reviews and activates it in **Admin → Catalogue**.
+- **Unreviewed inactive rows track cost:** while an inactive row's `price`
+  still equals its previous `provider_cost` (or is `NULL`), re-syncs move
+  `price` with `provider_cost` so it stays at cost rather than drifting below
+  cost before launch.
+- **Admin prices, names and deactivations survive re-sync:** once an admin
+  sets a custom `price`, edits `name` on an active row, or takes a row off
+  sale, re-syncs update `provider_cost` without overwriting `price`, `name` or
+  `is_active`. Identical re-syncs return `'unchanged'` with zero DB writes.
+- **Margin guard on active rows:** if vendor `provider_cost` rises strictly
+  above an active product's selling `price`, the sync switches `is_active` to
+  `0` (reporting `paused`) instead of selling below cost or inventing a new
+  customer price.
+- **Cross-provider isolation:** if `(network_id, service_type, code)` already
+  belongs to a different provider, a provider-scoped code (`CODE-P<id>`) is
+  used so syncing a second VTU vendor never hijacks another vendor's product.
+- One unsupported network is a skip; a sync that sees zero variations at all
+  *and* collected errors is recorded `FAILED`.
 - No decrypted key or vendor URL is ever returned in a sync error or log.
 
 ## Verification

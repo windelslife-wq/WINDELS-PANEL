@@ -690,31 +690,35 @@ class BestdataAdapter implements VtuProviderInterface {
         $code = $row['id'] ?? ($row['dataplan_id'] ?? ($row['cableplan_id'] ??
                ($row['variation_code'] ?? ($row['code'] ?? null))));
         if (!is_scalar($code) || trim((string)$code) === '') return null;
+        $planType = isset($row['plan_type']) && is_scalar($row['plan_type'])
+            ? trim((string)$row['plan_type']) : '';
+        $validity = isset($row['month_validate']) && is_scalar($row['month_validate'])
+            ? trim((string)$row['month_validate'])
+            : (isset($row['validity']) && is_scalar($row['validity']) ? trim((string)$row['validity']) : '');
         $name = $row['plan'] ?? ($row['package'] ?? ($row['plan_name'] ??
                ($row['name'] ?? null)));
         if (!is_scalar($name) || trim((string)$name) === '') {
             $name = (string)$code;
         } else {
             $name = trim((string)$name);
-            $planType = isset($row['plan_type']) && is_scalar($row['plan_type'])
-                ? trim((string)$row['plan_type']) : '';
             if ($planType !== '' && stripos($name, $planType) === false) {
                 $name .= ' '.$planType;
             }
-            $validity = isset($row['month_validate']) && is_scalar($row['month_validate'])
-                ? trim((string)$row['month_validate'])
-                : (isset($row['validity']) && is_scalar($row['validity']) ? trim((string)$row['validity']) : '');
             if ($validity !== '' && stripos($name, $validity) === false) {
                 $name .= ' - '.$validity;
             }
         }
         $amount = $this->money($row['plan_amount'] ?? ($row['amount'] ?? ($row['price'] ?? null)));
-        return array(
+        if ($amount === null || (float)$amount <= 0) return null;
+        $out = array(
             'variation_code' => (string)$code,
             'name'           => $name,
-            'amount'         => $amount === null ? null : number_format((float)$amount, 8, '.', ''),
+            'amount'         => number_format((float)$amount, 8, '.', ''),
             'fixed_price'    => true,
         );
+        if ($planType !== '') $out['product_type'] = $planType;
+        if ($validity !== '') $out['validity'] = $validity;
+        return $out;
     }
 
     /* ------------------------------ internals ---------------------------- */

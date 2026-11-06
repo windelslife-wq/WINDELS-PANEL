@@ -113,11 +113,13 @@ class Provider_model extends MY_Model {
 
     public function recent_sync_logs($id, $limit = 20){
         return $this->db->where('provider_id', $id)
-            ->order_by('created_at','DESC')->limit($limit)->get('provider_sync_logs')->result();
+            ->order_by('created_at','DESC')->order_by('id','DESC')
+            ->limit($limit)->get('provider_sync_logs')->result();
     }
 
     public function recent_health_logs($id, $limit = 20){
         return $this->db->where('provider_id', $id)
-            ->order_by('created_at','DESC')->limit($limit)->get('provider_health_logs')->result();
+            ->order_by('created_at','DESC')->order_by('id','DESC')
+            ->limit($limit)->get('provider_health_logs')->result();
     }
 }

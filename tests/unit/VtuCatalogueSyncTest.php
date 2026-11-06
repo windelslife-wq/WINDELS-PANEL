@@ -36,6 +36,10 @@ class VtuCatalogueSyncTest extends TestCase
         require_once self::$root.'/application/libraries/StandardVtuAdapter.php';
         require_once self::$root.'/application/libraries/VtpassAdapter.php';
         require_once self::$root.'/application/libraries/BestdataAdapter.php';
+        require_once self::$root.'/application/core/MY_Model.php';
+        require_once self::$root.'/application/helpers/marvy_helper.php';
+        require_once dirname(__DIR__).'/_support/FakeDb.php';
+        require_once dirname(__DIR__).'/_support/IntegrationHarness.php';
         require_once self::$root.'/application/libraries/Provider_manager.php';
         require_once self::$root.'/application/libraries/ProviderSyncService.php';
     }
@@ -303,6 +307,296 @@ class VtuCatalogueSyncTest extends TestCase
         $this->assertSame('FAILED', $ci->Provider_model->syncs[0]['status']);
         $this->assertSame(array(), $ci->Vtu_product_model->rows);
     }
+
+    /* ---------------- inactive at cost & safe re-syncs ---------------- */
+
+    /**
+     * Boot a real FakeDb + real Vtu_product_model + real ProviderSyncService
+     * wired to a scripted BestdataAdapter so every column and re-sync rule is
+     * verified end-to-end against the shipped schema.
+     */
+    private function real_bestdata_sync_app(VtuCatalogueSyncRoutedHttp $http)
+    {
+        $app = new IntegrationHarness();
+        $app->seed_minimal();
+        $now = gmdate('Y-m-d H:i:s');
+
+        $app->db->insert('providers', array(
+            'public_id'         => 'PROV0000000000000000000099',
+            'name'              => 'BestData Live',
+            'api_url'           => 'https://bestdatanig.com.ng',
+            'api_key_encrypted' => 'test-token',
+            'api_type'          => 'BESTDATA',
+            'status'            => 'ACTIVE',
+            'currency'          => 'NGN',
+            'timeout_ms'        => 15000,
+            'created_at'        => $now,
+            'updated_at'        => $now,
+        ));
+        $provider_id = $app->db->insert_id();
+
+        $nets = array(
+            array('MTN',      'MTN Airtime',    'AIRTIME'),
+            array('MTN-DATA', 'MTN Data',       'DATA'),
+            array('DSTV',     'DSTV',           'CABLE'),
+            array('IKEDC',    'Ikeja Electric', 'ELECTRICITY'),
+            array('WAEC',     'WAEC',           'EXAM_PIN'),
+            array('NECO',     'NECO',           'EXAM_PIN'),
+        );
+        $net_ids = array();
+        foreach ($nets as $i => $n) {
+            $app->db->insert('vtu_networks', array(
+                'public_id'    => 'VNET'.str_pad((string)($i + 10), 22, '0', STR_PAD_LEFT),
+                'code'         => $n[0],
+                'name'         => $n[1],
+                'service_type' => $n[2],
+                'is_active'    => 1,
+                'sorting'      => $i,
+                'created_at'   => $now,
+                'updated_at'   => $now,
+            ));
+            $net_ids[$n[0]] = $app->db->insert_id();
+        }
+
+        // Hand-configured variable-amount airtime & electricity rows.
+        $app->db->insert('vtu_products', array(
+            'public_id' => 'VPRD0000000000000000000101',
+            'network_id' => $net_ids['MTN'], 'provider_id' => $provider_id,
+            'service_type' => 'AIRTIME', 'code' => 'MTN-AIRTIME',
+            'name' => 'MTN Airtime', 'price' => null, 'face_value' => null,
+            'discount_percent' => '2.0000', 'min_amount' => '50', 'max_amount' => '50000',
+            'is_active' => 1, 'sorting' => 0, 'created_at' => $now, 'updated_at' => $now,
+        ));
+        $app->db->insert('vtu_products', array(
+            'public_id' => 'VPRD0000000000000000000102',
+            'network_id' => $net_ids['IKEDC'], 'provider_id' => $provider_id,
+            'service_type' => 'ELECTRICITY', 'code' => 'IKEDC-PREPAID',
+            'name' => 'Ikeja Prepaid', 'price' => null, 'face_value' => null,
+            'discount_percent' => '0.0000', 'min_amount' => '1000', 'max_amount' => '100000',
+            'is_active' => 1, 'sorting' => 0, 'created_at' => $now, 'updated_at' => $now,
+        ));
+
+        $app->model(array('Provider_model', 'Vtu_network_model', 'Vtu_product_model'));
+        $app->securehttpclient = $http;
+        $app->encryptionservice = new VtuCatalogueSyncPassthroughEncryption();
+        $app->provider_manager = new Provider_manager();
+        // Replace HarnessProviderSync stub with the real ProviderSyncService.
+        unset($app->providersyncservice);
+        $svc = new ProviderSyncService();
+        $provider = $app->Provider_model->find_by_id($provider_id);
+
+        return array($app, $svc, $provider, $net_ids);
+    }
+
+    public function testNewSyncedProductsArriveInactiveAtCostAndRepeatedSyncIsIdempotent()
+    {
+        $http = new VtuCatalogueSyncRoutedHttp(array(
+            '/api/network/' => array('MTN_PLAN' => array(
+                array('id' => 12, 'plan' => '1GB', 'plan_type' => 'SME',
+                      'month_validate' => '30 Days', 'plan_amount' => '700'),
+            )),
+            '/api/cable/'   => array('DSTVPLAN' => array(
+                array('id' => 31, 'package' => 'Padi', 'plan_amount' => '2150'),
+            )),
+            '/api/epin/'    => array(
+                array('exam_name' => 'WAEC', 'amount' => '3500'),
+                array('exam_name' => 'NECO', 'amount' => '2000'),
+            ),
+        ));
+        list($app, $svc, $provider, $net_ids) = $this->real_bestdata_sync_app($http);
+
+        $first = $svc->sync_services($provider);
+        $this->assertTrue($first['ok'], json_encode($first));
+        $this->assertSame(4, $first['inserted']);
+        $this->assertSame(0, $first['updated']);
+        $this->assertSame(0, $first['unchanged']);
+        $this->assertSame(0, $first['paused']);
+
+        $mtn = $app->Vtu_product_model->find_by_code($net_ids['MTN-DATA'], 'DATA', '12');
+        $this->assertNotNull($mtn);
+        $this->assertSame(0, (int)$mtn->is_active, 'new synced products must start inactive');
+        $this->assertSame('700.00000000', $mtn->price);
+        $this->assertSame('700.00000000', $mtn->provider_cost);
+        $this->assertSame('700.00000000', $mtn->face_value);
+        $this->assertSame('SME', $mtn->product_type);
+        $this->assertSame('30 Days', $mtn->validity);
+
+        $waec = $app->Vtu_product_model->find_by_code($net_ids['WAEC'], 'EXAM_PIN', 'WAEC');
+        $this->assertNotNull($waec);
+        $this->assertSame(0, (int)$waec->is_active);
+        $this->assertSame('3500.00000000', $waec->price);
+        $this->assertSame('3500.00000000', $waec->provider_cost);
+
+        // Variable-amount airtime & electricity stay hand-configured.
+        $air = $app->Vtu_product_model->find_by_code($net_ids['MTN'], 'AIRTIME', 'MTN-AIRTIME');
+        $this->assertSame(1, (int)$air->is_active);
+        $this->assertNull($air->price);
+
+        // Immediate re-sync with identical vendor data is a safe no-op.
+        $second = $svc->sync_services($provider);
+        $this->assertTrue($second['ok'], json_encode($second));
+        $this->assertSame(0, $second['inserted']);
+        $this->assertSame(0, $second['updated']);
+        $this->assertSame(4, $second['unchanged']);
+        $this->assertSame(4, $second['total']);
+    }
+
+    public function testUnreviewedInactiveRowsTrackCostChangesOnResync()
+    {
+        $http = new VtuCatalogueSyncRoutedHttp(array(
+            '/api/network/' => array('MTN_PLAN' => array(
+                array('id' => 12, 'plan' => '1GB', 'plan_amount' => '700'),
+            )),
+            '/api/cable/'   => array('DSTVPLAN' => array()),
+            '/api/epin/'    => array(array('exam_name' => 'WAEC', 'amount' => '3500')),
+        ));
+        list($app, $svc, $provider, $net_ids) = $this->real_bestdata_sync_app($http);
+        $svc->sync_services($provider);
+
+        // Vendor raises MTN 1GB cost (700 -> 850) and lowers WAEC (3500 -> 3200)
+        // before any admin has priced or activated either row.
+        $http->set('/api/network/', array('MTN_PLAN' => array(
+            array('id' => 12, 'plan' => '1GB', 'plan_amount' => '850'),
+        )));
+        $http->set('/api/epin/', array(array('exam_name' => 'WAEC', 'amount' => '3200')));
+
+        $res = $svc->sync_services($provider);
+        $this->assertTrue($res['ok']);
+        $this->assertSame(2, $res['updated']);
+
+        $mtn = $app->Vtu_product_model->find_by_code($net_ids['MTN-DATA'], 'DATA', '12');
+        $this->assertSame(0, (int)$mtn->is_active);
+        $this->assertSame('850.00000000', $mtn->provider_cost);
+        $this->assertSame('850.00000000', $mtn->price,
+            'an unreviewed inactive row must stay at cost rather than drifting below cost');
+        $this->assertSame('850.00000000', $mtn->face_value);
+
+        $waec = $app->Vtu_product_model->find_by_code($net_ids['WAEC'], 'EXAM_PIN', 'WAEC');
+        $this->assertSame(0, (int)$waec->is_active);
+        $this->assertSame('3200.00000000', $waec->price);
+    }
+
+    public function testResyncPreservesAdminPriceCustomNameAndDeactivation()
+    {
+        $http = new VtuCatalogueSyncRoutedHttp(array(
+            '/api/network/' => array('MTN_PLAN' => array(
+                array('id' => 12, 'plan' => '1GB', 'plan_amount' => '700'),
+                array('id' => 13, 'plan' => '2GB', 'plan_amount' => '1400'),
+            )),
+            '/api/cable/'   => array('DSTVPLAN' => array()),
+            '/api/epin/'    => array(array('exam_name' => 'WAEC', 'amount' => '3500')),
+        ));
+        list($app, $svc, $provider, $net_ids) = $this->real_bestdata_sync_app($http);
+        $svc->sync_services($provider);
+
+        // Admin prices + renames + activates plan 12; prices plan 13 while keeping it off sale.
+        $p12 = $app->Vtu_product_model->find_by_code($net_ids['MTN-DATA'], 'DATA', '12');
+        $app->Vtu_product_model->update_fields($p12->id, array(
+            'name' => 'MTN 1GB Monthly Promo', 'price' => '950.00000000', 'is_active' => 1,
+        ));
+        $p13 = $app->Vtu_product_model->find_by_code($net_ids['MTN-DATA'], 'DATA', '13');
+        $app->Vtu_product_model->update_fields($p13->id, array(
+            'price' => '1800.00000000', 'is_active' => 0,
+        ));
+
+        // Vendor nudges costs within margin (700 -> 780, 1400 -> 1500).
+        $http->set('/api/network/', array('MTN_PLAN' => array(
+            array('id' => 12, 'plan' => '1GB', 'plan_amount' => '780'),
+            array('id' => 13, 'plan' => '2GB', 'plan_amount' => '1500'),
+        )));
+
+        $res = $svc->sync_services($provider);
+        $this->assertTrue($res['ok']);
+        $this->assertSame(0, $res['paused']);
+
+        $after12 = $app->Vtu_product_model->find_by_id($p12->id);
+        $this->assertSame('780.00000000', $after12->provider_cost);
+        $this->assertSame('950.00000000', $after12->price, 'admin selling price must not be overwritten');
+        $this->assertSame('MTN 1GB Monthly Promo', $after12->name, 'admin custom title must survive re-sync');
+        $this->assertSame(1, (int)$after12->is_active);
+
+        $after13 = $app->Vtu_product_model->find_by_id($p13->id);
+        $this->assertSame('1500.00000000', $after13->provider_cost);
+        $this->assertSame('1800.00000000', $after13->price, 'pre-priced inactive row keeps admin price');
+        $this->assertSame(0, (int)$after13->is_active, 'inactive row must stay inactive');
+    }
+
+    public function testResyncPausesActiveRowWhenVendorCostRisesAboveSellingPrice()
+    {
+        $http = new VtuCatalogueSyncRoutedHttp(array(
+            '/api/network/' => array('MTN_PLAN' => array(
+                array('id' => 12, 'plan' => '1GB', 'plan_amount' => '700'),
+            )),
+            '/api/cable/'   => array('DSTVPLAN' => array()),
+            '/api/epin/'    => array(),
+        ));
+        list($app, $svc, $provider, $net_ids) = $this->real_bestdata_sync_app($http);
+        $svc->sync_services($provider);
+
+        $p12 = $app->Vtu_product_model->find_by_code($net_ids['MTN-DATA'], 'DATA', '12');
+        $app->Vtu_product_model->update_fields($p12->id, array(
+            'price' => '850.00000000', 'is_active' => 1,
+        ));
+
+        // Vendor spikes cost to 920 (> 850 selling price).
+        $http->set('/api/network/', array('MTN_PLAN' => array(
+            array('id' => 12, 'plan' => '1GB', 'plan_amount' => '920'),
+        )));
+
+        $res = $svc->sync_services($provider);
+        $this->assertTrue($res['ok']);
+        $this->assertSame(1, $res['paused']);
+
+        $after = $app->Vtu_product_model->find_by_id($p12->id);
+        $this->assertSame('920.00000000', $after->provider_cost);
+        $this->assertSame('850.00000000', $after->price, 'must not invent a new customer price');
+        $this->assertSame(0, (int)$after->is_active, 'must take underwater row off sale to prevent a loss');
+
+        $logs = $app->Provider_model->recent_sync_logs($provider->id, 1);
+        $this->assertStringContainsString('Paused 1 active product', (string)$logs[0]->message);
+    }
+
+    public function testSyncingSecondProviderDoesNotHijackFirstProvidersProduct()
+    {
+        $http = new VtuCatalogueSyncRoutedHttp(array(
+            '/api/network/' => array(),
+            '/api/cable/'   => array(),
+            '/api/epin/'    => array(array('exam_name' => 'WAEC', 'amount' => '3300')),
+        ));
+        list($app, $svc, $provider2, $net_ids) = $this->real_bestdata_sync_app($http);
+
+        // Provider #1 (from seed_minimal) already owns an active WAEC product.
+        $p1_id = $app->Vtu_product_model->create(array(
+            'network_id'    => $net_ids['WAEC'],
+            'provider_id'   => 1,
+            'service_type'  => 'EXAM_PIN',
+            'code'          => 'WAEC',
+            'provider_code' => 'waec-direct',
+            'name'          => 'WAEC Instant PIN',
+            'face_value'    => '4000.00000000',
+            'price'         => '4000.00000000',
+            'provider_cost' => '3400.00000000',
+            'is_active'     => 1,
+            'sorting'       => 0,
+        ));
+
+        $res = $svc->sync_services($provider2);
+        $this->assertTrue($res['ok']);
+        $this->assertSame(1, $res['inserted']);
+
+        $first = $app->Vtu_product_model->find_by_id($p1_id);
+        $this->assertSame(1, (int)$first->provider_id, 'first provider ownership must remain intact');
+        $this->assertSame('4000.00000000', $first->price);
+        $this->assertSame(1, (int)$first->is_active);
+
+        $scoped = $app->Vtu_product_model->find_by_code(
+            $net_ids['WAEC'], 'EXAM_PIN', 'WAEC-P'.$provider2->id);
+        $this->assertNotNull($scoped);
+        $this->assertSame((int)$provider2->id, (int)$scoped->provider_id);
+        $this->assertSame('WAEC', $scoped->provider_code, 'upstream variation code stays intact');
+        $this->assertSame(0, (int)$scoped->is_active);
+        $this->assertSame('3300.00000000', $scoped->price);
+    }
 }
 
 /* ------------------------------ doubles ------------------------------ */
@@ -388,6 +682,7 @@ class VtuCatalogueSyncPassthroughEncryption
 {
     public function decrypt($blob) { return (string)$blob; }
     public function encrypt($plain) { return (string)$plain; }
+    public function open($blob) { return (string)$blob; }
 }
 
 class VtuCatalogueSyncFakeHttp
@@ -428,4 +723,28 @@ class VtuCatalogueSyncFakeHttp
 class VtuCatalogueSyncLegacyAdapter
 {
     public function balance() { return array('ok' => true, 'balance' => '0.00'); }
+}
+
+
+/** Route-keyed HTTP fake for end-to-end BestData sync tests. */
+class VtuCatalogueSyncRoutedHttp
+{
+    private $routes = array();
+
+    public function __construct(array $routes = array()) { $this->routes = $routes; }
+    public function set($path, $payload) { $this->routes[$path] = $payload; }
+
+    public function get($url, $headers = array(), $options = array())
+    {
+        $path = (string)parse_url($url, PHP_URL_PATH);
+        if (array_key_exists($path, $this->routes)) {
+            return array('http_code' => 200, 'body' => json_encode($this->routes[$path]), 'error' => null);
+        }
+        return array('http_code' => 200, 'body' => '{}', 'error' => null);
+    }
+
+    public function post($url, $data = null, $headers = array(), $options = array())
+    {
+        return array('http_code' => 201, 'body' => '{}', 'error' => null);
+    }
 }

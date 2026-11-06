@@ -4,6 +4,9 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 class Vtu_product_model extends MY_Model {
     protected $table = 'vtu_products';
 
+    /** True when the most recent upsert_from_provider() paused an underwater active row. */
+    public $last_upsert_paused = false;
+
     /** Products a customer may buy, for one network and type. */
     public function active_for($network_id, $service_type){
         return $this->db->where('network_id',$network_id)
@@ -120,60 +123,161 @@ class Vtu_product_model extends MY_Model {
      * Upsert one product from a vendor's price list.
      * Returns 'inserted'|'updated'|'unchanged'.
      *
-     * The vendor owns what a product *is* (its code, name and what it charges
-     * us). It does not own what we sell it for: `price` is written only when
-     * the row has none, so a catalogue sync can never quietly move an existing
-     * product onto a losing margin, and never re-prices a product an admin has
-     * set by hand. Deactivated rows stay deactivated for the same reason.
+     * Inactive at cost, safe re-syncs:
+     *   - New rows arrive switched off (`is_active = 0`) and priced at vendor
+     *     cost (`price = face_value = provider_cost = $cost`), so unreviewed
+     *     variations never go on sale automatically.
+     *   - Untouched inactive rows (`is_active = 0` whose `price` still equals
+     *     the previous `provider_cost`, or is NULL) follow vendor cost updates
+     *     on re-sync so they remain at cost until an admin prices or activates
+     *     them.
+     *   - Once an admin sets a custom `price`, customises `name` on an active
+     *     row, or deactivates a product, re-syncs never overwrite `price`,
+     *     never clobber `name`, and never switch a deactivated row on.
+     *   - Margin guard: if vendor `provider_cost` rises strictly above an
+     *     active product's selling `price`, `is_active` drops to `0`
+     *     (`$last_upsert_paused = true`) rather than selling at a loss or
+     *     silently changing the customer price.
+     *   - Cross-provider isolation: if `(network_id, service_type, code)` is
+     *     already owned by a different provider, a provider-scoped code
+     *     (`CODE-P<id>`) is used so syncing a second vendor never hijacks a
+     *     live product owned by the first.
      *
-     * @param array $v variation_code, name, amount (vendor price), fixed_price
+     * @param array $v variation_code, name, amount (vendor price), fixed_price, validity?, product_type?
      */
     public function upsert_from_provider($provider_id, $network_id, $service_type, array $v, $sorting = 0){
-        $variation = (string)($v['variation_code'] ?? '');
+        $this->last_upsert_paused = false;
+
+        $variation = trim((string)($v['variation_code'] ?? ''));
         if ($variation === '') return 'unchanged';
 
-        $code = strtoupper(preg_replace('/[^A-Za-z0-9._-]/', '-', $variation));
-        $cost = isset($v['amount']) && $v['amount'] !== null
+        $base_code = strtoupper(preg_replace('/[^A-Za-z0-9._-]/', '-', $variation));
+        $code = mb_substr($base_code, 0, 64);
+        $cost = (isset($v['amount']) && $v['amount'] !== null && $v['amount'] !== '' && is_numeric($v['amount']))
             ? number_format((float)$v['amount'], 8, '.', '') : null;
 
+        $vendor_name = mb_substr(trim((string)($v['name'] ?? $variation)), 0, 128);
+        if ($vendor_name === '') $vendor_name = mb_substr($variation, 0, 128);
+
+        $validity = (isset($v['validity']) && is_scalar($v['validity']) && trim((string)$v['validity']) !== '')
+            ? mb_substr(trim((string)$v['validity']), 0, 32) : null;
+        $product_type = (isset($v['product_type']) && is_scalar($v['product_type']) && trim((string)$v['product_type']) !== '')
+            ? mb_substr(trim((string)$v['product_type']), 0, 32) : null;
+
         $existing = $this->find_by_code($network_id, $service_type, $code);
+        if ($existing && $existing->provider_id !== null && (int)$existing->provider_id !== (int)$provider_id) {
+            $suffix = '-P'.(int)$provider_id;
+            $code = mb_substr($base_code, 0, 64 - strlen($suffix)).$suffix;
+            $existing = $this->find_by_code($network_id, $service_type, $code);
+        }
+
         $now = $this->now_utc();
 
         if (!$existing) {
-            $this->db->insert($this->table, array(
+            $insert = array(
                 'public_id'     => marvy_public_id(),
                 'network_id'    => $network_id,
                 'provider_id'   => $provider_id,
                 'service_type'  => $service_type,
                 'code'          => $code,
                 'provider_code' => $variation,
-                'name'          => mb_substr((string)($v['name'] ?? $variation), 0, 128),
+                'name'          => $vendor_name,
                 'face_value'    => $cost,
-                // A brand-new product sells at the vendor's price until an
-                // admin prices it; that is visible and zero-margin, not a loss.
+                // New rows arrive inactive and priced at vendor cost: visible
+                // zero-margin baseline in Admin > Catalogue, never live until
+                // reviewed and switched on.
                 'price'         => $cost,
                 'provider_cost' => $cost,
-                // New rows arrive switched off: a sync must not put an
-                // unpriced, unreviewed product in front of customers.
                 'is_active'     => 0,
                 'sorting'       => (int)$sorting,
                 'created_at'    => $now,
                 'updated_at'    => $now,
-            ));
+            );
+            if ($validity !== null) $insert['validity'] = $validity;
+            if ($product_type !== null) $insert['product_type'] = $product_type;
+            $this->db->insert($this->table, $insert);
             return 'inserted';
+        }
+
+        $was_active = (int)$existing->is_active === 1;
+        $unreviewed_at_cost = !$was_active && (
+            $existing->price === null
+            || ($existing->provider_cost !== null
+                && $this->same_decimal($existing->price, $existing->provider_cost))
+        );
+
+        $new_cost = $cost !== null ? $cost : $existing->provider_cost;
+        $new_price = $existing->price;
+        if ($cost !== null && ($existing->price === null || $unreviewed_at_cost)) {
+            $new_price = $cost;
+        }
+
+        $new_face = $existing->face_value;
+        if ($cost !== null && ($existing->face_value === null
+            || (!$was_active && $existing->provider_cost !== null
+                && $this->same_decimal($existing->face_value, $existing->provider_cost)))) {
+            $new_face = $cost;
+        }
+
+        $new_active = $was_active ? 1 : 0;
+        if ($was_active && $new_cost !== null && $new_price !== null
+            && bccomp((string)$new_cost, (string)$new_price, 8) > 0) {
+            $new_active = 0;
+            $this->last_upsert_paused = true;
+        }
+
+        $existing_name = (string)($existing->name ?? '');
+        if ($unreviewed_at_cost
+            || trim($existing_name) === ''
+            || $existing_name === (string)$existing->code
+            || $existing_name === (string)($existing->provider_code ?? '')) {
+            $new_name = $vendor_name;
+        } else {
+            $new_name = $existing_name;
+        }
+
+        $existing_validity = $existing->validity ?? null;
+        $new_validity = ($validity !== null && ($unreviewed_at_cost || $existing_validity === null || $existing_validity === ''))
+            ? $validity : $existing_validity;
+
+        $existing_ptype = $existing->product_type ?? null;
+        $new_ptype = ($product_type !== null && ($unreviewed_at_cost || $existing_ptype === null || $existing_ptype === ''))
+            ? $product_type : $existing_ptype;
+
+        $changed = ($existing->provider_id === null || (int)$existing->provider_id !== (int)$provider_id)
+            || (string)($existing->provider_code ?? '') !== $variation
+            || $existing_name !== $new_name
+            || !$this->same_decimal($existing->provider_cost ?? null, $new_cost)
+            || !$this->same_decimal($existing->price ?? null, $new_price)
+            || !$this->same_decimal($existing->face_value ?? null, $new_face)
+            || (int)$existing->is_active !== $new_active
+            || $existing_validity !== $new_validity
+            || $existing_ptype !== $new_ptype;
+
+        if (!$changed) {
+            return 'unchanged';
         }
 
         $fields = array(
             'provider_id'   => $provider_id,
             'provider_code' => $variation,
-            'name'          => mb_substr((string)($v['name'] ?? $variation), 0, 128),
-            'provider_cost' => $cost,
+            'name'          => $new_name,
+            'provider_cost' => $new_cost,
+            'price'         => $new_price,
+            'face_value'    => $new_face,
+            'is_active'     => $new_active,
             'updated_at'    => $now,
         );
-        if ($existing->price === null) $fields['price'] = $cost;
-        if ($existing->face_value === null) $fields['face_value'] = $cost;
+        if ($new_validity !== $existing_validity) $fields['validity'] = $new_validity;
+        if ($new_ptype !== $existing_ptype) $fields['product_type'] = $new_ptype;
 
         $this->db->where('id', $existing->id)->update($this->table, $fields);
         return 'updated';
+    }
+
+    private function same_decimal($a, $b){
+        if ($a === null || $a === '') return ($b === null || $b === '');
+        if ($b === null || $b === '') return false;
+        return bccomp((string)$a, (string)$b, 8) === 0;
     }
 }
