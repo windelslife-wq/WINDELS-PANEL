@@ -43,7 +43,8 @@ class Migration_Vtu_fixed_products extends CI_Migration {
         require_once APPPATH.'libraries/Seeder.php';
         require_once APPPATH.'seeds/Core_seeder.php';
 
-        $sorting = (int)$this->db->select_max('sorting')->get('vtu_products')->row()->sorting + 1;
+        $max = $this->db->select_max('sorting')->get('vtu_products')->row();
+        $sorting = ($max && $max->sorting !== null) ? (int)$max->sorting + 1 : 0;
 
         foreach (Core_seeder::vtu_fixed_products() as $p) {
             list($network_code, $service_type, $code, $provider_code, $name, $validity, $face) = $p;
