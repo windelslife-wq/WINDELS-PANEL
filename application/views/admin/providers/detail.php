@@ -188,8 +188,9 @@ $has = function ($permission) use ($permissions) {
         </p>
       <?php elseif ($is_vtu): ?>
       <p class="muted text-sm mt-2">Synced products start inactive and priced at cost —
-        set a price and activate before customers can buy them. A re-sync never
-        overwrites a price you have set.</p>
+        set your selling price and activate in Admin &gt; Catalogue before customers can buy them.
+        Re-syncs keep unreviewed inactive rows at cost, never overwrite a price or deactivation
+        you set, and switch an active row off if vendor cost rises above your selling price.</p>
       <div class="overflow-x-auto mt-3">
         <table class="table">
           <thead><tr><th>Type</th><th>Vendor code</th><th>Name</th><th>Cost</th><th>Price</th><th>Status</th></tr></thead>

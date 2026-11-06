@@ -465,7 +465,7 @@ class ProviderSyncService {
             }
         }
 
-        $inserted = 0; $updated = 0; $skipped = 0; $errors = array();
+        $inserted = 0; $updated = 0; $unchanged = 0; $paused = 0; $skipped = 0; $errors = array();
         foreach ($types as $type) {
             foreach ($this->ci->Vtu_network_model->active($type) as $network) {
                 try {
@@ -487,32 +487,51 @@ class ProviderSyncService {
                     if (!is_array($v)) { $skipped++; continue; }
                     $outcome = $this->ci->Vtu_product_model->upsert_from_provider(
                         $provider->id, (int)$network->id, $type, $v, $i);
-                    if ($outcome === 'inserted') $inserted++;
-                    elseif ($outcome === 'updated') $updated++;
+                    if ($outcome === 'inserted') {
+                        $inserted++;
+                    } elseif ($outcome === 'updated') {
+                        $updated++;
+                        if (!empty($this->ci->Vtu_product_model->last_upsert_paused)) {
+                            $paused++;
+                        }
+                    } elseif ($outcome === 'unchanged' && !empty($v['variation_code'])) {
+                        $unchanged++;
+                    }
                 }
             }
         }
 
+        $seen_total = $inserted + $updated + $unchanged;
         $latency = (int)round((microtime(true) - $start) * 1000);
         // Nothing at all came back: that is a failed sync, not an empty one.
-        if ($inserted + $updated === 0 && $errors) {
+        if ($seen_total === 0 && $errors) {
             $message = implode(' | ', array_slice($errors, 0, 5));
             $this->ci->Provider_model->record_sync($provider->id, 'services', 'FAILED', $message, 0, $latency);
             return array('ok' => false, 'error' => $message, 'latency_ms' => $latency);
         }
 
+        $notes = array();
+        if ($paused > 0) {
+            $notes[] = 'Paused '.$paused.' active product'.($paused === 1 ? '' : 's').' whose vendor cost rose above selling price';
+        }
+        if ($errors) {
+            $notes[] = 'Skipped: '.implode(' | ', array_slice($errors, 0, 5));
+        }
+
         $this->ci->Provider_model->record_sync(
             $provider->id, 'services', 'SUCCESS',
-            $errors ? 'Skipped: '.implode(' | ', array_slice($errors, 0, 5)) : null,
-            $inserted + $updated, $latency
+            $notes ? implode(' · ', $notes) : null,
+            $seen_total, $latency
         );
 
         return array(
-            'ok'       => true,
-            'inserted' => $inserted,
-            'updated'  => $updated,
-            'total'    => $inserted + $updated,
-            'skipped'  => $skipped,
+            'ok'         => true,
+            'inserted'   => $inserted,
+            'updated'    => $updated,
+            'unchanged'  => $unchanged,
+            'paused'     => $paused,
+            'total'      => $seen_total,
+            'skipped'    => $skipped,
             'latency_ms' => $latency,
         );
     }

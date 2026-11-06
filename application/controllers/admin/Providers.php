@@ -177,10 +177,17 @@ class Providers extends Admin_Controller {
 
         $res = $this->providersyncservice->sync_services($provider);
         if ($res['ok']) {
-            $msg = "Sync complete — {$res['inserted']} new, {$res['updated']} updated ({$res['latency_ms']} ms).";
+            $msg = "Sync complete — {$res['inserted']} new, {$res['updated']} updated";
+            if (!empty($res['unchanged'])) {
+                $msg .= ", {$res['unchanged']} unchanged";
+            }
+            $msg .= " ({$res['latency_ms']} ms).";
             if (!empty($res['inserted'])) {
-                // New VTU products land inactive and unpriced on purpose.
-                $msg .= ' New products are inactive until you set a price.';
+                $msg .= ' New products arrive inactive and priced at cost — review and activate them in Admin > Catalogue.';
+            }
+            if (!empty($res['paused'])) {
+                $msg .= ' '.$res['paused'].' active product'.($res['paused'] === 1 ? ' was' : 's were')
+                    .' switched off because vendor cost rose above your selling price.';
             }
             $this->session->set_flashdata('success', $msg);
         } else {
