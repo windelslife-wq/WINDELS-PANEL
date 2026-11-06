@@ -1123,6 +1123,50 @@ class GiftcardsTest extends TestCase
         $this->assertStringContainsString('authenticate', $res['error']);
     }
 
+    /**
+     * The bare "Could not authenticate" message is fine for a log line but
+     * not for a flash message: it cannot tell "no credentials saved" from
+     * "the vendor rejected the credentials" from "the auth server is down",
+     * and those are fixed in three different places.
+     */
+    public function testMissingCredentialsAreNamedAsSuch()
+    {
+        list($adapter,) = $this->adapter(array(), array(
+            'retry_policy' => null,
+            'api_key_encrypted' => '{"client_id":"","client_secret":""}',
+        ));
+
+        $res = $adapter->balance();
+
+        $this->assertFalse($res['ok']);
+        $this->assertStringContainsString('authenticate', $res['error']);
+        $this->assertStringContainsString('no Reloadly client id/secret is configured', $res['error']);
+    }
+
+    public function testARejectedCredentialPairCarriesTheVendorStatusAndMessage()
+    {
+        list($adapter,) = $this->adapter(array(self::ok(self::fixture('auth_401.json'), 401)),
+            array('retry_policy' => null));
+
+        $res = $adapter->balance();
+
+        $this->assertFalse($res['ok']);
+        $this->assertStringContainsString('HTTP 401', $res['error']);
+        $this->assertStringContainsString('Unauthorized', $res['error']);
+    }
+
+    public function testAnUnreachableAuthServerIsDistinguishedFromBadCredentials()
+    {
+        list($adapter,) = $this->adapter(array(
+            array('http_code' => 0, 'body' => null, 'error' => 'Connection timed out'),
+        ), array('retry_policy' => null));
+
+        $res = $adapter->balance();
+
+        $this->assertFalse($res['ok']);
+        $this->assertStringContainsString('auth server is unreachable', $res['error']);
+    }
+
     /* --------------------------- catalogue import ------------------------- */
 
     public function testEachFixedDenominationBecomesItsOwnCatalogueRow()
