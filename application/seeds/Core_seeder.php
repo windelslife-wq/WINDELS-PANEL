@@ -249,6 +249,53 @@ class Core_seeder extends Seeder {
                 'is_active'        => 1,
             ));
         }
+
+        // Fixed-price products: data bundles, cable packages, exam PINs.
+        // Without these the Bundle/Package/PIN-type dropdowns render empty
+        // on a fresh install — a network row alone is not buyable. Codes
+        // equal the uppercased provider variation code, so a later provider
+        // sync updates these rows in place instead of creating duplicates.
+        // Priced at face value (zero margin), the same rule the catalogue
+        // sync applies to a vendor's amount; an admin sets the real margin.
+        foreach (self::vtu_fixed_products() as $p) {
+            $this->upsert('vtu_products', array(
+                'network_id'   => $ids[$p[0]],
+                'service_type' => $p[1],
+                'code'         => $p[2],
+            ), array(
+                'public_id'     => marvy_public_id(),
+                'provider_code' => $p[3],
+                'name'          => $p[4],
+                'validity'      => $p[5],
+                'face_value'    => $p[6],
+                'price'         => $p[6],
+                'provider_cost' => $p[6],
+                'is_active'     => 1,
+                'sorting'       => $sort++,
+            ));
+        }
+    }
+
+    /**
+     * Fixed-price VTU products seeded so every network in vtu_catalogue()
+     * has at least one buyable row: network code, service_type, our code,
+     * provider variation code, name, validity, face value (= price, NGN).
+     */
+    public static function vtu_fixed_products() {
+        return array(
+            array('MTN-DATA',     'DATA',     'MTN-500MB',       'mtn-500mb',       'MTN 500MB / 30 days',     '30 days', '350.00000000'),
+            array('MTN-DATA',     'DATA',     'MTN-1GB',         'mtn-1gb',         'MTN 1GB / 30 days',       '30 days', '700.00000000'),
+            array('GLO-DATA',     'DATA',     'GLO-1GB',         'glo-1gb',         'Glo 1GB / 30 days',       '30 days', '550.00000000'),
+            array('AIRTEL-DATA',  'DATA',     'AIRTEL-1GB',      'airtel-1gb',      'Airtel 1GB / 30 days',    '30 days', '650.00000000'),
+            array('9MOBILE-DATA', 'DATA',     '9MOBILE-1GB',     '9mobile-1gb',     '9mobile 1GB / 30 days',   '30 days', '600.00000000'),
+            array('DSTV',         'CABLE',    'DSTV-PADI',       'dstv-padi',       'DStv Padi',               '1 month', '2150.00000000'),
+            array('DSTV',         'CABLE',    'DSTV-COMPACT',    'dstv-compact',    'DStv Compact',            '1 month', '7900.00000000'),
+            array('GOTV',         'CABLE',    'GOTV-SMALLIE',    'gotv-smallie',    'GOtv Smallie',            '1 month', '1100.00000000'),
+            array('STARTIMES',    'CABLE',    'STARTIMES-BASIC', 'startimes-basic', 'StarTimes Basic',         '1 month', '1500.00000000'),
+            array('WAEC',         'EXAM_PIN', 'WAEC-PIN',        'waec-pin',        'WAEC Result Checker PIN', null,      '3500.00000000'),
+            array('NECO',         'EXAM_PIN', 'NECO-PIN',        'neco-pin',        'NECO Result Checker PIN', null,      '2000.00000000'),
+            array('JAMB',         'EXAM_PIN', 'JAMB-PIN',        'jamb-pin',        'JAMB Registration PIN',   null,      '4500.00000000'),
+        );
     }
 
     /**

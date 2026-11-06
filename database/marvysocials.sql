@@ -3281,6 +3281,44 @@ VALUES (7, 14, 'ELECTRICITY', 'AEDC-ELECTRICITY', '1W3WVMVM6XA7CMNHBDD0SQJSDQ', 
 INSERT INTO `vtu_products` (`id`, `network_id`, `service_type`, `code`, `public_id`, `name`, `discount_percent`, `min_amount`, `max_amount`, `is_active`)
 VALUES (8, 15, 'ELECTRICITY', 'PHED-ELECTRICITY', 'NR08B5F1ZF6T6XV5WDC78J6XQZ', 'Port Harcourt Electric Units', '1.0000', '500.00000000', '100000.00000000', 1);
 
+-- Fixed-price products: data bundles, cable packages, exam PINs, so the
+-- Bundle / Package / PIN-type dropdowns are never empty on a fresh install.
+INSERT INTO `vtu_products` (`id`, `network_id`, `service_type`, `code`, `public_id`, `provider_code`, `name`, `validity`, `face_value`, `price`, `provider_cost`, `is_active`, `sorting`)
+VALUES (9, 5, 'DATA', 'MTN-500MB', 'SEEDDFIPAUZRABHNRIKTIVAP6A', 'mtn-500mb', 'MTN 500MB / 30 days', '30 days', '350.00000000', '350.00000000', '350.00000000', 1, 0);
+
+INSERT INTO `vtu_products` (`id`, `network_id`, `service_type`, `code`, `public_id`, `provider_code`, `name`, `validity`, `face_value`, `price`, `provider_cost`, `is_active`, `sorting`)
+VALUES (10, 5, 'DATA', 'MTN-1GB', 'SEEDE647OMEX081EK0FSLZ1N2O', 'mtn-1gb', 'MTN 1GB / 30 days', '30 days', '700.00000000', '700.00000000', '700.00000000', 1, 1);
+
+INSERT INTO `vtu_products` (`id`, `network_id`, `service_type`, `code`, `public_id`, `provider_code`, `name`, `validity`, `face_value`, `price`, `provider_cost`, `is_active`, `sorting`)
+VALUES (11, 6, 'DATA', 'GLO-1GB', 'SEEDUDNC29DIMX1G4SO8BZCFX3', 'glo-1gb', 'Glo 1GB / 30 days', '30 days', '550.00000000', '550.00000000', '550.00000000', 1, 2);
+
+INSERT INTO `vtu_products` (`id`, `network_id`, `service_type`, `code`, `public_id`, `provider_code`, `name`, `validity`, `face_value`, `price`, `provider_cost`, `is_active`, `sorting`)
+VALUES (12, 7, 'DATA', 'AIRTEL-1GB', 'SEEDBNE4NTA46RWWWS8BZ2MG6Q', 'airtel-1gb', 'Airtel 1GB / 30 days', '30 days', '650.00000000', '650.00000000', '650.00000000', 1, 3);
+
+INSERT INTO `vtu_products` (`id`, `network_id`, `service_type`, `code`, `public_id`, `provider_code`, `name`, `validity`, `face_value`, `price`, `provider_cost`, `is_active`, `sorting`)
+VALUES (13, 8, 'DATA', '9MOBILE-1GB', 'SEEDS4W4XB72Y7XGXPXECXS3Z3', '9mobile-1gb', '9mobile 1GB / 30 days', '30 days', '600.00000000', '600.00000000', '600.00000000', 1, 4);
+
+INSERT INTO `vtu_products` (`id`, `network_id`, `service_type`, `code`, `public_id`, `provider_code`, `name`, `validity`, `face_value`, `price`, `provider_cost`, `is_active`, `sorting`)
+VALUES (14, 9, 'CABLE', 'DSTV-PADI', 'SEED942Z0JPN19U0KU7JXFQOOA', 'dstv-padi', 'DStv Padi', '1 month', '2150.00000000', '2150.00000000', '2150.00000000', 1, 5);
+
+INSERT INTO `vtu_products` (`id`, `network_id`, `service_type`, `code`, `public_id`, `provider_code`, `name`, `validity`, `face_value`, `price`, `provider_cost`, `is_active`, `sorting`)
+VALUES (15, 9, 'CABLE', 'DSTV-COMPACT', 'SEED86UKHDBFXX3TSIW244QD04', 'dstv-compact', 'DStv Compact', '1 month', '7900.00000000', '7900.00000000', '7900.00000000', 1, 6);
+
+INSERT INTO `vtu_products` (`id`, `network_id`, `service_type`, `code`, `public_id`, `provider_code`, `name`, `validity`, `face_value`, `price`, `provider_cost`, `is_active`, `sorting`)
+VALUES (16, 10, 'CABLE', 'GOTV-SMALLIE', 'SEED9I5R0U3NL03K8S9RX4GVIX', 'gotv-smallie', 'GOtv Smallie', '1 month', '1100.00000000', '1100.00000000', '1100.00000000', 1, 7);
+
+INSERT INTO `vtu_products` (`id`, `network_id`, `service_type`, `code`, `public_id`, `provider_code`, `name`, `validity`, `face_value`, `price`, `provider_cost`, `is_active`, `sorting`)
+VALUES (17, 11, 'CABLE', 'STARTIMES-BASIC', 'SEEDDUTXUSHS7PJMF5XTJIGSEA', 'startimes-basic', 'StarTimes Basic', '1 month', '1500.00000000', '1500.00000000', '1500.00000000', 1, 8);
+
+INSERT INTO `vtu_products` (`id`, `network_id`, `service_type`, `code`, `public_id`, `provider_code`, `name`, `validity`, `face_value`, `price`, `provider_cost`, `is_active`, `sorting`)
+VALUES (18, 16, 'EXAM_PIN', 'WAEC-PIN', 'SEEDSO2FXYVKIDQ2GHO4K6PPKW', 'waec-pin', 'WAEC Result Checker PIN', NULL, '3500.00000000', '3500.00000000', '3500.00000000', 1, 9);
+
+INSERT INTO `vtu_products` (`id`, `network_id`, `service_type`, `code`, `public_id`, `provider_code`, `name`, `validity`, `face_value`, `price`, `provider_cost`, `is_active`, `sorting`)
+VALUES (19, 17, 'EXAM_PIN', 'NECO-PIN', 'SEED3W21P3TYOZ8JZZXJM1R9XY', 'neco-pin', 'NECO Result Checker PIN', NULL, '2000.00000000', '2000.00000000', '2000.00000000', 1, 10);
+
+INSERT INTO `vtu_products` (`id`, `network_id`, `service_type`, `code`, `public_id`, `provider_code`, `name`, `validity`, `face_value`, `price`, `provider_cost`, `is_active`, `sorting`)
+VALUES (20, 18, 'EXAM_PIN', 'JAMB-PIN', 'SEED6R53GV8XIJ3BZT9AM0YGSR', 'jamb-pin', 'JAMB Registration PIN', NULL, '4500.00000000', '4500.00000000', '4500.00000000', 1, 11);
+
 -- number_countries
 INSERT INTO `number_countries` (`id`, `code`, `public_id`, `name`, `dial_prefix`, `flag_emoji`, `is_active`, `sorting`)
 VALUES (1, 'NG', 'FRFER6J96ATZS48MESPTN98PP0', 'Nigeria', '+234', '🇳🇬', 1, 0);
