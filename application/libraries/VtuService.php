@@ -477,6 +477,14 @@ class VtuService {
             return array('ok' => true, 'matched' => true, 'settled' => false, 'status' => $status);
         }
 
+        if ($status === 'SUCCESSFUL' && !empty($res['detail']) && is_array($res['detail'])
+            && isset($this->ci->Vtu_transaction_model)) {
+            $tokens = array_intersect_key($res['detail'], array('token' => 1, 'units' => 1));
+            if ($tokens) {
+                $this->ci->Vtu_transaction_model->update_for_transaction($tx->id, $tokens);
+            }
+        }
+
         // FAILED refunds automatically inside the engine, exactly as the cron's
         // vtu_status sweep would.
         $this->ci->transactionengine->transition(

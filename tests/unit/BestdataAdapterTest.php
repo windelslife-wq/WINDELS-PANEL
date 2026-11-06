@@ -316,14 +316,79 @@ class BestdataAdapterTest extends TestCase
 
     public function testExamPinPurchaseUsesTheEpinEndpoint()
     {
-        $http = $this->http($this->resp(201, array('ident' => 'PIN-1', 'Status' => 'successful')));
+        $http = $this->http($this->resp(201, array(
+            'id'        => 42,
+            'exam_name' => 'WAEC',
+            'quantity'  => 2,
+            'pins'      => null,
+            'data'      => '[{"model":"vtuapp.exam_pin","pk":1,"fields":{"exam":"WAEC","pin":"260516349117","serial":"WR1001"}},{"model":"vtuapp.exam_pin","pk":2,"fields":{"exam":"WAEC","pin":"260516349118","serial":"WR1002"}}]',
+            'Status'    => 'successful',
+            'amount'    => 7000,
+        )));
         $res = $this->adapter($http)->education(array(
-            'exam_code' => 'WAEC', 'quantity' => 2, 'reference' => 'TX-5',
+            'exam_code' => 'WAEC', 'variation_code' => 'waec-pin', 'quantity' => '2', 'reference' => 'TX-5',
         ));
         $this->assertTrue($res['ok']);
+        $this->assertSame('42', $res['reference']);
         $this->assertStringEndsWith('/api/epin/', $http->calls[0]['url']);
         $this->assertSame(array('exam_name' => 'WAEC', 'quantity' => 2),
             json_decode($http->calls[0]['body'], true));
+        $this->assertSame('WR1001:260516349117, WR1002:260516349118', $res['detail']['token'],
+            'VtuService writes detail[token] to vtu_transactions.token for the customer receipt');
+        $this->assertCount(2, $res['detail']['cards']);
+    }
+
+    public function testExamPinExtractionSupportsAllUpstreamNellyApiFormatsAndOverrides()
+    {
+        // 1. VTpass string inside `data` + specific synced variation_code (`WAEC_GCE`)
+        $http1 = $this->http($this->resp(201, array(
+            'id' => 51, 'exam_name' => 'WAEC_GCE', 'Status' => 'successful',
+            'data' => 'Pin : 998877665544, Serial No : WG900',
+        )));
+        $res1 = $this->adapter($http1)->education(array(
+            'exam_code' => 'WAEC', 'variation_code' => 'WAEC_GCE', 'quantity' => 1,
+        ));
+        $this->assertTrue($res1['ok']);
+        $this->assertSame(array('exam_name' => 'WAEC_GCE', 'quantity' => 1),
+            json_decode($http1->calls[0]['body'], true));
+        $this->assertSame('Pin : 998877665544, Serial No : WG900', $res1['detail']['token']);
+
+        // 2. EasyAccess JSON object inside `data` + NBAIS / NABTEB + retry_policy.bestdata.exam_names
+        $http2 = $this->http($this->resp(201, array(
+            'id' => 52, 'exam_name' => 'NABTEB', 'Status' => 'successful',
+            'data' => '{"success":"true","pin":"Serial No: NB11<=>Pin: 445566","pin2":"Serial No: NB12<=>Pin: 778899"}',
+        )));
+        $prov = $this->provider(array(
+            'api_type'     => 'BESTDATA',
+            'retry_policy' => json_encode(array('bestdata' => array(
+                'exam_names' => array('NABTEB-RESULT' => 'NABTEB'),
+            ))),
+        ));
+        $res2 = (new BestdataAdapter($prov, $http2))->education(array(
+            'exam_code' => 'NABTEB-RESULT', 'variation_code' => 'NABTEB-P2', 'quantity' => 2,
+        ));
+        $this->assertTrue($res2['ok']);
+        $this->assertSame(array('exam_name' => 'NABTEB', 'quantity' => 2),
+            json_decode($http2->calls[0]['body'], true));
+        $this->assertStringContainsString('445566', $res2['detail']['token']);
+        $this->assertStringContainsString('778899', $res2['detail']['token']);
+
+        // 3. MobileNig array of {serial_number, pin} in `pins` + NBAIS network
+        $http3 = $this->http($this->resp(201, array(
+            'id' => 53, 'exam_name' => 'NBAIS', 'Status' => 'successful',
+            'pins' => array(array('serial_number' => 'NBS1', 'pin' => '112233')),
+        )));
+        $res3 = $this->adapter($http3)->education(array(
+            'exam_code' => 'NBAIS', 'quantity' => 1,
+        ));
+        $this->assertTrue($res3['ok']);
+        $this->assertSame('NBS1:112233', $res3['detail']['token']);
+
+        // 4. Missing exam code fails cleanly before calling the vendor.
+        $http4 = $this->http();
+        $res4 = $this->adapter($http4)->education(array('exam_code' => '', 'variation_code' => ''));
+        $this->assertFalse($res4['ok']);
+        $this->assertCount(0, $http4->calls);
     }
 
     public function testVendorRejectionAndDrfFieldErrorsAreReadable()
@@ -368,6 +433,23 @@ class BestdataAdapterTest extends TestCase
         $this->assertTrue($res['ok']);
         $this->assertSame('SUCCESSFUL', $res['status']);
         $this->assertStringEndsWith('/api/history/', $http->calls[0]['url']);
+    }
+
+    public function testStatusFallsBackToEpinDetailForExamPinOrdersOmittedFromHistory()
+    {
+        $http = $this->http();
+        $http->route('/api/history/', $this->resp(200, array(
+            'data' => array(), 'topup' => array(), 'cablesub' => array(),
+        )));
+        $http->route('/api/epin/77', $this->resp(200, array(
+            'id' => 77, 'exam_name' => 'NECO', 'Status' => 'successful',
+            'pins' => 'NECO-PIN-889900',
+        )));
+
+        $res = $this->adapter($http)->status('77');
+        $this->assertTrue($res['ok']);
+        $this->assertSame('SUCCESSFUL', $res['status']);
+        $this->assertSame('NECO-PIN-889900', $res['detail']['token']);
     }
 
     public function testMeterAndSmartcardVerificationUseTheVendorLookups()

@@ -76,7 +76,7 @@ class CronWorkers {
      */
     public function vtu_status($limit = 200) {
         $this->need(
-            array('Service_transaction_model', 'Provider_model'),
+            array('Service_transaction_model', 'Provider_model', 'Vtu_transaction_model'),
             array('TransactionEngine', 'Provider_manager')
         );
 
@@ -103,6 +103,12 @@ class CronWorkers {
             if ($status === 'PROCESSING' || $status === $tx->status) continue;
 
             if (in_array($status, array('SUCCESSFUL', 'FAILED'), true)) {
+                if ($status === 'SUCCESSFUL' && !empty($res['detail']) && is_array($res['detail'])) {
+                    $tokens = array_intersect_key($res['detail'], array('token' => 1, 'units' => 1));
+                    if ($tokens) {
+                        $this->ci->Vtu_transaction_model->update_for_transaction($tx->id, $tokens);
+                    }
+                }
                 // FAILED refunds automatically inside the engine.
                 $this->ci->transactionengine->transition(
                     $tx->id, $status, 'PROVIDER',

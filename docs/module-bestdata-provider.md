@@ -73,7 +73,7 @@ adapter only uses the documented, stable subset above.
   * airtime — `network`, `mobile_number`, `amount`, `airtime_type` (`VTU`), `Ported_number`
   * cable — `cablename` (id), `cableplan` (id), `smart_card_number`
   * electricity — `disco_name` (id), `amount`, `Customer_Phone`, `meter_number`, `MeterType` (`Prepaid`/`Postpaid`)
-  * exam pin — `exam_name` (`WAEC`/`NECO`), `quantity`
+  * exam pin — `exam_name` (`WAEC`/`NECO`/`NABTEB`/`NBAIS`/`JAMB`), `quantity` (positive int); response PINs arrive in `pins`, `purchase_pin`, or `data` (plain string, EasyAccess JSON, MobileNig token array, or Django serialized `exam_pin` rows) and are mapped onto `detail['token']` so the customer receipt displays them immediately
 * Balance is `user.Account_Balance` (also `wallet_balance`, `bonus_balance`) in
   `GET /api/user/`. A 200 from that endpoint proves the token even when an
   install renamed the balance field, so a missing field does **not** fail the
@@ -129,6 +129,7 @@ because of the compatibility route, but its label is misleading — edit it to
     "cable_ids": { "DSTV": 1, "GOTV": 2, "STARTIMES": 3 },
     "disco_ids": { "IKEDC": 1, "EKEDC": 2, "AEDC": 3, "PHED": 4 },
     "disco_names": { "IKEDC": "Ikeja Electric" },
+    "exam_names": { "WAEC": "WAEC", "NECO": "NECO", "NABTEB": "NABTEB" },
     "airtime_type": "VTU",
     "ported_number": false,
     "currency": "NGN"
