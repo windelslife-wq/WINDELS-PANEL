@@ -15,10 +15,41 @@ if (!defined('ENVIRONMENT')) {
 // CI3 defines these in index.php. Config files use APPPATH to pull in the
 // helper that supplies env_bool(), so the suite needs them too.
 if (!defined('APPPATH'))  define('APPPATH', dirname(__DIR__).'/application/');
-if (!defined('BASEPATH')) define('BASEPATH', dirname(__DIR__).'/system/');
+if (!defined('BASEPATH')) {
+    // The framework is a Composer dependency exposed as ./system by
+    // tools/link_system.php; both are gitignored, so a fresh clone has
+    // neither. Two mail test classes extend CI_Email and load the real
+    // library from BASEPATH. Point them at the exact MIT-licensed copy
+    // shipped in the tracked deployment package (tests/fixtures/ci3/) when
+    // the framework is absent, so the SMTP handshake is still tested for
+    // real instead of being skipped or stubbed out. A normal install with
+    // system/ present is completely unaffected.
+    $framework = dirname(__DIR__).'/system/';
+    if (!is_file($framework.'libraries/Email.php')) {
+        $fixture = __DIR__.'/fixtures/ci3/';
+        if (is_file($fixture.'libraries/Email.php')) $framework = $fixture;
+    }
+    define('BASEPATH', $framework);
+}
 
 // Deterministic timestamps: the app stores UTC everywhere.
 date_default_timezone_set('UTC');
+
+// CI3's CI_Email constructor reads config_item('charset'), then initialize()
+// runs strtoupper() on it. A bare test process has no config loaded, so the
+// null shim the mail tests used to install made PHP 8.1+ emit a deprecation
+// and turned the charset into ''. Mirror the real application/config/config.php
+// value instead: the framework behaves exactly as it does in production.
+if (!function_exists('config_item')) {
+    function config_item($item)
+    {
+        return $item === 'charset' ? 'UTF-8' : null;
+    }
+}
+// system/core/CodeIgniter.php defines these before any library loads; the
+// bare test process has to supply them for CI_Email's Q-encoding path.
+if (!defined('MB_ENABLED'))    define('MB_ENABLED', extension_loaded('mbstring'));
+if (!defined('ICONV_ENABLED')) define('ICONV_ENABLED', extension_loaded('iconv'));
 
 if (is_file(__DIR__.'/../vendor/autoload.php')) {
     require_once __DIR__.'/../vendor/autoload.php';
