@@ -122,6 +122,9 @@ class Vtu extends Auth_Controller {
                     'code'  => $p->code,
                     'name'  => $p->name,
                     'price' => $p->price,
+                    // Preformatted so the dropdown JS does not have to know
+                    // about currencies — same text the server renders.
+                    'price_text' => $p->price !== null ? marvy_price_text($p->price) : null,
                     'validity' => $p->validity,
                 );
             }
