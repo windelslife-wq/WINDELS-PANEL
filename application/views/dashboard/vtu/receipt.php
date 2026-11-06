@@ -24,7 +24,7 @@ $class = $badge[$tx->status] ?? 'badge-muted';
             <tr><th>Name</th><td><?=htmlspecialchars($detail->recipient_name)?></td></tr>
           <?php endif; ?>
           <?php if (!empty($detail->token)): ?>
-            <tr><th>Token</th><td class="mono"><strong><?=htmlspecialchars($detail->token)?></strong></td></tr>
+            <tr><th><?=(($tx->service_type ?? '') === 'EXAM_PIN') ? 'PIN' : 'Token'?></th><td class="mono"><strong><?=htmlspecialchars($detail->token)?></strong></td></tr>
           <?php endif; ?>
           <?php if (!empty($detail->units)): ?>
             <tr><th>Units</th><td><?=htmlspecialchars($detail->units)?></td></tr>

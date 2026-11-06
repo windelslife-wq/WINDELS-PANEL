@@ -216,6 +216,66 @@ class VtuTest extends TestCase
         }
     }
 
+    public function testBestdataExamPinPurchaseAndDelayedSettlementWritePinToReceiptToken()
+    {
+        list($app, $user) = $this->app();
+        $app->encryptionservice = new class {
+            public function open($b) { return (string)$b; }
+            public function decrypt($b) { return (string)$b; }
+            public function encrypt($p) { return (string)$p; }
+        };
+        $http = new class {
+            public $epin_post;
+            public $epin_get;
+            public function post($url, $data = null, $headers = array(), $options = array()) {
+                return array('http_code' => 201, 'body' => json_encode($this->epin_post), 'error' => null);
+            }
+            public function get($url, $headers = array(), $options = array()) {
+                $path = (string)parse_url($url, PHP_URL_PATH);
+                if (strpos($path, '/api/history/') !== false) {
+                    return array('http_code' => 200, 'body' => '{"data":[],"topup":[],"cablesub":[]}', 'error' => null);
+                }
+                return array('http_code' => 200, 'body' => json_encode($this->epin_get), 'error' => null);
+            }
+        };
+        $app->securehttpclient = $http;
+        $app->db->where('id', 2)->update('providers', array(
+            'api_type' => 'BESTDATA',
+            'api_url'  => 'https://bestdatanig.com.ng',
+            'api_key_encrypted' => 'test-key',
+        ));
+
+        // 1. Immediate delivery stores the PIN in vtu_transactions.token.
+        $http->epin_post = array(
+            'id' => 91, 'exam_name' => 'WAEC', 'Status' => 'successful',
+            'data' => 'Pin : 554433221100, Serial No : WR777',
+        );
+        $res1 = $app->vtuservice->education($user, array(
+            'network' => 'WAEC', 'product' => 'WAEC-PIN', 'quantity' => 1,
+        ));
+        $this->assertTrue($res1['ok'], $res1['error'] ?? '');
+        $detail1 = $app->Vtu_transaction_model->for_transaction($res1['transaction']->id);
+        $this->assertSame('Pin : 554433221100, Serial No : WR777', $detail1->token);
+
+        // 2. Processing purchase settled later by CronWorkers::vtu_status() also stores the PIN.
+        $http->epin_post = array('id' => 92, 'exam_name' => 'WAEC', 'Status' => 'processing', 'data' => null);
+        $http->epin_get  = array('id' => 92, 'exam_name' => 'WAEC', 'Status' => 'successful', 'pins' => 'WR888:112233445566');
+        $res2 = $app->vtuservice->education($user, array(
+            'network' => 'WAEC', 'product' => 'WAEC-PIN', 'quantity' => 1,
+        ));
+        $this->assertTrue($res2['ok']);
+        $this->assertSame('PROCESSING', $res2['transaction']->status);
+
+        $app->library('CronWorkers');
+        $sweep = $app->cronworkers->vtu_status();
+        $this->assertSame(1, $sweep['processed']);
+        $this->assertStringContainsString('1 settled', $sweep['message']);
+        $this->assertSame('SUCCESSFUL', $app->Service_transaction_model->find_by_id($res2['transaction']->id)->status);
+        $detail2 = $app->Vtu_transaction_model->for_transaction($res2['transaction']->id);
+        $this->assertSame('WR888:112233445566', $detail2->token,
+            'settling a PROCESSING exam PIN via /api/epin/<id> must populate vtu_transactions.token');
+    }
+
     /* ======================== money integrity ========================== */
 
     /** The failure that must never silently keep the customer's money. */

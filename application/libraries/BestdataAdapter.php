@@ -84,7 +84,8 @@ class BestdataAdapter implements VtuProviderInterface {
 
     /** Our exam-body codes -> the vendor's exam_name values (sent back on purchase). */
     private static $exam_groups = array(
-        'WAEC' => 'WAEC', 'NECO' => 'NECO', 'JAMB' => 'JAMB', 'NABTEB' => 'NABTEB',
+        'WAEC' => 'WAEC', 'NECO' => 'NECO', 'JAMB' => 'JAMB',
+        'NABTEB' => 'NABTEB', 'NBAIS' => 'NBAIS',
     );
 
     /** Words used to match our disco abbreviations against /api/disco/ names. */
@@ -272,9 +273,14 @@ class BestdataAdapter implements VtuProviderInterface {
     }
 
     public function education(array $p) {
+        $exam = $this->resolve_exam_name($p);
+        if ($exam === null) {
+            return $this->unknown_code('exam body', $p['exam_code'] ?? ($p['variation_code'] ?? null));
+        }
+        $qty = isset($p['quantity']) && is_numeric($p['quantity']) ? max(1, (int)$p['quantity']) : 1;
         return $this->purchase($this->paths['epin'], array(
-            'exam_name' => $p['exam_code'] ?? ($p['variation_code'] ?? null),
-            'quantity'  => $p['quantity'] ?? 1,
+            'exam_name' => $exam,
+            'quantity'  => $qty,
         ), $p);
     }
 
@@ -314,13 +320,18 @@ class BestdataAdapter implements VtuProviderInterface {
     }
 
     /**
-     * GET /api/history/ returns the last ten transactions of each service.
-     * Match on the vendor `ident` we returned from the purchase.
+     * GET /api/history/ returns the last ten data/topup/cablesub transactions.
+     * Exam-PIN (`Result_Checker_Pin_order`) and electricity (`BillPayment`)
+     * orders are omitted from /api/history/ on stock nelly_api installs and
+     * instead live under /api/epin/<id> (or /api/epin/) and /api/billpayment/<id>.
      */
     public function status($reference) {
+        $reference = trim((string)$reference);
+        if ($reference === '') {
+            return array('ok' => false, 'error' => 'Transaction reference is empty');
+        }
         $res = $this->call($this->paths['history'], null, 'GET');
         if (empty($res['ok'])) return $res;
-        $reference = (string)$reference;
         foreach ($res['data'] as $list) {
             if (!is_array($list)) continue;
             if (isset($list['results']) && is_array($list['results'])) $list = $list['results'];
@@ -328,15 +339,48 @@ class BestdataAdapter implements VtuProviderInterface {
                 if (!is_array($row)) continue;
                 $ident = $row['ident'] ?? ($row['id'] ?? null);
                 if ($ident === null || (string)$ident !== $reference) continue;
-                return array(
-                    'ok'        => true,
-                    'status'    => $this->map_status((string)($row['Status'] ?? ($row['status'] ?? 'processing'))),
-                    'reference' => $reference,
-                    'raw'       => $row,
-                );
+                return $this->status_from_row($reference, $row);
             }
         }
+
+        if (ctype_digit($reference)) {
+            foreach (array('epin', 'billpayment') as $kind) {
+                $item_path = rtrim($this->paths[$kind], '/').'/'.$reference;
+                $item = $this->call($item_path, null, 'GET');
+                if (!empty($item['ok']) && is_array($item['data'])) {
+                    $ident = $item['data']['ident'] ?? ($item['data']['id'] ?? null);
+                    if ($ident !== null && (string)$ident === $reference) {
+                        return $this->status_from_row($reference, $item['data']);
+                    }
+                }
+            }
+            $epin_list = $this->call($this->paths['epin'], null, 'GET');
+            if (!empty($epin_list['ok']) && is_array($epin_list['data'])) {
+                $rows = isset($epin_list['data']['results']) && is_array($epin_list['data']['results'])
+                    ? $epin_list['data']['results'] : $epin_list['data'];
+                foreach ($rows as $row) {
+                    if (!is_array($row)) continue;
+                    $ident = $row['ident'] ?? ($row['id'] ?? null);
+                    if ($ident !== null && (string)$ident === $reference) {
+                        return $this->status_from_row($reference, $row);
+                    }
+                }
+            }
+        }
+
         return array('ok' => false, 'error' => 'Transaction not found in the provider history');
+    }
+
+    private function status_from_row($reference, array $row) {
+        $out = array(
+            'ok'        => true,
+            'status'    => $this->map_status((string)($row['Status'] ?? ($row['status'] ?? 'processing'))),
+            'reference' => (string)$reference,
+            'raw'       => $row,
+        );
+        $detail = $this->extract_detail($row);
+        if ($detail) $out['detail'] = $detail;
+        return $out;
     }
 
     /** GET /api/user/ doubles as the connection/auth probe. */
@@ -671,8 +715,20 @@ class BestdataAdapter implements VtuProviderInterface {
         if (isset(self::$cable_groups[$code])) {
             return array('kind' => 'CABLE', 'key' => self::$cable_groups[$code]);
         }
+        $exam_base = preg_replace('/[-_](PIN|PINS|RESULT|CHECKER)$/', '', $code);
+        if (isset($this->cfg['exam_names']) && is_array($this->cfg['exam_names'])) {
+            foreach (array($code, $exam_base) as $ek) {
+                if (isset($this->cfg['exam_names'][$ek]) && is_scalar($this->cfg['exam_names'][$ek])
+                    && trim((string)$this->cfg['exam_names'][$ek]) !== '') {
+                    return array('kind' => 'EXAM_PIN', 'key' => strtoupper(trim((string)$this->cfg['exam_names'][$ek])));
+                }
+            }
+        }
         if (isset(self::$exam_groups[$code])) {
             return array('kind' => 'EXAM_PIN', 'key' => self::$exam_groups[$code]);
+        }
+        if (isset(self::$exam_groups[$exam_base])) {
+            return array('kind' => 'EXAM_PIN', 'key' => self::$exam_groups[$exam_base]);
         }
         // A numeric network id is a valid vendor id: translate it back to a name.
         if (ctype_digit($base)) {
@@ -740,20 +796,194 @@ class BestdataAdapter implements VtuProviderInterface {
         );
         $cost = $data['plan_amount'] ?? ($data['paid_amount'] ?? ($data['amount'] ?? null));
         if ($this->money($cost) !== null) $out['cost'] = $this->money($cost);
+        $detail = $this->extract_detail($data);
+        if ($detail) $out['detail'] = $detail;
+        return $out;
+    }
+
+    /**
+     * Resolve the upstream `exam_name` expected by POST /api/epin/.
+     *
+     * Synced variations carry the vendor's exact exam_name in `variation_code`
+     * (e.g. "WAEC", "NECO", "NABTEB", "WAEC_GCE"), whereas seeded catalogue
+     * rows carry generic slugs like "waec-pin" or provider-scoped codes like
+     * "WAEC-P2". Prefer a specific vendor variation when present; otherwise
+     * normalise `exam_code`.
+     */
+    private function resolve_exam_name(array $p) {
+        $overrides = (isset($this->cfg['exam_names']) && is_array($this->cfg['exam_names']))
+            ? array_change_key_case($this->cfg['exam_names'], CASE_UPPER) : array();
+
+        $variation = trim((string)($p['variation_code'] ?? ''));
+        $exam_code = trim((string)($p['exam_code'] ?? ''));
+
+        $var_upper = strtoupper(preg_replace('/-P\d+$/i', '', $variation));
+        $is_generic_seed = ($var_upper === '' || preg_match('/^[A-Z0-9]+[-_](PIN|PINS)$/', $var_upper) === 1);
+
+        $raw = (!$is_generic_seed) ? $var_upper : strtoupper(preg_replace('/-P\d+$/i', '', $exam_code));
+        if ($raw === '' && $var_upper !== '') {
+            $raw = preg_replace('/[-_](PIN|PINS|RESULT|CHECKER)$/', '', $var_upper);
+        }
+        if ($raw === '') return null;
+
+        if (isset($overrides[$raw]) && is_scalar($overrides[$raw]) && trim((string)$overrides[$raw]) !== '') {
+            return trim((string)$overrides[$raw]);
+        }
+        $stripped = preg_replace('/[-_](PIN|PINS|RESULT|CHECKER)$/', '', $raw);
+        if (isset($overrides[$stripped]) && is_scalar($overrides[$stripped]) && trim((string)$overrides[$stripped]) !== '') {
+            return trim((string)$overrides[$stripped]);
+        }
+        if (isset(self::$exam_groups[$raw])) return self::$exam_groups[$raw];
+        if (isset(self::$exam_groups[$stripped])) return self::$exam_groups[$stripped];
+        return $raw;
+    }
+
+    /**
+     * Extract electricity tokens/units and exam-checker PINs from a purchase
+     * or status payload.
+     *
+     * VtuService persists `detail['token']` and `detail['units']` onto
+     * `vtu_transactions`, and the customer receipt renders `detail->token`.
+     * On nelly_api (`POST /api/epin/`), exam PINs arrive in `pins`,
+     * `purchase_pin`, or `data` (plain string from VTpass, JSON object from
+     * EasyAccess, token list from MobileNig, or Django `serializers.serialize`
+     * JSON from the local `exam_pin` table), never in `token` — so extracted
+     * PINs populate both `detail['pins']` and `detail['token']`.
+     */
+    private function extract_detail(array $data) {
         $detail = array();
         foreach (array('token' => array('token', 'Token', 'purchased_code'),
-                       'units' => array('units', 'Units'),
-                       'pins'  => array('pins', 'purchase_pin')) as $key => $candidates) {
+                       'units' => array('units', 'Units')) as $key => $candidates) {
             foreach ($candidates as $candidate) {
                 if (isset($data[$candidate]) && is_scalar($data[$candidate])
                     && trim((string)$data[$candidate]) !== '') {
-                    $detail[$key] = (string)$data[$candidate];
+                    $limit = $key === 'units' ? 64 : 128;
+                    $detail[$key] = mb_substr(trim((string)$data[$candidate]), 0, $limit);
                     break;
                 }
             }
         }
-        if ($detail) $out['detail'] = $detail;
+
+        $pins = $this->extract_pins($data);
+        if ($pins) {
+            $joined = implode(', ', $pins);
+            $detail['pins'] = $joined;
+            if (count($pins) > 1) {
+                $detail['cards'] = $pins;
+            }
+            if (!isset($detail['token']) || $detail['token'] === '') {
+                $detail['token'] = mb_substr($joined, 0, 128);
+            }
+        }
+
+        return $detail;
+    }
+
+    /** Return a clean list of formatted PIN strings from any nelly_api epin payload. */
+    private function extract_pins(array $data) {
+        foreach (array('pins', 'purchase_pin', 'cards', 'tokens', 'pin', 'Pin') as $field) {
+            if (!array_key_exists($field, $data) || $data[$field] === null || $data[$field] === '') continue;
+            $parsed = $this->parse_pin_value($data[$field], true);
+            if ($parsed) return $parsed;
+        }
+
+        // Result_Checker_Pin_orderSerializer writes upstream output into `data`.
+        if (array_key_exists('data', $data) && $data['data'] !== null && $data['data'] !== '') {
+            $is_epin_row = isset($data['exam_name'])
+                || array_key_exists('pins', $data)
+                || array_key_exists('purchase_pin', $data);
+            $parsed = $this->parse_pin_value($data['data'], $is_epin_row);
+            if ($parsed) return $parsed;
+        }
+
+        return array();
+    }
+
+    private function parse_pin_value($val, $allow_bare_scalar) {
+        if (is_scalar($val)) {
+            $str = trim((string)$val);
+            if ($str === '' || strtolower($str) === 'null' || strtolower($str) === 'none') {
+                return array();
+            }
+            if ($str[0] === '[' || $str[0] === '{') {
+                $decoded = json_decode($str, true);
+                if (is_array($decoded)) {
+                    $from_json = $this->parse_pin_array($decoded);
+                    if ($from_json) return $from_json;
+                    return array();
+                }
+            }
+            return $allow_bare_scalar ? array($str) : array();
+        }
+        if (is_array($val)) {
+            return $this->parse_pin_array($val);
+        }
+        return array();
+    }
+
+    private function parse_pin_array(array $arr) {
+        if ($arr === array()) return array();
+
+        // Nested wrappers such as {"details":{"tokens":[...]}} or {"cards":[...]}.
+        foreach (array('tokens', 'pins', 'cards') as $wrap) {
+            if (isset($arr[$wrap]) && is_array($arr[$wrap])) {
+                $inner = $this->parse_pin_array($arr[$wrap]);
+                if ($inner) return $inner;
+            }
+            if (isset($arr['details'][$wrap]) && is_array($arr['details'][$wrap])) {
+                $inner = $this->parse_pin_array($arr['details'][$wrap]);
+                if ($inner) return $inner;
+            }
+        }
+
+        // EasyAccess associative object: {"success":"true","pin":"...","pin2":"..."}.
+        if (!$this->is_list_array($arr)) {
+            if (isset($arr['fields']) && is_array($arr['fields'])) {
+                $one = $this->format_pin_object($arr['fields']);
+                return $one !== null ? array($one) : array();
+            }
+            $multi = array();
+            foreach ($arr as $k => $v) {
+                if (preg_match('/^pin\d*$/i', (string)$k) && is_scalar($v) && trim((string)$v) !== '') {
+                    $multi[] = trim((string)$v);
+                }
+            }
+            if ($multi) return $multi;
+            $single = $this->format_pin_object($arr);
+            return $single !== null ? array($single) : array();
+        }
+
+        $out = array();
+        foreach ($arr as $item) {
+            if (is_scalar($item) && trim((string)$item) !== '') {
+                $out[] = trim((string)$item);
+            } elseif (is_array($item)) {
+                $target = (isset($item['fields']) && is_array($item['fields'])) ? $item['fields'] : $item;
+                $formatted = $this->format_pin_object($target);
+                if ($formatted !== null) $out[] = $formatted;
+            }
+        }
         return $out;
+    }
+
+    private function format_pin_object(array $obj) {
+        $pin = null;
+        foreach (array('pin', 'Pin', 'PIN', 'token', 'Token', 'purchased_code') as $pk) {
+            if (isset($obj[$pk]) && is_scalar($obj[$pk]) && trim((string)$obj[$pk]) !== '') {
+                $pin = trim((string)$obj[$pk]);
+                break;
+            }
+        }
+        if ($pin === null) return null;
+        $serial = null;
+        foreach (array('serial', 'Serial', 'serial_number', 'serialNo', 'Serial_Number') as $sk) {
+            if (isset($obj[$sk]) && is_scalar($obj[$sk]) && trim((string)$obj[$sk]) !== '') {
+                $serial = trim((string)$obj[$sk]);
+                break;
+            }
+        }
+        return ($serial !== null && stripos($pin, $serial) === false)
+            ? $serial.':'.$pin : $pin;
     }
 
     private function is_rejection(array $data) {
@@ -904,7 +1134,7 @@ class BestdataAdapter implements VtuProviderInterface {
         return array(
             'ok'    => false,
             'error' => 'Unknown '.$what.' "'.(string)$code.'" for Bestdatanig. '
-                      .'Map it in retry_policy.bestdata.network_ids / cable_ids / disco_ids.',
+                      .'Map it in retry_policy.bestdata.network_ids / cable_ids / disco_ids / exam_names.',
         );
     }
 
