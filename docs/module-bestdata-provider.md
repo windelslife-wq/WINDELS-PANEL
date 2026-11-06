@@ -86,7 +86,7 @@ adapter only uses the documented, stable subset above.
 
 | File | Change |
 |---|---|
-| `application/libraries/BestdataAdapter.php` | New `VtuProviderInterface` adapter: normalises the website URL to the API origin, Token/Bearer auth, JSON bodies, 2xx handling, all eight interface methods, `catalogue_types()` (`DATA`, `CABLE`) and `variations()` for the grouped price lists. |
+| `application/libraries/BestdataAdapter.php` | New `VtuProviderInterface` adapter: normalises the website URL to the API origin, Token/Bearer auth, JSON bodies, 2xx handling, all eight interface methods, `catalogue_types()` (`DATA`, `CABLE`, `EXAM_PIN`) and `variations()` for data, cable and exam-PIN price lists. |
 | `application/libraries/Provider_manager.php` | Registers `BESTDATA` under `FAMILY_VTU`. Legacy `STANDARD_VTU` rows whose URL is a `bestdatanig.com.ng` / `adadata.com.ng` host are routed to the new adapter, so an already-saved provider starts working without a database migration. |
 | `application/libraries/StandardVtuAdapter.php` | Accepts every 2xx (not just 200), and replaces bare `HTTP 404` / `HTTP 401` with an actionable message naming the path and the likely mistake. |
 | `application/libraries/VtuProviderInterface.php` | Capability docs now name the fourth built-in adapter. |
@@ -106,8 +106,11 @@ permissions.
    existing row): type `BESTDATA`, API URL `https://bestdatanig.com.ng`, API
    key = the token from the logged-in dashboard (`/api-docs` or `/documentation/`).
 2. **Test connection** → `GET /api/user/` → `ONLINE` and the wallet balance.
-3. **Sync services** → `GET /api/network/` and `GET /api/cable/` populate
-   `vtu_products` (inactive, at cost, never overwrites an admin selling price).
+3. **Sync services** → `GET /api/network/`, `GET /api/cable/` and `GET /api/epin/`
+   (falling back to `GET /api/user/` when `/api/epin/` carries paginated order
+   history) populate fixed-price `DATA`, `CABLE` and `EXAM_PIN` rows in
+   `vtu_products` (inactive, at cost, never overwrites an admin selling price;
+   airtime and electricity stay variable-amount in Admin → Catalogue).
 4. Price the new products in **Admin → Catalogue** before selling them.
 
 A row still stored as `STANDARD_VTU` with the website URL works immediately
@@ -165,7 +168,10 @@ one request per document rather than one per network.
   adapter maps it (and `app.bestdatanig.com.ng`) to the live Django origin;
   if the vendor later publishes a dedicated API host, set
   `retry_policy.bestdata.base_url` and no code change is needed.
-* `/api/epin/` publishes transaction history rather than a price list, and
-  this build's exam bodies are `WAEC`/`NECO`/`JAMB`. `BESTDATA` therefore
-  declares only `DATA` and `CABLE` catalogue types; exam PIN products stay
-  hand-configured in Admin → Catalogue.
+* `BESTDATA` declares `DATA`, `CABLE` and `EXAM_PIN` catalogue types. Exam-PIN
+  prices are read from `GET /api/epin/` when it publishes a price list (flat
+  `[{"exam_name","amount"}]` or grouped `{"WAEC":[...]}`), and automatically
+  fall back to `GET /api/user/`'s `"Exam"` map (`{"WAEC":{"amount":...}}`) when
+  `/api/epin/` returns DRF paginated order history. The synced variation code
+  is the exam name itself, because `POST /api/epin/` takes `exam_name`, not a
+  numeric plan id.

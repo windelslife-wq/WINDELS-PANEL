@@ -406,6 +406,10 @@ class BestdataAdapterTest extends TestCase
         $http->route('/api/cable/', $this->resp(200, array(
             'DSTVPLAN' => array(array('id' => 17, 'package' => 'Compact', 'plan_amount' => '9900')),
         )));
+        $http->route('/api/epin/', $this->resp(200, array(
+            array('exam_name' => 'WAEC', 'amount' => '3500'),
+            array('exam_name' => 'NECO', 'amount' => '2000'),
+        )));
         $adapter = $this->adapter($http);
 
         $data = $adapter->variations('MTN-DATA');
@@ -423,22 +427,118 @@ class BestdataAdapterTest extends TestCase
         $this->assertSame('17', $cable['variations'][0]['variation_code']);
         $this->assertSame('Compact', $cable['variations'][0]['name']);
 
+        // Exam PINs come from the flat /api/epin/ price list, filtered to the
+        // requested exam body; the variation code is the exam name, because
+        // the purchase endpoint takes exam_name, not a numeric plan id.
         $exam = $adapter->variations('WAEC');
-        $this->assertFalse($exam['ok']);
-        $this->assertStringContainsString('Admin > Catalogue', $exam['error']);
-        // The two GET documents are fetched once each, not once per network.
+        $this->assertTrue($exam['ok'], json_encode($exam));
+        $this->assertSame('WAEC', $exam['service_id']);
+        $this->assertCount(1, $exam['variations']);
+        $this->assertSame('WAEC', $exam['variations'][0]['variation_code']);
+        $this->assertSame('WAEC Result Checker PIN', $exam['variations'][0]['name']);
+        $this->assertSame('3500.00000000', $exam['variations'][0]['amount']);
+
+        $neco = $adapter->variations('NECO');
+        $this->assertTrue($neco['ok']);
+        $this->assertSame('NECO', $neco['variations'][0]['variation_code']);
+
+        // Each GET document is fetched once, not once per network.
         $paths = array();
         foreach ($http->calls as $call) $paths[] = $call['path'];
         $this->assertSame(1, count(array_keys($paths, '/api/network/', true)));
         $this->assertSame(1, count(array_keys($paths, '/api/cable/', true)));
+        $this->assertSame(1, count(array_keys($paths, '/api/epin/', true)));
     }
 
-    public function testCatalogueTypesOnlyClaimTheListsTheVendorPublishes()
+    public function testCatalogueTypesClaimEveryPublishedPriceList()
     {
         $types = BestdataAdapter::catalogue_types();
         $this->assertContains('DATA', $types);
         $this->assertContains('CABLE', $types);
-        $this->assertNotContains('EXAM_PIN', $types);
+        $this->assertContains('EXAM_PIN', $types);
+    }
+
+    public function testExamPinVariationsFallBackToUserDocumentWhenEpinIsOrderHistory()
+    {
+        // Stock MSORG/LegitData returns DRF paginated order history on
+        // GET /api/epin/ (with total order amount = unit * quantity) and
+        // publishes unit exam prices under GET /api/user/ -> "Exam".
+        $http = $this->http();
+        $http->route('/api/epin/', $this->resp(200, array(
+            'count'    => 1,
+            'next'     => null,
+            'previous' => null,
+            'results'  => array(
+                array(
+                    'id' => 9, 'exam_name' => 'WAEC', 'quantity' => 2,
+                    'amount' => '6800', 'Status' => 'successful',
+                    'previous_balance' => '10000', 'after_balance' => '3200',
+                    'create_date' => '2026-01-01T00:00:00Z',
+                ),
+            ),
+        )));
+        $http->route('/api/user/', $this->resp(200, array(
+            'user' => array('Account_Balance' => '3200'),
+            'Exam' => array(
+                'WAEC' => array('amount' => 3400),
+                'NECO' => array('amount' => 1200),
+            ),
+        )));
+        $adapter = $this->adapter($http);
+
+        $waec = $adapter->variations('WAEC');
+        $this->assertTrue($waec['ok'], json_encode($waec));
+        $this->assertCount(1, $waec['variations']);
+        $this->assertSame('WAEC', $waec['variations'][0]['variation_code']);
+        $this->assertSame('3400.00000000', $waec['variations'][0]['amount'],
+            'must use the unit price from /api/user/, never the multi-quantity order row');
+        $this->assertTrue($waec['variations'][0]['fixed_price']);
+
+        $neco = $adapter->variations('NECO');
+        $this->assertTrue($neco['ok']);
+        $this->assertSame('1200.00000000', $neco['variations'][0]['amount']);
+
+        $jamb = $adapter->variations('JAMB');
+        $this->assertTrue($jamb['ok']);
+        $this->assertSame(array(), $jamb['variations']);
+    }
+
+    public function testSubGroupedDataplansAndStartimeplanShapesAreSupported()
+    {
+        $http = $this->http();
+        $http->route('/api/network/', $this->resp(200, array(
+            'Dataplans' => array(
+                'MTN_PLAN' => array(
+                    'SME' => array(
+                        array('id' => 101, 'plan' => '1.0GB', 'plan_type' => 'SME',
+                              'month_validate' => '30 Days', 'plan_amount' => '260'),
+                    ),
+                    'CORPORATE' => array(
+                        array('id' => 102, 'plan' => '1.0GB', 'plan_type' => 'CORPORATE GIFTING',
+                              'month_validate' => '30 Days', 'plan_amount' => '275'),
+                    ),
+                ),
+            ),
+        )));
+        $http->route('/api/cable/', $this->resp(200, array(
+            'Cableplan' => array(
+                'STARTIMEPLAN' => array(
+                    array('id' => 55, 'package' => 'Nova', 'plan_amount' => '1500'),
+                ),
+            ),
+        )));
+        $adapter = $this->adapter($http);
+
+        $mtn = $adapter->variations('MTN-DATA');
+        $this->assertTrue($mtn['ok']);
+        $this->assertCount(2, $mtn['variations']);
+        $this->assertSame('1.0GB SME - 30 Days', $mtn['variations'][0]['name']);
+        $this->assertSame('1.0GB CORPORATE GIFTING - 30 Days', $mtn['variations'][1]['name']);
+
+        $star = $adapter->variations('STARTIMES');
+        $this->assertTrue($star['ok']);
+        $this->assertSame('55', $star['variations'][0]['variation_code']);
+        $this->assertSame('Nova', $star['variations'][0]['name']);
     }
 
     public function testSyncServicesWritesTheBestdataPriceList()
@@ -451,14 +551,20 @@ class BestdataAdapterTest extends TestCase
         $http->route('/api/cable/', $this->resp(200, array(
             'DSTVPLAN' => array(array('id' => 17, 'package' => 'Compact', 'plan_amount' => '9900')),
         )));
+        $http->route('/api/epin/', $this->resp(200, array(
+            array('exam_name' => 'WAEC', 'amount' => '3500'),
+            array('exam_name' => 'NECO', 'amount' => '2000'),
+        )));
         $provider = $this->provider();
         $ci = new BestdataFakeCI($http, $provider);
         $service = new ProviderSyncService();
         $res = $service->sync_services($provider);
         $this->assertTrue($res['ok'], $res['error'] ?? 'sync failed');
-        $this->assertSame(3, $res['inserted']);
+        // 2 data plans + 1 cable package + 2 exam PINs (JAMB has no row;
+        // airtime and electricity stay variable-amount in Admin > Catalogue).
+        $this->assertSame(5, $res['inserted']);
         $this->assertSame('SUCCESS', $ci->Provider_model->syncs[0]['status']);
-        $this->assertSame(3, count($ci->Vtu_product_model->rows));
+        $this->assertSame(5, count($ci->Vtu_product_model->rows));
     }
 
     /* ---------------------------- configuration ------------------------ */
@@ -558,6 +664,7 @@ class BestdataNetworks
         $codes = array(
             'DATA' => array('MTN-DATA', 'GLO-DATA', 'AIRTEL-DATA', '9MOBILE-DATA'),
             'CABLE' => array('DSTV', 'GOTV', 'STARTIMES'),
+            'EXAM_PIN' => array('WAEC', 'NECO', 'JAMB'),
         );
         $out = array();
         $i = 1;

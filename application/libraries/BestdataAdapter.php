@@ -61,8 +61,8 @@ class BestdataAdapter implements VtuProviderInterface {
     /** The live Django REST origin. The `app.` host is a website, not an API. */
     const API_BASE = 'https://bestdatanig.com.ng';
 
-    /** Fixed-price lists this vendor publishes (exam PINs are hand-configured). */
-    private static $catalogue_types = array('DATA', 'CABLE');
+    /** Fixed-price lists this vendor publishes via its price-list endpoints. */
+    private static $catalogue_types = array('DATA', 'CABLE', 'EXAM_PIN');
 
     /** Network ids from GET /api/get/network/ (MTN=1 in the published sample). */
     private static $default_network_ids = array(
@@ -80,6 +80,11 @@ class BestdataAdapter implements VtuProviderInterface {
     private static $cable_groups = array(
         'DSTV' => 'DSTVPLAN', 'GOTV' => 'GOTVPLAN',
         'STARTIMES' => 'STARTIME', 'STARTIME' => 'STARTIME',
+    );
+
+    /** Our exam-body codes -> the vendor's exam_name values (sent back on purchase). */
+    private static $exam_groups = array(
+        'WAEC' => 'WAEC', 'NECO' => 'NECO', 'JAMB' => 'JAMB', 'NABTEB' => 'NABTEB',
     );
 
     /** Words used to match our disco abbreviations against /api/disco/ names. */
@@ -363,10 +368,19 @@ class BestdataAdapter implements VtuProviderInterface {
     /**
      * Mirror one network's fixed-price list into vtu_products.
      *
-     * GET /api/network/ answers {MTN_PLAN:[...], GLO_PLAN:[...]}, and
-     * GET /api/cable/ answers {DSTVPLAN:[...], GOTVPLAN:[...], STARTIME:[...],
-     * cablename:[...]}. Both documents are fetched once per adapter instance —
-     * the sync asks for four data networks and three cable providers.
+     * Primary price-list documents:
+     *   - DATA:     GET /api/network/ ({MTN_PLAN:[...]} or {MTN_PLAN:{ALL:[...]}})
+     *   - CABLE:    GET /api/cable/   ({DSTVPLAN:[...], GOTVPLAN:[...], STARTIME:[...]})
+     *   - EXAM_PIN: GET /api/epin/    ([{exam_name, amount}] or {WAEC:[...]})
+     *
+     * On stock MSORG/LegitData deployments, GET /api/epin/ is the user's
+     * paginated order history ({count, results:[...]}) while GET /api/user/
+     * embeds the account's tier-priced catalogue under "Exam"
+     * ({WAEC:{amount}, NECO:{amount}}), "Dataplans" and "Cableplan". When a
+     * primary document carries no price list (or answers 404 because one
+     * network row was renamed), we fall back to GET /api/user/. Every GET
+     * document is cached per adapter instance so a full sync fetches each
+     * document at most once.
      */
     public function variations($network_code) {
         $code = strtoupper(trim((string)$network_code));
@@ -378,35 +392,293 @@ class BestdataAdapter implements VtuProviderInterface {
                           .'Configure these products by hand in Admin > Catalogue.',
             );
         }
-        $path = $group['kind'] === 'DATA' ? $this->paths['plans'] : $this->paths['cable'];
-        $doc = $this->document($path);
-        if (empty($doc['ok'])) return array('ok' => false, 'error' => $doc['error']);
-        $rows = isset($doc['data'][$group['key']]) ? $doc['data'][$group['key']] : null;
-        if (!is_array($rows)) {
-            return array('ok' => false, 'error' => 'No '.$group['key'].' price list in the provider response');
+        $resolved = $this->resolve_price_rows($group);
+        if (empty($resolved['ok'])) {
+            return array('ok' => false, 'error' => $resolved['error']);
         }
         $out = array();
-        foreach ($rows as $row) {
-            $normalized = $this->normalize_variation($row);
-            if ($normalized) $out[] = $normalized;
+        $seen = array();
+        foreach ($resolved['rows'] as $row) {
+            $normalized = $group['kind'] === 'EXAM_PIN'
+                ? $this->normalize_exam_variation($row, $group['key'])
+                : $this->normalize_variation($row);
+            if (!$normalized) continue;
+            $vcode = $normalized['variation_code'];
+            if (isset($seen[$vcode])) continue;
+            $seen[$vcode] = true;
+            $out[] = $normalized;
         }
         return array('ok' => true, 'service_id' => $group['key'], 'variations' => $out);
     }
 
-    /** Our network code -> {kind, key}. Unknown codes are skipped by the sync. */
+    /**
+     * Resolve a group's raw rows from its primary endpoint, falling back to
+     * GET /api/user/ when the primary endpoint carries no price list (e.g.
+     * /api/epin/ returning paginated order history) or fails when /api/user/
+     * embeds Dataplans/Cableplan/Exam.
+     */
+    private function resolve_price_rows(array $group) {
+        $path = $group['kind'] === 'DATA' ? $this->paths['plans']
+              : ($group['kind'] === 'CABLE' ? $this->paths['cable'] : $this->paths['epin']);
+        $doc = $this->document($path);
+        if (!empty($doc['ok'])) {
+            $rows = $this->price_rows($doc['data'], $group);
+            if (is_array($rows)) {
+                return array('ok' => true, 'rows' => $rows);
+            }
+            if ($group['kind'] !== 'EXAM_PIN'
+                && $this->has_catalogue_kind($doc['data'], $group['kind'])) {
+                return array(
+                    'ok'    => false,
+                    'error' => 'No '.$group['key'].' price list in the provider response',
+                );
+            }
+        }
+
+        if ($path !== $this->paths['user']) {
+            $user = $this->document($this->paths['user']);
+            if (!empty($user['ok'])) {
+                $rows = $this->price_rows($user['data'], $group);
+                if (is_array($rows)) {
+                    return array('ok' => true, 'rows' => $rows);
+                }
+            }
+        }
+
+        if (empty($doc['ok'])) {
+            return array('ok' => false, 'error' => $doc['error']);
+        }
+        return array(
+            'ok'    => false,
+            'error' => 'No '.$group['key'].' price list in the provider response',
+        );
+    }
+
+    /**
+     * Pull one group's rows out of a price-list document across all shapes
+     * seen in Bestdatanig / MSORG / LegitData deployments.
+     */
+    private function price_rows($data, array $group) {
+        if (!is_array($data) || $data === array()) return null;
+        if ($group['kind'] === 'EXAM_PIN') {
+            return $this->exam_price_rows($data, $group['key']);
+        }
+        if ($group['kind'] === 'DATA') {
+            return $this->data_price_rows($data, $group);
+        }
+        return $this->cable_price_rows($data, $group['key']);
+    }
+
+    private function data_price_rows(array $data, array $group) {
+        $containers = array();
+        foreach (array('Dataplans', 'dataplans', 'data') as $wrap) {
+            if (isset($data[$wrap]) && is_array($data[$wrap])) $containers[] = $data[$wrap];
+        }
+        $containers[] = $data;
+
+        foreach ($containers as $c) {
+            if (isset($c[$group['key']]) && is_array($c[$group['key']])) {
+                $unwrapped = $this->unwrap_plan_bucket($c[$group['key']]);
+                if (is_array($unwrapped)) return $unwrapped;
+            }
+            $base = $group['base'] ?? '';
+            if ($base !== '' && isset($c[$base]) && is_array($c[$base])
+                && isset($c[$base]['data_plans']) && is_array($c[$base]['data_plans'])) {
+                return $c[$base]['data_plans'];
+            }
+        }
+        return null;
+    }
+
+    private function cable_price_rows(array $data, $key) {
+        $aliases = array($key);
+        if ($key === 'STARTIME') {
+            $aliases = array('STARTIME', 'STARTIMEPLAN', 'STARTIMES', 'STARTIMESPLAN');
+        } elseif ($key === 'DSTVPLAN') {
+            $aliases = array('DSTVPLAN', 'DSTV');
+        } elseif ($key === 'GOTVPLAN') {
+            $aliases = array('GOTVPLAN', 'GOTV');
+        }
+        $containers = array();
+        foreach (array('Cableplan', 'cableplan', 'data') as $wrap) {
+            if (isset($data[$wrap]) && is_array($data[$wrap])) $containers[] = $data[$wrap];
+        }
+        $containers[] = $data;
+
+        foreach ($containers as $c) {
+            foreach ($aliases as $alias) {
+                if (!isset($c[$alias]) || !is_array($c[$alias])) continue;
+                $bucket = $c[$alias];
+                if (isset($bucket['plans']) && is_array($bucket['plans'])) return $bucket['plans'];
+                if ($this->is_list_array($bucket)) return $bucket;
+            }
+        }
+        return null;
+    }
+
+    private function exam_price_rows(array $data, $exam_key) {
+        $c = null;
+        foreach (array('Exam', 'exam', 'exams', 'epin', 'result_checker') as $wrap) {
+            if (isset($data[$wrap]) && is_array($data[$wrap])) { $c = $data[$wrap]; break; }
+        }
+        if ($c === null) {
+            if (isset($data['data']) && is_array($data['data'])) {
+                $c = $data['data'];
+            } elseif (isset($data['results']) && is_array($data['results'])) {
+                // DRF PageNumberPagination on /api/epin/ with 0 orders is
+                // empty order history, not an empty price list.
+                if ($data['results'] === array()
+                    && (array_key_exists('count', $data) || array_key_exists('next', $data))) {
+                    return null;
+                }
+                $c = $data['results'];
+            } else {
+                $c = $data;
+            }
+        }
+        if (!is_array($c) || $c === array()) return null;
+
+        // Shape 1: flat list of exam price rows ([{"exam_name":"WAEC","amount":"3500"}, ...]).
+        if ($this->is_list_array($c)) {
+            $priceRows = array();
+            foreach ($c as $row) {
+                if (!is_array($row) || $this->is_order_history_row($row)) continue;
+                if (isset($row['exam_name']) || isset($row['exam']) || isset($row['code'])
+                    || isset($row['amount']) || isset($row['price']) || isset($row['plan_amount'])) {
+                    $priceRows[] = $row;
+                }
+            }
+            if (!$priceRows) return null;
+            $out = array();
+            foreach ($priceRows as $row) {
+                $exam = strtoupper(trim((string)($row['exam_name'] ?? ($row['exam'] ?? ($row['code'] ?? '')))));
+                if ($exam === '' || $exam === $exam_key) $out[] = $row;
+            }
+            return $out;
+        }
+
+        // Shape 2: associative map keyed by exam body — either UserAPIView's
+        // {"WAEC":{"amount":3500},"NECO":{"amount":2000}} or {"WAEC":[...]}.
+        $hasKnownExam = false;
+        $matched = null;
+        foreach ($c as $k => $v) {
+            $uk = strtoupper(trim((string)$k));
+            if (isset(self::$exam_groups[$uk])) $hasKnownExam = true;
+            if ($uk === $exam_key) $matched = $v;
+        }
+        if (!$hasKnownExam) return null;
+        if ($matched === null) return array();
+        if (is_scalar($matched)) {
+            return array(array('exam_name' => $exam_key, 'amount' => $matched));
+        }
+        if (!is_array($matched)) return array();
+        if ($this->is_list_array($matched)) {
+            $out = array();
+            foreach ($matched as $row) {
+                if (is_array($row) && !$this->is_order_history_row($row)) $out[] = $row;
+            }
+            return $out;
+        }
+        if ($this->is_order_history_row($matched)) return null;
+        return array(array_merge(array('exam_name' => $exam_key), $matched));
+    }
+
+    /** True when $doc already contains at least one group of $kind. */
+    private function has_catalogue_kind($data, $kind) {
+        if (!is_array($data)) return false;
+        if ($kind === 'DATA') {
+            foreach (self::$data_groups as $base => $key) {
+                if ($this->data_price_rows($data, array('kind' => 'DATA', 'key' => $key, 'base' => $base)) !== null) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        if ($kind === 'CABLE') {
+            foreach (array_unique(array_values(self::$cable_groups)) as $key) {
+                if ($this->cable_price_rows($data, $key) !== null) return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Unwrap either a flat plan list ([row, ...]) or UserAPIView's sub-grouped
+     * plan map ({"CORPORATE":[...], "SME":[...], "GIFTING":[...], "ALL":[...]}).
+     */
+    private function unwrap_plan_bucket(array $bucket) {
+        if ($this->is_list_array($bucket)) return $bucket;
+        if (isset($bucket['ALL']) && is_array($bucket['ALL']) && $this->is_list_array($bucket['ALL'])) {
+            return $bucket['ALL'];
+        }
+        if (isset($bucket['data_plans']) && is_array($bucket['data_plans'])) {
+            return $bucket['data_plans'];
+        }
+        $merged = array();
+        $foundSublist = false;
+        foreach ($bucket as $sub) {
+            if (!is_array($sub) || !$this->is_list_array($sub)) continue;
+            $foundSublist = true;
+            foreach ($sub as $row) {
+                if (is_array($row)) $merged[] = $row;
+            }
+        }
+        return $foundSublist ? $merged : null;
+    }
+
+    private function is_list_array(array $arr) {
+        if ($arr === array()) return true;
+        return array_keys($arr) === range(0, count($arr) - 1);
+    }
+
+    /** Order-history rows from Result_Checker_Pin_order carry ledger/pin fields. */
+    private function is_order_history_row(array $row) {
+        foreach (array('previous_balance', 'after_balance', 'balance_before',
+                       'balance_after', 'create_date', 'Status', 'pins', 'purchase_pin') as $k) {
+            if (array_key_exists($k, $row)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * One exam-PIN price row -> the sync shape. The variation code IS the
+     * exam name, because the purchase endpoint takes exam_name, not a
+     * numeric plan id.
+     */
+    private function normalize_exam_variation($row, $exam) {
+        if (!is_array($row)) return null;
+        $code = strtoupper(trim((string)($row['exam_name'] ?? ($row['exam'] ?? ($row['code'] ?? '')))));
+        if ($code === '') $code = strtoupper(trim((string)$exam));
+        if ($code === '') return null;
+        $amount = $this->money($row['amount'] ?? ($row['api_price'] ?? ($row['price'] ?? ($row['plan_amount'] ?? null))));
+        if ($amount === null || (float)$amount <= 0) return null;
+        $label = isset($row['name']) && is_scalar($row['name']) && strtoupper(trim((string)$row['name'])) !== $code
+            ? trim((string)$row['name']) : '';
+        return array(
+            'variation_code' => $code,
+            'name'           => $label !== '' ? $label : $code.' Result Checker PIN',
+            'amount'         => number_format((float)$amount, 8, '.', ''),
+            'fixed_price'    => true,
+        );
+    }
+
+    /** Our network code -> {kind, key, base?}. Unknown codes are skipped by the sync. */
     private function catalogue_group($code) {
         $base = preg_replace('/-(DATA|AIRTIME)$/', '', $code);
         if (isset(self::$data_groups[$base])) {
-            return array('kind' => 'DATA', 'key' => self::$data_groups[$base]);
+            return array('kind' => 'DATA', 'key' => self::$data_groups[$base], 'base' => $base);
         }
         if (isset(self::$cable_groups[$code])) {
             return array('kind' => 'CABLE', 'key' => self::$cable_groups[$code]);
+        }
+        if (isset(self::$exam_groups[$code])) {
+            return array('kind' => 'EXAM_PIN', 'key' => self::$exam_groups[$code]);
         }
         // A numeric network id is a valid vendor id: translate it back to a name.
         if (ctype_digit($base)) {
             $name = array_search((int)$base, self::$default_network_ids, true);
             if ($name !== false && isset(self::$data_groups[$name])) {
-                return array('kind' => 'DATA', 'key' => self::$data_groups[$name]);
+                return array('kind' => 'DATA', 'key' => self::$data_groups[$name], 'base' => $name);
             }
         }
         return null;
@@ -420,11 +692,26 @@ class BestdataAdapter implements VtuProviderInterface {
         if (!is_scalar($code) || trim((string)$code) === '') return null;
         $name = $row['plan'] ?? ($row['package'] ?? ($row['plan_name'] ??
                ($row['name'] ?? null)));
-        if (!is_scalar($name)) $name = null;
+        if (!is_scalar($name) || trim((string)$name) === '') {
+            $name = (string)$code;
+        } else {
+            $name = trim((string)$name);
+            $planType = isset($row['plan_type']) && is_scalar($row['plan_type'])
+                ? trim((string)$row['plan_type']) : '';
+            if ($planType !== '' && stripos($name, $planType) === false) {
+                $name .= ' '.$planType;
+            }
+            $validity = isset($row['month_validate']) && is_scalar($row['month_validate'])
+                ? trim((string)$row['month_validate'])
+                : (isset($row['validity']) && is_scalar($row['validity']) ? trim((string)$row['validity']) : '');
+            if ($validity !== '' && stripos($name, $validity) === false) {
+                $name .= ' - '.$validity;
+            }
+        }
         $amount = $this->money($row['plan_amount'] ?? ($row['amount'] ?? ($row['price'] ?? null)));
         return array(
             'variation_code' => (string)$code,
-            'name'           => (string)($name ?? $code),
+            'name'           => $name,
             'amount'         => $amount === null ? null : number_format((float)$amount, 8, '.', ''),
             'fixed_price'    => true,
         );
