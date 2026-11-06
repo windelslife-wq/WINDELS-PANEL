@@ -57,6 +57,14 @@ $has = function ($permission) use ($permissions) {
         <button class="btn btn-secondary" type="button" data-dialog-open="ws-import-services">⇥ Import all services…</button>
         <?php endif; ?>
       </div>
+      <?php if ($is_vtu): ?>
+      <p class="hint text-xs muted mt-2 mb-0">
+        Sync services reads this vendor's fixed-price DATA, CABLE and EXAM_PIN
+        product list (variations) into the VTU catalogue. New products arrive
+        inactive and priced at cost; airtime and electricity are variable-amount
+        and stay hand-configured in Admin &gt; Catalogue.
+      </p>
+      <?php endif; ?>
       <?php endif; ?>
       <?php if ($has('providers.manage')): ?>
       <div class="row mt-3" style="justify-content:flex-end;gap:.5rem">
