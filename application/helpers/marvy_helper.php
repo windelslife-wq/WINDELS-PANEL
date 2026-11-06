@@ -301,6 +301,24 @@ if (!function_exists('marvy_money')) {
         return $sym . $formatted;
     }
 }
+if (!function_exists('marvy_vtu_currency')) {
+    /**
+     * VTU products (airtime, data, cable TV, electricity and exam PINs) are
+     * Nigerian carrier/utility variations priced and billed in Naira (NGN)
+     * regardless of the panel's accounting or browsing currency.
+     */
+    function marvy_vtu_currency(){
+        return 'NGN';
+    }
+}
+if (!function_exists('marvy_naira')) {
+    /**
+     * Format an amount unconditionally in Nigerian Naira (₦).
+     */
+    function marvy_naira($amount){
+        return '₦'.number_format((float)$amount, 2, '.', ',');
+    }
+}
 if (!function_exists('marvy_display_money')) {
     /**
      * A base-currency amount, converted and formatted for browsing in the
@@ -357,14 +375,14 @@ if (!function_exists('marvy_to_base_money')) {
         if ($from === marvy_base_currency()) return number_format((float)$amount, 8, '.', '');
         if (!is_numeric($amount)) return null;
 
-        static $service = null;
-        if ($service === null && function_exists('get_instance')) {
+        $service = false;
+        if (function_exists('get_instance')) {
             try {
                 $ci =& get_instance();
-                $ci->load->library('CurrencyService');
-                // A loader that no-ops (test doubles) leaves the property
-                // unset; reading it blind warns where try/catch cannot help.
-                $service = isset($ci->currencyservice) ? $ci->currencyservice : false;
+                if ($ci && !isset($ci->currencyservice) && isset($ci->load)) {
+                    $ci->load->library('CurrencyService');
+                }
+                $service = ($ci && isset($ci->currencyservice)) ? $ci->currencyservice : false;
             } catch (Throwable $e) {
                 $service = false;
             }

@@ -8,6 +8,9 @@ $can_price = $has('pricing.manage');
 $variable = $domain === 'vtu' && in_array($product->service_type, array('AIRTIME','ELECTRICITY'), true);
 $margin = ($product->price !== null && $product->provider_cost !== null)
     ? bcsub((string)$product->price, (string)$product->provider_cost, 8) : null;
+$fmt_domain = function ($amt) use ($domain) {
+    return $domain === 'vtu' ? marvy_naira($amt) : marvy_money($amt);
+};
 ?>
 <div class="row justify-between mb-4" style="align-items:flex-start;flex-wrap:wrap;gap:.75rem">
   <div>
@@ -45,20 +48,20 @@ $margin = ($product->price !== null && $product->provider_cost !== null)
           <tr><th>Price</th><td class="muted">Customer names the amount</td></tr>
           <tr><th>Discount</th><td class="mono"><?=htmlspecialchars(rtrim(rtrim((string)$product->discount_percent, '0'), '.'))?>%</td></tr>
           <tr><th>Limits</th><td class="mono">
-            <?=$product->min_amount === null ? 'no minimum' : marvy_money($product->min_amount)?>
+            <?=$product->min_amount === null ? 'no minimum' : $fmt_domain($product->min_amount)?>
             –
-            <?=$product->max_amount === null ? 'no maximum' : marvy_money($product->max_amount)?>
+            <?=$product->max_amount === null ? 'no maximum' : $fmt_domain($product->max_amount)?>
           </td></tr>
         <?php else: ?>
           <tr><th>Price</th><td class="mono">
-            <?=$product->price === null ? '<span class="badge badge-warning">not set</span>' : marvy_money($product->price)?>
+            <?=$product->price === null ? '<span class="badge badge-warning">not set</span>' : $fmt_domain($product->price)?>
           </td></tr>
           <tr><th>Vendor cost</th><td class="mono">
-            <?=$product->provider_cost === null ? '—' : marvy_money($product->provider_cost)?>
+            <?=$product->provider_cost === null ? '—' : $fmt_domain($product->provider_cost)?>
           </td></tr>
           <tr><th>Margin</th><td class="mono">
             <?php if ($margin === null): ?>—<?php else: ?>
-              <span class="<?=bccomp($margin, '0', 8) < 0 ? 'badge badge-danger' : ''?>"><?=marvy_money($margin)?></span>
+              <span class="<?=bccomp($margin, '0', 8) < 0 ? 'badge badge-danger' : ''?>"><?=$fmt_domain($margin)?></span>
             <?php endif; ?>
           </td></tr>
         <?php endif; ?>

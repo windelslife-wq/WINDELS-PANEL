@@ -31,7 +31,7 @@
     <label class="label" for="meter">Meter number</label>
     <input class="input mb-4" id="meter" name="meter" inputmode="numeric" required>
 
-    <label class="label" for="amount">Amount</label>
+    <label class="label" for="amount">Amount (₦)</label>
     <input class="input mb-2" id="amount" name="amount" type="number" min="500" step="1" required>
     <p class="muted text-xs mb-4">Prepaid tokens appear on your receipt as soon as the
       purchase completes.</p>

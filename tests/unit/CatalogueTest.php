@@ -891,6 +891,106 @@ class CatalogueTest extends TestCase
         }
     }
 
+    /**
+     * VTU products are Nigerian carrier/utility variations priced and billed in
+     * Naira (₦). Even when the panel's accounting currency is USD, every VTU
+     * catalogue screen, form label and margin warning must render in Naira.
+     */
+    public function testVtuCatalogueAlwaysDisplaysInNairaEvenWhenBaseCurrencyIsUsd()
+    {
+        list($app,) = $this->app();
+        // Flip the panel's base currency to USD.
+        $app->db->where('code', 'NGN')->update('currencies', array('is_base' => 0, 'exchange_rate' => '1500.00000000'));
+        $app->db->insert('currencies', array(
+            'code' => 'USD', 'name' => 'US Dollar', 'symbol' => '$',
+            'exchange_rate' => '1.00000000', 'is_base' => 1, 'is_active' => 1,
+            'updated_at' => gmdate('Y-m-d H:i:s'),
+        ));
+        marvy_forget_base_currency();
+        $this->assertSame('USD', marvy_base_currency());
+
+        $this->assertSame('NGN', CatalogueService::currency('vtu'));
+        $this->assertSame('USD', CatalogueService::currency('numbers'));
+        $this->assertSame('₦1,250.00', marvy_naira('1250'));
+
+        // Below-cost warning on VTU uses ₦, never $.
+        $net = $app->db->where('code', 'MTND')->get('vtu_networks')->row();
+        $saved = $app->catalogueservice->save('vtu', null, array(
+            'network_id'    => $net->id,
+            'code'          => 'MTN-LOSS-CHECK',
+            'name'          => 'MTN Loss Check',
+            'price'         => '250',
+            'provider_cost' => '285',
+            'is_active'     => '1',
+        ));
+        $this->assertTrue($saved['ok'], $saved['error'] ?? '');
+        $this->assertNotEmpty($saved['warnings']);
+        $this->assertStringContainsString('₦250.00 against ₦285.00', $saved['warnings'][0]);
+        $this->assertStringNotContainsString('$250.00', $saved['warnings'][0]);
+
+        // Render admin/catalogue/vtu index, edit and _form views under USD base.
+        if (!function_exists('site_url')) {
+            eval('function site_url($p = ""){ return "https://activedigitalhub.com/".ltrim((string)$p, "/"); }');
+        }
+        $grid = $app->catalogueservice->grid('vtu', array(), 50, 0);
+        $options = $app->catalogueservice->options('vtu');
+        $view_ctx = new class(self::$root) {
+            public $security;
+            public $load;
+            private $root;
+            public function __construct($root) {
+                $this->root = $root;
+                $this->security = new class {
+                    public function get_csrf_token_name() { return 'csrf_test'; }
+                    public function get_csrf_hash() { return 'tok'; }
+                };
+            }
+            public function render($rel, array $vars) {
+                $self = $this;
+                $this->load = new class($self) {
+                    private $p;
+                    public function __construct($p) { $this->p = $p; }
+                    public function view($r, $v = array()) { echo $this->p->render($r, $v); }
+                };
+                extract($vars);
+                ob_start();
+                include $this->root.'/application/views/'.$rel.'.php';
+                return ob_get_clean();
+            }
+        };
+
+        $index_html = $view_ctx->render('admin/catalogue/index', array(
+            'domain'      => 'vtu',
+            'domains'     => CatalogueService::domains(),
+            'rows'        => $grid['rows'],
+            'total'       => $grid['total'],
+            'page'        => 1,
+            'total_pages' => 1,
+            'filters'     => array(),
+            'options'     => $options,
+            'permissions' => array('*'),
+        ));
+        $this->assertStringContainsString('Prices are in NGN (₦).', $index_html);
+        $this->assertStringContainsString('₦300.00', $index_html);
+        $this->assertStringContainsString('₦10,500.00', $index_html);
+        $this->assertStringNotContainsString('$300.00', $index_html);
+        $this->assertStringNotContainsString('Prices are in USD.', $index_html);
+        $this->assertStringContainsString('Price (NGN · ₦)', $index_html);
+        $this->assertStringContainsString('Vendor cost (NGN · ₦)', $index_html);
+
+        $edit_html = $view_ctx->render('admin/catalogue/edit', array(
+            'domain'      => 'vtu',
+            'product'     => $saved['product'],
+            'options'     => $options,
+            'permissions' => array('*'),
+        ));
+        $this->assertStringContainsString('₦250.00', $edit_html);
+        $this->assertStringContainsString('₦285.00', $edit_html);
+        $this->assertStringNotContainsString('$250.00', $edit_html);
+
+        marvy_forget_base_currency();
+    }
+
     private function seeder()
     {
         if (!class_exists('Core_seeder')) {

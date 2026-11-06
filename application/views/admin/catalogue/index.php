@@ -32,13 +32,17 @@ $type_options = array(
     'giftcards' => array('FIXED','RANGE'),
 );
 $current_type = $filters['service_type'] ?? ($filters['id_type'] ?? ($filters['denomination_type'] ?? ''));
+$domain_currency = CatalogueService::currency($domain);
+$fmt_domain = function ($amt) use ($domain) {
+    return $domain === 'vtu' ? marvy_naira($amt) : marvy_money($amt);
+};
 ?>
 <div class="row justify-between mb-4" style="align-items:flex-start;flex-wrap:wrap;gap:.75rem">
   <div>
     <h2 class="mb-0" style="font-size:1.4rem;font-weight:600">Catalogue</h2>
     <p class="muted text-sm">
       <?=number_format((int)$total)?> <?=htmlspecialchars(strtolower(CatalogueService::label($domain)))?>
-      matching this view. Prices are in <?=htmlspecialchars(marvy_base_currency())?>.
+      matching this view. Prices are in <?=$domain === 'vtu' ? 'NGN (₦)' : htmlspecialchars($domain_currency)?>.
     </p>
   </div>
   <?php if ($can_price): ?>
@@ -190,17 +194,17 @@ $current_type = $filters['service_type'] ?? ($filters['id_type'] ?? ($filters['d
             <?php elseif ($r->price === null): ?>
               <span class="badge badge-warning">no price</span>
             <?php else: ?>
-              <?=marvy_money($r->price)?>
+              <?=$fmt_domain($r->price)?>
             <?php endif; ?>
           </td>
           <td class="text-right mono text-sm muted">
-            <?=$r->provider_cost === null ? '—' : marvy_money($r->provider_cost)?>
+            <?=$r->provider_cost === null ? '—' : $fmt_domain($r->provider_cost)?>
           </td>
           <td class="text-right mono text-sm">
             <?php if ($margin === null): ?>
               <span class="muted">—</span>
             <?php else: ?>
-              <span class="<?=bccomp($margin, '0', 8) < 0 ? 'badge badge-danger' : ''?>"><?=marvy_money($margin)?></span>
+              <span class="<?=bccomp($margin, '0', 8) < 0 ? 'badge badge-danger' : ''?>"><?=$fmt_domain($margin)?></span>
             <?php endif; ?>
           </td>
           <td>

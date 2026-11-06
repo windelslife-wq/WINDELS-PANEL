@@ -19,7 +19,8 @@ $money = function ($column) use ($p) {
     if (!$p || !isset($p->$column) || $p->$column === null) return '';
     return rtrim(rtrim(number_format((float)$p->$column, 8, '.', ''), '0'), '.');
 };
-$cur = marvy_base_currency();
+$cur = CatalogueService::currency($domain);
+$cur_label = $domain === 'vtu' ? 'NGN · ₦' : $cur;
 $variable_vtu = $domain === 'vtu' && $p && in_array($p->service_type, array('AIRTIME','ELECTRICITY'), true);
 ?>
 
@@ -135,7 +136,7 @@ $variable_vtu = $domain === 'vtu' && $p && in_array($p->service_type, array('AIR
 
 <?php if ($domain === 'vtu' && (!$p || !$variable_vtu)): ?>
   <div class="row" style="gap:.75rem">
-    <label class="field" style="flex:1"><span class="label">Face value</span>
+    <label class="field" style="flex:1"><span class="label">Face value (₦)</span>
       <input class="input" type="number" step="0.01" min="0" name="face_value"
              value="<?=htmlspecialchars($money('face_value'))?>">
       <span class="text-xs muted">What the bundle is nominally worth. Optional.</span>
@@ -163,23 +164,23 @@ $variable_vtu = $domain === 'vtu' && $p && in_array($p->service_type, array('AIR
              value="<?=htmlspecialchars(rtrim(rtrim((string)$v('discount_percent','0'), '0'), '.') ?: '0')?>">
       <span class="text-xs muted">₦1,000 airtime at 2% costs the customer ₦980.</span>
     </label>
-    <label class="field" style="flex:1"><span class="label">Minimum (<?=htmlspecialchars($cur)?>)</span>
+    <label class="field" style="flex:1"><span class="label">Minimum (<?=htmlspecialchars($cur_label)?>)</span>
       <input class="input" type="number" step="0.01" min="0" name="min_amount"
              value="<?=htmlspecialchars($money('min_amount'))?>">
     </label>
-    <label class="field" style="flex:1"><span class="label">Maximum (<?=htmlspecialchars($cur)?>)</span>
+    <label class="field" style="flex:1"><span class="label">Maximum (<?=htmlspecialchars($cur_label)?>)</span>
       <input class="input" type="number" step="0.01" min="0" name="max_amount"
              value="<?=htmlspecialchars($money('max_amount'))?>">
     </label>
   </div>
 <?php else: ?>
   <div class="row" style="gap:.75rem">
-    <label class="field" style="flex:1"><span class="label">Price (<?=htmlspecialchars($cur)?>)</span>
+    <label class="field" style="flex:1"><span class="label">Price (<?=htmlspecialchars($cur_label)?>)</span>
       <input class="input" type="number" step="0.01" min="0" name="price"
              value="<?=htmlspecialchars($money('price'))?>">
       <span class="text-xs muted">What the customer pays. Required before it can go on sale.</span>
     </label>
-    <label class="field" style="flex:1"><span class="label">Vendor cost (<?=htmlspecialchars($cur)?>)</span>
+    <label class="field" style="flex:1"><span class="label">Vendor cost (<?=htmlspecialchars($cur_label)?>)</span>
       <input class="input" type="number" step="0.01" min="0" name="provider_cost"
              value="<?=htmlspecialchars($money('provider_cost'))?>">
       <span class="text-xs muted">Only when the vendor bills in <?=htmlspecialchars($cur)?>.</span>

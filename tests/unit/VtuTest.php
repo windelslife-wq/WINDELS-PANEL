@@ -276,6 +276,43 @@ class VtuTest extends TestCase
             'settling a PROCESSING exam PIN via /api/epin/<id> must populate vtu_transactions.token');
     }
 
+    public function testUsdBasePanelDisplaysNairaBoundsAndConvertsVtuChargeFromNgn()
+    {
+        list($app, $user) = $this->app();
+        $app->library('CurrencyService');
+        // Switch panel base currency to USD (1 USD = 1500 NGN) and give customer $10 USD.
+        $app->db->where('code', 'NGN')->update('currencies', array(
+            'is_base' => 0, 'is_active' => 1, 'exchange_rate' => '1500.00000000',
+        ));
+        $app->db->insert('currencies', array(
+            'code' => 'USD', 'name' => 'US Dollar', 'symbol' => '$',
+            'exchange_rate' => '1.00000000', 'is_base' => 1, 'is_active' => 1,
+            'updated_at' => gmdate('Y-m-d H:i:s'),
+        ));
+        $app->db->where('user_id', $user->id)->update('wallets', array(
+            'currency' => 'USD', 'balance' => '10.00000000',
+        ));
+        marvy_forget_base_currency();
+        $this->assertSame('USD', marvy_base_currency());
+
+        // Bounds error is formatted in Naira (₦50.00), never $50.00.
+        $low = $app->vtuservice->airtime($user, array(
+            'network' => 'MTN', 'msisdn' => '08031234567', 'amount' => '10',
+        ));
+        $this->assertFalse($low['ok']);
+        $this->assertStringContainsString('₦50.00', $low['error']);
+
+        // Buying MTN-1GB (price = ₦300) charges $0.20 USD (300 / 1500), NOT $300 USD!
+        $res = $app->vtuservice->data($user, array(
+            'network' => 'MTND', 'product' => 'MTN-1GB', 'msisdn' => '08031234567',
+        ));
+        $this->assertTrue($res['ok'], $res['error'] ?? '');
+        $this->assertSame('0.20000000', $res['transaction']->amount);
+        $this->assertSame('9.80000000', $app->balance($user));
+
+        marvy_forget_base_currency();
+    }
+
     /* ======================== money integrity ========================== */
 
     /** The failure that must never silently keep the customer's money. */

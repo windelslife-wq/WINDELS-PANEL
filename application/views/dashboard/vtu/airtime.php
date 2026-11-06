@@ -26,7 +26,7 @@
     <input class="input mb-4" id="msisdn" name="msisdn" inputmode="tel"
            placeholder="08031234567" required>
 
-    <label class="label" for="amount">Amount</label>
+    <label class="label" for="amount">Amount (₦)</label>
     <input class="input mb-4" id="amount" name="amount" type="number"
            min="50" step="1" placeholder="1000" required>
     <?php // Module 36: one code works on every purchase in the panel. ?>

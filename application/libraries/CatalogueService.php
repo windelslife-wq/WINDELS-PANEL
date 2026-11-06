@@ -75,6 +75,11 @@ class CatalogueService {
         return isset(self::$domains[$domain]) ? self::$domains[$domain] : $domain;
     }
 
+    /** Currency in which a catalogue domain's product rows are denominated. */
+    public static function currency($domain) {
+        return $domain === 'vtu' ? marvy_vtu_currency() : marvy_base_currency();
+    }
+
     /** The product model behind one domain. */
     public function model($domain) {
         switch ($domain) {
@@ -287,8 +292,11 @@ class CatalogueService {
         $cost  = isset($fields['provider_cost']) ? $fields['provider_cost'] : null;
 
         if ($price !== null && $cost !== null && bccomp((string)$price, (string)$cost, 8) < 0) {
+            $fmt = $domain === 'vtu'
+                ? function ($a) { return marvy_naira($a); }
+                : function ($a) { return marvy_money($a); };
             $out[] = 'Heads up: this sells below the vendor cost ('
-                .marvy_money($price).' against '.marvy_money($cost).').';
+                .$fmt($price).' against '.$fmt($cost).').';
         }
         if ($domain === 'giftcards') {
             if (isset($fields['denomination_type']) && $fields['denomination_type'] === 'RANGE') {
