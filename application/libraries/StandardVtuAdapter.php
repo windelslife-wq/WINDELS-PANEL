@@ -408,12 +408,27 @@ class StandardVtuAdapter implements VtuProviderInterface {
         }
 
         $code = isset($res['http_code']) ? (int)$res['http_code'] : 0;
-        if ($code !== 200) {
+        if ($code === 0) {
             return array(
                 'ok' => false,
-                'error' => $res['error'] ?? ('HTTP '.$code),
+                'error' => $res['error'] ?? 'Provider unreachable',
                 'http_code' => $code,
             );
+        }
+        if ($code < 200 || $code >= 300) {
+            // A bare "HTTP 404" left operators staring at the wrong problem.
+            // In practice it means the base URL is a dashboard/marketing site
+            // rather than the API, or the path belongs to another vendor.
+            if ($code === 404) {
+                $error = 'HTTP 404 at '.$path.' — the API URL is a website or the '
+                        .'wrong path. Check the provider dashboard for its API base '
+                        .'(Bestdatanig: https://bestdatanig.com.ng with type BESTDATA).';
+            } elseif ($code === 401 || $code === 403) {
+                $error = 'HTTP '.$code.' — the provider rejected the API key.';
+            } else {
+                $error = $res['error'] ?? ('HTTP '.$code);
+            }
+            return array('ok' => false, 'error' => $error, 'http_code' => $code);
         }
         $data = json_decode(isset($res['body']) ? $res['body'] : '', true);
         if (!is_array($data)) {

@@ -36,6 +36,8 @@ class Provider_manager {
             'MOCK'         => array('MockVtuAdapter', 'MockVtuAdapter.php'),
             'STANDARD_VTU' => array('StandardVtuAdapter', 'StandardVtuAdapter.php'),
             'VTPASS'       => array('VtpassAdapter', 'VtpassAdapter.php'),
+            // Bestdatanig / AdaData Django REST API (Token auth, /api/* paths).
+            'BESTDATA'     => array('BestdataAdapter', 'BestdataAdapter.php'),
         ),
         self::FAMILY_NUMBER => array(
             'MOCK_NUMBER' => array('MockNumberAdapter', 'MockNumberAdapter.php'),
@@ -78,6 +80,19 @@ class Provider_manager {
     public function adapter($provider, $family = self::FAMILY_SMM) {
         $family = strtoupper($family);
         $type   = strtoupper(isset($provider->api_type) ? $provider->api_type : '');
+
+        // Compatibility with rows saved before the Bestdatanig adapter: they
+        // are STANDARD_VTU with the *website* URL app.bestdatanig.com.ng. That
+        // combination sent VTpass-shaped GET /balance at a Next.js site, which
+        // answers HTTP 404 on the "Test connection" button. Route them to the
+        // docs-correct Django REST adapter without making the operator delete
+        // and recreate the provider row (or migrate its credentials).
+        if ($family === self::FAMILY_VTU && $type === 'STANDARD_VTU') {
+            require_once __DIR__.'/BestdataAdapter.php';
+            if (BestdataAdapter::is_bestdata_url(isset($provider->api_url) ? $provider->api_url : '')) {
+                $type = 'BESTDATA';
+            }
+        }
 
         if (!isset(self::$registry[$family])) {
             throw new RuntimeException('Unknown provider family: '.$family);

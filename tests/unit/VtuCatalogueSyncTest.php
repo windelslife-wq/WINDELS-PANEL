@@ -4,7 +4,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * VTU catalogue sync (the "Sync services" button).
  *
- * The registry registers three VTU adapters, but only VTPASS used to answer
+ * The registry used to hold three VTU adapters, but only VTPASS answered
  * variations(). A STANDARD_VTU (or MOCK) provider therefore hit a dead-end
  * `This VTU adapter cannot list products.` before a single HTTP call was made,
  * from the admin button and from the cron's provider_sync job alike. Every
@@ -35,6 +35,7 @@ class VtuCatalogueSyncTest extends TestCase
         require_once self::$root.'/application/libraries/MockVtuAdapter.php';
         require_once self::$root.'/application/libraries/StandardVtuAdapter.php';
         require_once self::$root.'/application/libraries/VtpassAdapter.php';
+        require_once self::$root.'/application/libraries/BestdataAdapter.php';
         require_once self::$root.'/application/libraries/Provider_manager.php';
         require_once self::$root.'/application/libraries/ProviderSyncService.php';
     }
@@ -79,10 +80,11 @@ class VtuCatalogueSyncTest extends TestCase
 
     public function testEveryRegisteredVtuAdapterCanListProducts()
     {
-        foreach (array('MOCK', 'STANDARD_VTU', 'VTPASS') as $type) {
+        foreach (array('MOCK', 'STANDARD_VTU', 'VTPASS', 'BESTDATA') as $type) {
             $this->assertContains($type, Provider_manager::supported_types(Provider_manager::FAMILY_VTU));
         }
-        foreach (array('MockVtuAdapter', 'StandardVtuAdapter', 'VtpassAdapter') as $class) {
+        foreach (array('MockVtuAdapter', 'StandardVtuAdapter', 'VtpassAdapter',
+                       'BestdataAdapter') as $class) {
             $this->assertTrue(method_exists($class, 'variations'),
                 $class.' must implement variations()');
             $this->assertTrue(method_exists($class, 'catalogue_types'),
@@ -90,7 +92,9 @@ class VtuCatalogueSyncTest extends TestCase
             $types = $class::catalogue_types();
             $this->assertContains('DATA', $types);
             $this->assertContains('CABLE', $types);
-            $this->assertContains('EXAM_PIN', $types);
+            // Bestdatanig publishes no exam-PIN price list, so it honestly
+            // declares only the two fixed-price lists it can mirror.
+            if ($class !== 'BestdataAdapter') $this->assertContains('EXAM_PIN', $types);
             $this->assertTrue(is_subclass_of($class, 'VtuProviderInterface'));
         }
     }

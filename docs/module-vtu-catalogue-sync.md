@@ -8,8 +8,8 @@ That is the flash message from **Admin → Providers → Sync services**. It cam
 from `ProviderSyncService::sync_vtu_catalogue()`, which bails out *before any
 HTTP call* when the provider's adapter has no `variations()` method.
 
-`Provider_manager` registers three VTU api_types — `MOCK`, `STANDARD_VTU` and
-`VTPASS` — but only `VtpassAdapter` implemented the catalogue contract
+At the time `Provider_manager` registered three VTU api_types — `MOCK`,
+`STANDARD_VTU` and `VTPASS` — but only `VtpassAdapter` implemented the catalogue contract
 (`variations()` plus `catalogue_types()`). `VtuProviderInterface` never
 required it, so the other two were perfectly good at *selling* airtime/data and
 could not answer the one question the sync asks. An operator who added a
@@ -66,9 +66,11 @@ list in `content`/`data`. Each row accepts `variation_code|code|product_code|id`
 non-success `code`/`response_description` with no variation list) comes back as
 `ok:false, error`, which the sync treats as a per-network skip.
 
-`catalogue_types()` returns `DATA`, `CABLE` and `EXAM_PIN` for all three
-adapters. Airtime and electricity remain variable-amount products configured by
-the panel, not by a vendor price list.
+`catalogue_types()` returns `DATA`, `CABLE` and `EXAM_PIN` for the three
+original adapters; the later `BESTDATA` adapter declares `DATA` and `CABLE`
+only, because its vendor publishes no exam-PIN price list. Airtime and
+electricity remain variable-amount products configured by the panel, not by a
+vendor price list.
 
 ## Safety rules (unchanged)
 
