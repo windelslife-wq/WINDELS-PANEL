@@ -7,7 +7,15 @@
   var product = document.getElementById('product');
   if (!network || !product) return;
   var serviceType = <?=json_encode($service_type)?>;
-  var baseUrl = <?=json_encode(site_url('dashboard/vtu/products'))?>;
+  var tab = <?=json_encode($tab)?>;
+  // Root-relative, derived from the page's own URL: an absolute site_url()
+  // can name a different origin than the one serving the page (misconfigured
+  // APP_URL, preview hosts), and CSP connect-src 'self' would then block
+  // the fetch. This way the request is same-origin by construction and works
+  // in subdirectory installs too.
+  var root = location.pathname.split('/dashboard/vtu/')[0];
+  var baseUrl = root + '/dashboard/vtu/products';
+  var pageUrl = root + '/dashboard/vtu/' + tab;
 
   function optionEl(value, text) {
     var opt = document.createElement('option');
@@ -38,9 +46,10 @@
       }
       product.disabled = false;
     }).catch(function () {
-      product.innerHTML = '';
-      product.appendChild(optionEl('', 'Could not load options — please retry'));
-      product.disabled = false;
+      // No-JS-grade fallback: reload with ?network=CODE, which the server
+      // honours when rendering the product list, so the dropdown still
+      // follows the network even when fetch is unavailable or blocked.
+      window.location.href = pageUrl + '?network=' + encodeURIComponent(network.value);
     });
   }
 

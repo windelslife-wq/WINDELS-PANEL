@@ -2332,7 +2332,7 @@ CREATE TABLE IF NOT EXISTS migrations (
 
 DELETE FROM migrations;
 
-INSERT INTO migrations (version) VALUES (43);
+INSERT INTO migrations (version) VALUES (44);
 
 -- ======================================================================
 -- CORE DATA

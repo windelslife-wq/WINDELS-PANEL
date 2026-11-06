@@ -170,10 +170,18 @@ class Vtu extends Auth_Controller {
         list($service_type, $view, $label) = self::$tabs[$tab];
         $networks = $this->Vtu_network_model->active($service_type);
 
-        // Products for the first network, so the page is useful before any JS runs.
+        // Products for the selected network (?network=CODE — the no-JS
+        // fallback when the dependent-dropdown fetch cannot run), else the
+        // first network so the page is useful before any JS runs.
         $products = array();
+        $selected_network = null;
         if ($networks) {
-            $products = $this->Vtu_product_model->active_for($networks[0]->id, $service_type);
+            $want = strtoupper(trim((string)$this->input->get('network', true)));
+            foreach ($networks as $n) {
+                if ($want !== '' && strcasecmp($n->code, $want) === 0) { $selected_network = $n; break; }
+            }
+            if (!$selected_network) $selected_network = $networks[0];
+            $products = $this->Vtu_product_model->active_for($selected_network->id, $service_type);
         }
 
         // Single row, not a list — Wallet_model::for_user() returns one wallet.
@@ -183,6 +191,7 @@ class Vtu extends Auth_Controller {
             'tab'      => $tab,
             'tabs'     => self::$tabs,
             'networks' => $networks,
+            'selected_network' => $selected_network ? $selected_network->code : null,
             'products' => $products,
             'wallet'   => $wallet,
         ));

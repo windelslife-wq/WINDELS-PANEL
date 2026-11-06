@@ -18,7 +18,7 @@
     <label class="label" for="network">Provider</label>
     <select class="select mb-4" id="network" name="network" required>
       <?php foreach ($networks as $n): ?>
-        <option value="<?=htmlspecialchars($n->code)?>"><?=htmlspecialchars($n->name)?></option>
+        <option value="<?=htmlspecialchars($n->code)?>"<?=$selected_network === $n->code ? ' selected' : ''?>><?=htmlspecialchars($n->name)?></option>
       <?php endforeach; ?>
     </select>
 
@@ -43,5 +43,5 @@
     <button class="btn btn-primary" type="submit">Pay subscription</button>
   </form>
   <?php endif; ?>
-  <?php $this->load->view('dashboard/vtu/_dependent_products', array('service_type' => 'CABLE')); ?>
+  <?php $this->load->view('dashboard/vtu/_dependent_products', array('service_type' => 'CABLE', 'tab' => $tab)); ?>
 </div>
