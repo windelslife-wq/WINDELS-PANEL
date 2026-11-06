@@ -43,4 +43,5 @@
     <button class="btn btn-primary" type="submit">Pay subscription</button>
   </form>
   <?php endif; ?>
+  <?php $this->load->view('dashboard/vtu/_dependent_products', array('service_type' => 'CABLE')); ?>
 </div>
