@@ -1167,6 +1167,26 @@ class GiftcardsTest extends TestCase
         $this->assertStringContainsString('auth server is unreachable', $res['error']);
     }
 
+    /**
+     * configured() is what lets the sync tell "never set up" apart from
+     * "set up and failing": the first is a SKIPPED log line, the second a
+     * FAILED one, and an ACTIVE row of the first kind must not be retried
+     * as if it could ever authenticate.
+     */
+    public function testConfiguredReflectsWhetherBothCredentialHalvesArePresent()
+    {
+        list($with,) = $this->adapter(array());
+        $this->assertTrue($with->configured());
+
+        list($missing,) = $this->adapter(array(), array(
+            'api_key_encrypted' => '{"client_id":"","client_secret":"test_secret"}',
+        ));
+        $this->assertFalse($missing->configured());
+
+        list($plain,) = $this->adapter(array(), array('api_key_encrypted' => 'not-json'));
+        $this->assertFalse($plain->configured());
+    }
+
     /* --------------------------- catalogue import ------------------------- */
 
     public function testEachFixedDenominationBecomesItsOwnCatalogueRow()

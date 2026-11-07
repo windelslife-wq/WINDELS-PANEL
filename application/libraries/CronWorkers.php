@@ -986,18 +986,25 @@ class CronWorkers {
         $providers = $this->ci->Provider_model->due_for_sync();
         if (!$providers) return array('processed'=>0, 'failed'=>0, 'message'=>'no providers due');
 
-        $ok = 0; $bad = 0; $items = 0;
+        $ok = 0; $bad = 0; $skip = 0; $items = 0;
         foreach ($providers as $provider) {
             try {
                 $res = $this->ci->providersyncservice->sync_services($provider);
                 if (!empty($res['ok'])) { $ok++; $items += (int)($res['total'] ?? 0); }
+                // A provider that is not configured (e.g. gift card vendor
+                // without credentials) is skipped, not failed: there is
+                // nothing wrong with the vendor, and counting it as failed
+                // every interval buries the real failures.
+                elseif (!empty($res['skipped'])) $skip++;
                 else $bad++;
             } catch (Exception $e) {
                 $bad++;
                 log_message('error', "provider_sync {$provider->id}: ".$e->getMessage());
             }
         }
-        return array('processed'=>$ok, 'failed'=>$bad, 'message'=>"{$ok} providers synced ({$items} services), {$bad} failed");
+        $message = "{$ok} providers synced ({$items} services), {$bad} failed";
+        if ($skip > 0) $message .= ", {$skip} skipped (not configured)";
+        return array('processed'=>$ok, 'skipped'=>$skip, 'failed'=>$bad, 'message'=>$message);
     }
 
     /* ======================== payment reconciliation ======================= */
