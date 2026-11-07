@@ -672,6 +672,19 @@ class ProviderSyncService {
             return array('ok' => false, 'error' => $e->getMessage(), 'latency_ms' => $latency);
         }
 
+        // An ACTIVE row with no credentials can never authenticate, and
+        // since last_successful_sync_at never advances, the cron would
+        // record the same FAILED entry on every interval forever. That is
+        // noise, not signal: record one SKIPPED line naming the actual
+        // problem instead. The row stays due, so the moment credentials are
+        // saved the next sync goes through.
+        if (method_exists($adapter, 'configured') && !$adapter->configured()) {
+            $latency = (int)round((microtime(true) - $start) * 1000);
+            $message = 'No gift card vendor credentials are configured on this provider';
+            $this->ci->Provider_model->record_sync($provider->id, 'services', 'SKIPPED', $message, 0, $latency);
+            return array('ok' => false, 'skipped' => true, 'error' => $message, 'latency_ms' => $latency);
+        }
+
         $inserted = 0; $updated = 0; $skipped = 0; $errors = array();
         // Brands are resolved once per name, not once per denomination: a
         // hundred Amazon products must not be a hundred brand upserts.

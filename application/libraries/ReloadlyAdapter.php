@@ -113,6 +113,20 @@ class ReloadlyAdapter implements GiftcardProviderInterface {
         $this->base = $url !== '' ? $url : self::BASE_URL;
     }
 
+    /**
+     * Whether the provider row carries both halves of the OAuth2 pair.
+     *
+     * Not on GiftcardProviderInterface: it is a Reloadly-specific precondition
+     * (other vendors may be configured differently), so the sync checks for
+     * it with method_exists rather than forcing every adapter to implement it.
+     * A provider that is not configured can never authenticate, and must not
+     * be retried as if it could.
+     */
+    public function configured() {
+        $creds = $this->credentials();
+        return $creds['client_id'] !== '' && $creds['client_secret'] !== '';
+    }
+
     /* -------------------------------- order ------------------------------- */
 
     public function order(array $p) {
